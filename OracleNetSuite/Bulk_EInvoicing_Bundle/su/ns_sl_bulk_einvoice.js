@@ -71,6 +71,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
                         type: serverWidget.SublistType.LIST,
                         label: 'Invoice'
                     });
+                    sublist.addMarkAllButtons();
                    var SetSublist = setSublistReorderPoint(sublist, Form, request, response);
                     
 					Form.clientScriptModulePath = '../lib/cs_bulk_einvoicing.js';
