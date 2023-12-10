@@ -113,9 +113,11 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
 			sublist.addField({ id: 'custpage_internal_id',  type: serverWidget.FieldType.TEXT,  label: 'Internal ID' });
 			sublist.addField({ id: 'custpage_doc_number',  type: serverWidget.FieldType.TEXT,  label: 'Transaction ID' });
             sublist.addField({ id: 'custpage_customer_name', type: serverWidget.FieldType.TEXT, label: 'Entity' });
+            sublist.addField({ id: 'custpage_invoice_date', type: serverWidget.FieldType.DATE, label: 'Invoice Date' });
+    
             sublist.addField({ id: 'custpage_memo', type: serverWidget.FieldType.TEXT, label: 'Memo' });
             sublist.addField({ id: 'custpage_currency', type: serverWidget.FieldType.TEXT, label: 'Currency' });
-           
+    
             sublist.addField({ id: 'custpage_amount', type: serverWidget.FieldType.TEXT, label: 'Amount' });
              sublist.addField({ id: 'custpage_sending_method', type: serverWidget.FieldType.TEXT, label: 'E-DOCUMENT SENDING METHOD' });
 			sublist.addField({ id: 'custpage_ei_template', type: serverWidget.FieldType.TEXT, label: 'E-Document Template' });
@@ -140,6 +142,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
       search.createColumn({name: "entity", label: "entity"}),
       search.createColumn({name: "currency", label: "currency"}),
       search.createColumn({name: "amount", label: "amount"}),
+      search.createColumn({name: "trandate", label: "trandate"}),
       search.createColumn({name: "custbody_psg_ei_sending_method", label: "sending_method"}),
       search.createColumn({name: "custbody_psg_ei_template", label: "ei_template"}),
       search.createColumn({name: "custbody_psg_ei_status", label: "ei_status"}),
@@ -159,11 +162,13 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
 							 var doc_num = data_invoice[k].doc_num;
 							 var amount = data_invoice[k].amount;
 							 var entity = InvObj[k].getText({ name: 'entity'});
+                             var trandate = data_invoice[k].trandate;
 							 var currency = InvObj[k].getText({ name: 'currency'});
 							 var sending_method = InvObj[k].getText({ name: 'custbody_psg_ei_sending_method'});
 							 var ei_template = InvObj[k].getText({ name: 'custbody_psg_ei_template'});
 							 var ei_status = InvObj[k].getText({ name: 'custbody_psg_ei_status'});
 							 var type = InvObj[k].getText({ name: 'type'});
+
 							// var entity = data_invoice[k].entity;
 							 var memo = data_invoice[k].memo;
 							 if(memo == ""){
@@ -181,6 +186,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
         sublist.setSublistValue({  id: 'custpage_ei_template', line: lineNum, value: ei_template });
         sublist.setSublistValue({  id: 'custpage_ei_status', line: lineNum, value: ei_status });
         sublist.setSublistValue({  id: 'custpage_type', line: lineNum, value: type });
+        sublist.setSublistValue({  id: 'custpage_invoice_date', line: lineNum, value: trandate });
 				
 				  ++lineNum;			
 							}
@@ -193,4 +199,4 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
             onRequest: onRequest
         };
 
-    });
+    })
