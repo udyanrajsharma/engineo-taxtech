@@ -3,9 +3,9 @@
  * @NScriptType ClientScript
  * @NModuleScope Public
  */
-define(['N/currentRecord','N/url','N/https','N/ui/message'],
+define(['N/currentRecord','N/url','N/https','N/ui/message', "../lib/common_2.0", "N/https", "N/url",'N/search'],
 
-function(currentRecord,url,https,message) {
+function(currentRecord,url,https,message,common, https,url,search) {
   var record = currentRecord.get();  
     
     /**
@@ -32,31 +32,48 @@ function(currentRecord,url,https,message) {
 	
 	
 	
+	
 	 function fieldChanged(context) {
         var currentRecord = context.currentRecord;
         var sublistFieldName = context.fieldId;
-	var payee_list = currentRecord.getLineCount({sublistId: 'custpage_sublist'}) ;
-		
-		var ei_status_old = 0;
-		 for (var i = 0; i < payee_list; i++) {
-			 var checkbox_id = currentRecord.getSublistValue({sublistId: 'custpage_sublist', fieldId: 'custpage_checkbox',line: i});
-			 if(checkbox_id == true){
-				  ei_status = currentRecord.getSublistValue({sublistId: 'custpage_sublist', fieldId: 'custpage_ei_status',line: i}); 
-			if(ei_status_old != 0 && ei_status_old != ei_status){
+		if(sublistFieldName == 'custpage_select_invoice'){
+		var select_invoice = currentRecord.getText({fieldId: 'custpage_select_invoice'});
+		if(select_invoice != ""){
+			 var sub_list = currentRecord.getLineCount({sublistId: 'custpage_sublist'}) ;
+			 
+			  for (var i = 0; i < sub_list; i++) {
+			 var doc_number = currentRecord.getSublistValue({sublistId: 'custpage_sublist', fieldId: 'custpage_doc_number',line: i});
+			 if(doc_number == select_invoice){
+			 var ei_irn = currentRecord.getSublistValue({sublistId: 'custpage_sublist', fieldId: 'custpage_ei_irn',line: i});
+			 
+			 currentRecord.setValue({fieldId: 'custpage_irn_value',  value: ei_irn});
+			 currentRecord.getField("custpage_irn_value").isDisabled = true;
+
 				
-				//alert("Please select only one type of document status");
-				
-				
-			}
-			if(ei_status_old == 0){
-				ei_status_old = ei_status;
-			}
-			
-			
-			
-			
-			}
+			 
 		 }
+		 
+		 }
+		 
+		}
+		
+		}
+	 
+		
+		
+		if(sublistFieldName == 'custpage_start_date' || sublistFieldName == 'custpage_end_date'){
+			var start_date = currentRecord.getValue({fieldId: 'custpage_start_date'});
+			var end_date = currentRecord.getValue({fieldId: 'custpage_end_date'});
+			if(start_date != "" && end_date != ""){
+				if(start_date > end_date){
+					alert("Please select Valid Start Date and End Date");
+				} 
+				
+			}
+			
+			
+		}
+	
 		
 		
 		
@@ -66,6 +83,80 @@ function(currentRecord,url,https,message) {
     function refreshpage(){
     	window.onbeforeunload = null;
 		window.location.reload();
+    }
+	
+	function goBack() {
+      history.back();
+    }
+	
+	
+	function CancelEdoc(context){
+		
+  
+		
+	
+	var select_invoice = currentRecord.getValue({fieldId: 'custpage_select_invoice'});
+	var cancel_reason = currentRecord.getValue({fieldId: 'custpage_cancel_reason'});
+	var cancel_remark = currentRecord.getValue({fieldId: 'custpage_cancel_remark'});
+	 
+	 if(select_invoice == ""){
+		alert ("Please Select Invoice To Cancel");
+		return false;
+	}
+	if(cancel_reason == ""){
+		alert ("Please Select Reason");
+		return false;
+	}
+	
+	if(cancel_remark == ""){
+		alert ("Please Add Remark");
+		return false;
+	}
+
+	
+	 var token_val = '1.2b9e12c1-3a6d-4c8b-a40b-dbce03657fd0_f2a24d70cef395ca36c919c00f527fb7a702edb55f20c36bc95141c790af285b';			
+		var gstin_val = '27AAECI5297A1ZL';	
+		
+		var headerObj = new Array();
+		headerObj['X-Cleartax-Auth-Token'] = token_val;	
+		headerObj['Content-Type'] = 'application/json';	
+		headerObj['Accept'] = 'application/json';	
+		headerObj['gstin'] = gstin_val;	
+		
+		var url_new = 'https://api-sandbox.clear.in/einv/v2/eInvoice/cancel';
+		
+	
+	var fieldLookUp = search.lookupFields({
+    type: search.Type.INVOICE,
+    id: select_invoice,
+    columns: ['custbody_in_ei_irn']
+});	
+var irn = fieldLookUp.custbody_in_ei_irn;
+
+
+psg_ei_content =	[
+{
+  "irn": irn,
+  "CnlRsn": cancel_reason,
+  "CnlRem": cancel_remark
+}
+];
+
+ var suiteletURL = url.resolveScript({
+                scriptId: 'customscript_sl_to_cancel_einvoice',
+                deploymentId: 'customdeploy_sl_to_cancel_einvoice'
+               
+            });
+			
+			var response = https.post({url: suiteletURL, body:  {invoice_data: select_invoice,cancel_reason :cancel_reason,cancel_remark :cancel_remark  }});
+
+	//var response = https.put({ url: url_new,body: JSON.stringify(psg_ei_content),headers: headerObj});
+//alert(JSON.stringify(response.body));
+			alert("IRN cancallation is done");	
+			window.onbeforeunload = null;
+			window.location.reload();	
+	
+		 
     }
 	
 	function generateEdoc(context){
@@ -149,6 +240,8 @@ function(currentRecord,url,https,message) {
 		fieldChanged: fieldChanged,
 		generateEdoc: generateEdoc,
 		sendEdoc: sendEdoc,
+		goBack: goBack,
+		CancelEdoc: CancelEdoc,
 		
     	refreshpage:refreshpage
     };
