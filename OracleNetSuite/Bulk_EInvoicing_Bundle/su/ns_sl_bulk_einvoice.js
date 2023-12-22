@@ -180,6 +180,9 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
 			sublist.addField({ id: 'custpage_ei_template', type: serverWidget.FieldType.TEXT, label: 'E-Document Template' });
             sublist.addField({ id: 'custpage_ei_status', type: serverWidget.FieldType.TEXT, label: 'E-Document Status' });
             sublist.addField({ id: 'custpage_type', type: serverWidget.FieldType.TEXT, label: 'Type' });
+          //Changes start 22/12/2023
+          sublist.addField({ id: 'custbody_in_ei_irn', type: serverWidget.FieldType.TEXT, label: 'IRN' });
+          //Changes End 22/10/2023
             
             var lineNum = 0;
 			if(start_date){
@@ -216,6 +219,9 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
       search.createColumn({name: "amount", label: "amount"}),
       search.createColumn({name: "trandate", label: "trandate"}),
       search.createColumn({name: "custbody_psg_ei_sending_method", label: "sending_method"}),
+      //Changes Start on 22/12/2023
+      search.createColumn({name: "custbody_in_ei_irn", label: "ei_irn"}),
+      //Changes End on 22/10/2023
       search.createColumn({name: "custbody_psg_ei_template", label: "ei_template"}),
       search.createColumn({name: "custbody_psg_ei_status", label: "ei_status"}),
       search.createColumn({name: "type", label: "type"}),
@@ -252,6 +258,14 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
 							 if(memo == ""){
 								memo = '-'; 
 							 }
+                              //Changes Start on 22/10/2023
+                              var ei_irn = data_invoice[k].ei_irn;
+							 if(ei_irn == ""){
+								ei_irn = '-'; 
+							 }
+                              //Changes End on 22/10/2023
+                            
+                              
 							 
 		sublist.setSublistValue({ id: 'custpage_checkbox', line: lineNum, value: 'F' });
 		sublist.setSublistValue({ id: 'custpage_internal_id', line: lineNum, value: internalid });
@@ -265,6 +279,9 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
         sublist.setSublistValue({  id: 'custpage_ei_status', line: lineNum, value: ei_status });
         sublist.setSublistValue({  id: 'custpage_type', line: lineNum, value: type });
         sublist.setSublistValue({  id: 'custpage_invoice_date', line: lineNum, value: trandate });
+        //Changes start on 22/10/2023
+         sublist.setSublistValue({  id: 'custpage_ei_irn', line: lineNum, value: ei_irn });
+        //Changes End on 22/10/2023
 				
 				  ++lineNum;			
 							}

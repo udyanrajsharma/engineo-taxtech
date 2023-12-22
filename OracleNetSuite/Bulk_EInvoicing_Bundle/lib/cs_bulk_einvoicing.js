@@ -22,7 +22,16 @@ function(currentRecord,url,https,message,common, https,url,search) {
     function pageInit(scriptContext) {
 		
 		currentRecord = scriptContext.currentRecord;
-		
+			var post_value = currentRecord.getValue({fieldId: 'custpage_post_value'});
+			if(post_value == 1){
+		  var myMsg_val = message.create({
+        title: 'Message!',
+        message: 'E-invoice cancallation is done please click on back button to cancel another E-invoice',
+        type: message.Type.CONFIRMATION,
+        duration: 20000
+    });
+	myMsg_val.show();
+			}
 		  
 	
     //	 alert('test');
@@ -87,6 +96,8 @@ function(currentRecord,url,https,message,common, https,url,search) {
 	
 	function goBack() {
       history.back();
+	
+	  
     }
 	
 	

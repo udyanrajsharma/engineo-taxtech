@@ -75,21 +75,26 @@ var inv_data =	GetInvoiceToCancel();
                     label: 'IRN'
                   
                 });
-				
+				irn.defaultValue = '';
 				var cancel_remark = Form.addField({
                     id: 'custpage_cancel_remark',
                     type: serverWidget.FieldType.LONGTEXT,
                     label: 'Cancel Remark'
                   
                 });
+				cancel_remark.defaultValue = '';
 				
 				cancel_remark.setHelpText({
     help : "Add Remark with in 100 char",
 	showInlineForAssistant : true
 });
 
-			var cancel_btn = Form.addButton({  id : 'cancel_edoc',label : 'Cancel E-Invoice', functionName: "CancelEdoc"});
-          
+		
+		   Form.addSubmitButton({
+                    label: 'Cancel Edoc'
+                });
+				
+				
 		     var sublist = Form.addSublist({
                         id: 'custpage_sublist',
                         type: serverWidget.SublistType.LIST,
@@ -106,13 +111,45 @@ var inv_data =	GetInvoiceToCancel();
 			  
 						}else {
 							
+							
+							 var Form = serverWidget.createForm({
+                        title: 'Cancel E-Invoice',
+                        hideNavBar: false
+                    });
+					Form.clientScriptModulePath = '../lib/cs_bulk_einvoicing.js';
+					Form.addButton({
+                    id: 'goBack',
+                    label: 'Go Back',
+                    functionName: "goBack"
+                });
 						 var parameters = request.parameters;	
-						 log.debug('json_obj parameters', JSON.stringify(parameters));
-						 	 var objRecord = record.load({
-			type: record.Type.INVOICE,
-				id: parameters.invoice_data
-			});
+						  var invoice = parameters.custpage_select_invoice;
+						  var cancel_reason = parameters.custpage_cancel_reason;
+						  var irn_value = parameters.custpage_irn_value;
+						  var cancel_remark = parameters.custpage_cancel_remark;
+						 log.debug('json_obj invoice', JSON.stringify(invoice));
+						 log.debug('json_obj cancel_reason', JSON.stringify(cancel_reason));
+						 log.debug('json_obj irn_value', JSON.stringify(irn_value));
+						 log.debug('json_obj cancel_remark', JSON.stringify(cancel_remark));
 						 
+						 var post = Form.addField({
+                    id: 'custpage_post_value',
+                    type: serverWidget.FieldType.TEXT,
+                    label: 'Post'
+                  
+                });
+				post.defaultValue = '1';
+				post.updateDisplayType({
+    displayType : serverWidget.FieldDisplayType.HIDDEN
+});
+						 	 
+						 
+							 var objRecord = record.load({
+			type: record.Type.INVOICE,
+				id: invoice
+			});
+				response.writePage(Form);	
+				
 			var nexus = objRecord.getValue({fieldId: 'nexus'});
 			var subsidiary = objRecord.getValue({fieldId: 'subsidiary'});
 			var irn = objRecord.getValue({fieldId: 'custbody_in_ei_irn'});
@@ -135,8 +172,8 @@ var inv_data =	GetInvoiceToCancel();
 psg_ei_content =	[
 {
   "irn": irn,
-  "CnlRsn": parameters.cancel_reason,
-  "CnlRem": parameters.cancel_remark
+  "CnlRsn": cancel_reason,
+  "CnlRem": cancel_remark
 }
 ];
 
@@ -158,7 +195,10 @@ var is_success =	body_val[0].govt_response.Success;
 
 				var recordId = objRecord.save();			
 				}
-						}
+						
+					
+					
+		}
             
 
         }
