@@ -181,7 +181,7 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
             sublist.addField({ id: 'custpage_ei_status', type: serverWidget.FieldType.TEXT, label: 'E-Document Status' });
             sublist.addField({ id: 'custpage_type', type: serverWidget.FieldType.TEXT, label: 'Type' });
           //Changes start 22/12/2023
-          sublist.addField({ id: 'custbody_in_ei_irn', type: serverWidget.FieldType.TEXT, label: 'IRN' });
+          sublist.addField({ id: 'custpage_ei_irn', type: serverWidget.FieldType.TEXT, label: 'IRN' });
           //Changes End 22/10/2023
             
             var lineNum = 0;
