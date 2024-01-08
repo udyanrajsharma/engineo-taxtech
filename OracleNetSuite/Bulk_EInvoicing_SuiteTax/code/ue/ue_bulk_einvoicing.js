@@ -28,11 +28,11 @@ define([
         var currRecord = context.newRecord;
          if (context.type === context.UserEventType.VIEW) {
               var form = context.form;
-                var generated_bulk_edoc = currRecord.getValue('custbody_psg_ei_generated_bulk_edoc');
+                var generated_bulk_edoc = currRecord.getValue('custbody_psg_ei_generated_edoc');
              if(generated_bulk_edoc != ""){
 				 
 				  var generated_edocField = form.getField({
-            id: 'custbody_psg_ei_generated_edoc',
+            id: 'custbody_psg_ei_generated_bulk_edoc',
         });
         if (generated_edocField) {
             generated_edocField.updateDisplayType({
@@ -42,7 +42,7 @@ define([
 				 
 			 }else{
                  var generated_edocField = form.getField({
-            id: 'custbody_psg_ei_generated_bulk_edoc',
+            id: 'custbody_psg_ei_generated_edoc',
         });
         if (generated_edocField) {
             generated_edocField.updateDisplayType({

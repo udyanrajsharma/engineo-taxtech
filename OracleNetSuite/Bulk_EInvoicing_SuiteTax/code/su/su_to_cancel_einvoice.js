@@ -164,7 +164,7 @@ var inv_data =	GetInvoiceToCancel();
 		headerObj['Accept'] = 'application/json';	
 		headerObj['gstin'] = gstin_val;	
 		
-		var url_new = 'https://api-sandbox.clear.in/einv/v2/eInvoice/cancel';
+		var url_new = 'https://api.clear.in/einv/v2/eInvoice/cancel';
 		
  log.debug('url_new url_new', JSON.stringify(url_new));
 
@@ -265,7 +265,7 @@ return Token_Details;
       "AND", 
       ["mainline","is","T"], 
       "AND", 
-       ["custbody_psg_ei_status","anyof","3","4"], 
+       ["custbody_psg_ei_status","anyof","3","4","7","8"], 
       "AND", 
       ["memorized","is","F"], 
       "AND", 
@@ -309,7 +309,7 @@ return Token_Details;
       "AND", 
       ["mainline","is","T"], 
       "AND", 
-       ["custbody_psg_ei_status","anyof","3","4"], 
+       ["custbody_psg_ei_status","anyof","3","4","7","8"], 
       "AND", 
       ["memorized","is","F"], 
       "AND", 

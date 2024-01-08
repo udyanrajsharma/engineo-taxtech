@@ -498,6 +498,7 @@ return Dispatch_Details;
 	  
 	  var columns=[
 	   search.createColumn({name: "item", label: "item"}),
+	   search.createColumn({name: "line", label: "line"}),
       search.createColumn({name: "quantity", label: "quantity"}),
       search.createColumn({name: "memo", label: "memo"}),
       search.createColumn({name: "fxamount", label: "fxrate"}),
@@ -518,7 +519,8 @@ return Dispatch_Details;
 					 	var item = {};
 					 
 					 	var item_id = item_Details[i].item;
-						var tax_data = GetTaxDetailsItemWise(invoice_id,item_id);
+					 	var line = item_Details[i].line;
+						var tax_data = GetTaxDetailsItemWise(invoice_id,item_id,line);
 						
 					 	var quantity = item_Details[i].quantity;
 					 	var type = item_Details[i].type;
@@ -551,7 +553,7 @@ return Dispatch_Details;
 	
 	
 	
-	function GetTaxDetailsItemWise(invoice_id,item_id)
+	function GetTaxDetailsItemWise(invoice_id,item_id,line)
 	{
 			log.debug('GetTaxDetailsItemWise item_id', JSON.stringify(item_id)); 
 		
@@ -565,7 +567,8 @@ return Dispatch_Details;
       "AND", 
       ["internalid","anyof",invoice_id], 
       "AND", 
-      ["item","anyof",item_id]
+      ["item","anyof",item_id],"AND", 
+      ["taxdetail.linenumber","equalto",line]
    ];
 	  
 	  var columns=[
@@ -590,7 +593,8 @@ return Dispatch_Details;
 	  
 	  var tax_data = common.searchAllRecord('invoice',null,filters,columns); 
 			var tax_Details = common.pushSearchResultIntoArray(tax_data);
-		
+			
+		log.debug('GetTaxDetailsItemWise ---'+item_id, JSON.stringify(tax_Details)); 
 			var taxs_array = [];
 				var tax_val = {};
 			 for (var t = 0; t < tax_Details.length; t++) {
