@@ -80,6 +80,10 @@ function(record, search, runtime, error, file, task,common,moment,url,https,emai
 			 var subtotal = objRecord.getValue({fieldId: 'subtotal'});
 			
 			 var taxtotal = objRecord.getValue({fieldId: 'taxtotal'});
+			 var buyer_gstin = objRecord.getValue({fieldId: 'entitytaxregnum'});
+			 
+			 
+			
 		
 			 var taxtotal25 = objRecord.getValue({fieldId: 'taxtotal94'});
 			 if(taxtotal25 != undefined){
@@ -115,6 +119,7 @@ function(record, search, runtime, error, file, task,common,moment,url,https,emai
 		var Seller_Details = GetSellerDetails(subsidiary, nexus);	
 		 log.debug('Seller_Details Seller_Details', JSON.stringify(Seller_Details)); 
 		var Buyers_Details = GetBuyersDetails(entity);	 
+		 
 		if(location_val != ""){
 		var Dispatch_Details = GetDispatchDetails(location_val);
 		var state_code_dispatch = Dispatch_Details[0].state;
@@ -122,16 +127,27 @@ function(record, search, runtime, error, file, task,common,moment,url,https,emai
 		}		
 		
 		var Item_Details = GetItemDetails(objRecord,invoice_id);	 
-		 
+		
+			buyer_gstin = Buyers_Details[0].defaulttaxreg;
 			 
-			
-
+		
+			 
+			var ship_Details = GetShippingDetails(invoice_id);	
+				
+				var shipaddr1 = ship_Details[0].shipaddress1;
+				var shipaddr2 = ship_Details[0].shipaddress2;
+				var shipcity = ship_Details[0].shipcity;
+				var shipstate = ship_Details[0].shipstate;
+				var shipzip = ship_Details[0].shipzip;
+			  var state_code_buyer = shipstate;
+				state_code_buyer = state_code_buyer.split("-");
 	  
 			var state_code = Seller_Details[0].state;
 				state_code = state_code.split("-");
-				
+				if(state_code_buyer == ""){
 				var state_code_buyer = Buyers_Details[0].state;
 				state_code_buyer = state_code_buyer.split("-");
+				}
 				
 				
 				
@@ -214,14 +230,14 @@ function(record, search, runtime, error, file, task,common,moment,url,https,emai
                 "Em": null
             },
             "BuyerDtls": {
-                "Gstin": Buyers_Details[0].defaulttaxreg,
+                "Gstin": buyer_gstin,
                 "LglNm": Buyers_Details[0].name,
                 "TrdNm": Buyers_Details[0].name,
                 "Pos": state_code_buyer[0],
-                "Addr1": Buyers_Details[0].address1,
-                "Addr2": Buyers_Details[0].address2,
-                "Loc": Buyers_Details[0].city,
-                "Pin": Buyers_Details[0].zipcode,
+                "Addr1": shipaddr1,
+                "Addr2": shipaddr2,
+                "Loc": shipcity,
+                "Pin": shipzip,
                 "Stcd": state_code_buyer[0],
                 "Ph": null,
                 "Em": Buyers_Details[0].email
@@ -238,11 +254,11 @@ function(record, search, runtime, error, file, task,common,moment,url,https,emai
             "ShipDtls": {
                 "LglNm": Buyers_Details[0].name,
                 "TrdNm": Buyers_Details[0].name,
-                "Gstin": Buyers_Details[0].defaulttaxreg,
-                "Addr1": Buyers_Details[0].address1,
-                "Addr2": Buyers_Details[0].address2,
-                "Loc": Buyers_Details[0].city,
-                "Pin": Buyers_Details[0].zipcode,
+                "Gstin": buyer_gstin,
+                "Addr1": shipaddr1,
+                "Addr2": shipaddr2,
+                "Loc": shipcity,
+                "Pin": shipzip,
                 "Stcd": state_code_buyer[0]
             },
             "ItemList":values,
@@ -280,8 +296,8 @@ var fileName = 'Invoice_'+tranid+'_edoc.json';
 
 					File.folder = gen_edoc_folder;
 					var edoc_id = File.save();
-					
-var otherId = record.submitFields({type: record.Type.INVOICE,id: invoice_id,values: {'custbody_psg_ei_content': JSON.stringify(edocContent),'custbody_psg_ei_status' : 19,'custbody_psg_ei_generated_bulk_edoc' : edoc_id}});
+					 var today = new Date();
+var otherId = record.submitFields({type: record.Type.INVOICE,id: invoice_id,values: {'custbody_psg_ei_content': JSON.stringify(edocContent),'custbody_psg_ei_status' : 19,'custbody_psg_ei_generated_bulk_edoc' : edoc_id,'custbody_bulk_einvoice_gen_date' : today}});
 
 
 log.debug('edocContent edocContent', JSON.stringify(edocContent));
@@ -326,6 +342,38 @@ return Token_Details;
 	}
 	
 	
+	
+	
+	function GetShippingDetails(invoice_id) 
+	{
+		
+		
+		
+		 var filters=[    ["type","anyof","CustInvc"], 
+      "AND", 
+      ["subsidiary","anyof","14"], 
+      "AND", 
+      ["mainline","is","T"], 
+      "AND", 
+      ["internalid","anyof",invoice_id] ];
+	  
+	  var columns=[
+	  search.createColumn({name: "shipaddress1", label: "shipaddress1"}),
+      search.createColumn({name: "shipaddress2", label: "shipaddress2"}),
+      search.createColumn({name: "shipcity", label: "shipcity"}),
+      search.createColumn({name: "shipstate", label: "shipstate"}),
+      search.createColumn({name: "shipzip", label: "shipzip"})
+     
+	  
+	  ]; 
+	  
+	  var ship_data = common.searchAllRecord('invoice',null,filters,columns); 
+			var Ship_Details = common.pushSearchResultIntoArray(ship_data);
+		
+		 log.debug('Ship_Details Ship_Details', JSON.stringify(Ship_Details)); 
+return Ship_Details;		
+	
+	}
 	
 	
 	function GetSellerDetails(subsidiary,nexus) 
@@ -385,7 +433,7 @@ return Seller_Details;
 	  
 	  var customer_data = common.searchAllRecord('customer',null,filters,columns); 
 			var Buyers_Details = common.pushSearchResultIntoArray(customer_data);
-				
+		log.debug('Buyers_Details entity', JSON.stringify(Buyers_Details)); 		
 		
 return Buyers_Details;		
 	
@@ -450,6 +498,7 @@ return Dispatch_Details;
 	  
 	  var columns=[
 	   search.createColumn({name: "item", label: "item"}),
+	   search.createColumn({name: "line", label: "line"}),
       search.createColumn({name: "quantity", label: "quantity"}),
       search.createColumn({name: "memo", label: "memo"}),
       search.createColumn({name: "fxamount", label: "fxrate"}),
@@ -470,7 +519,8 @@ return Dispatch_Details;
 					 	var item = {};
 					 
 					 	var item_id = item_Details[i].item;
-						var tax_data = GetTaxDetailsItemWise(invoice_id,item_id);
+					 	var line = item_Details[i].line;
+						var tax_data = GetTaxDetailsItemWise(invoice_id,item_id,line);
 						
 					 	var quantity = item_Details[i].quantity;
 					 	var type = item_Details[i].type;
@@ -503,7 +553,7 @@ return Dispatch_Details;
 	
 	
 	
-	function GetTaxDetailsItemWise(invoice_id,item_id)
+	function GetTaxDetailsItemWise(invoice_id,item_id,line)
 	{
 			log.debug('GetTaxDetailsItemWise item_id', JSON.stringify(item_id)); 
 		
@@ -517,7 +567,8 @@ return Dispatch_Details;
       "AND", 
       ["internalid","anyof",invoice_id], 
       "AND", 
-      ["item","anyof",item_id]
+      ["item","anyof",item_id],"AND", 
+      ["taxdetail.linenumber","equalto",line]
    ];
 	  
 	  var columns=[
@@ -542,7 +593,8 @@ return Dispatch_Details;
 	  
 	  var tax_data = common.searchAllRecord('invoice',null,filters,columns); 
 			var tax_Details = common.pushSearchResultIntoArray(tax_data);
-		
+			
+		log.debug('GetTaxDetailsItemWise ---'+item_id, JSON.stringify(tax_Details)); 
 			var taxs_array = [];
 				var tax_val = {};
 			 for (var t = 0; t < tax_Details.length; t++) {
@@ -606,7 +658,7 @@ return Dispatch_Details;
 		
 	var email_body1 = '<table border="1">';
 	
-	var email_body7 = '<tr><td><strong>Invoice #</strong></td><td><strong>Status </strong></td></tr>';
+	var email_body7 = '<tr><td><strong>Invoice #</strong></td><td><strong>Status </strong></td><td><strong>Error </strong></td></tr>';
 	
 	
 	
@@ -635,7 +687,9 @@ return Dispatch_Details;
 		
 		
 		function CertifyEdocInvoice(invoice_id) 
-	{
+	{ 
+
+      log.debug(' CertifyEdocInvoice start', JSON.stringify(invoice_id));
 		 var objRecord = record.load({
 			type: record.Type.INVOICE,
 				id: invoice_id
@@ -664,7 +718,10 @@ return Dispatch_Details;
 
 				log.debug('json_obj values', JSON.stringify(response));
 				log.debug('json_obj values body', JSON.parse(response.body));
+				
+				
 				var body_val = JSON.parse(response.body);
+				log.debug('govt_response.ErrorDetails', JSON.stringify(body_val[0].govt_response.ErrorDetails));
 				var fileName = 'Invoice_'+tranid+'.json';
 				var File = file.create({
 					name: fileName,
@@ -674,21 +731,26 @@ return Dispatch_Details;
 
 					File.folder = certify_edoc_folder;
 					var file_id = File.save();
-					
+					var error_msg = JSON.stringify(body_val[0].govt_response.ErrorDetails);
+					log.debug('error_msg.error_msg', error_msg);
+					log.debug('error_msg.error_msg ----', JSON.stringify(error_msg));
 				var is_success =	body_val[0].govt_response.Success;
 				if(is_success == 'Y'){
 				var success_msg = 'Success';	
-				
+				error_msg = "";
 				objRecord.setValue({ fieldId: 'custbody_in_ei_irn', value: body_val[0].govt_response.Irn});
 			objRecord.setValue({ fieldId: 'custbody_in_ei_ackno', value: body_val[0].govt_response.AckNo});
+            objRecord.setValue({ fieldId: 'custbody_ack_date_bulk_einvoice', value: body_val[0].govt_response.AckDt});
 			objRecord.setValue({ fieldId: 'custbody_in_ei_irn_status', value: body_val[0].govt_response.Success});
 			objRecord.setValue({ fieldId: 'custbody_in_ei_qrcode', value: body_val[0].govt_response.SignedQRCode});
 			objRecord.setValue({ fieldId: 'custbody_in_ei_signedinv', value: body_val[0].govt_response.SignedInvoice});
 			objRecord.setValue({ fieldId: 'custbody_psg_ei_status', value: 3});
+			objRecord.setValue({ fieldId: 'custbody_bulk_einvoice_error', value: error_msg });
 				
 				}else{
 					var success_msg = 'Failled';
 					objRecord.setValue({ fieldId: 'custbody_psg_ei_status', value: 21});
+					objRecord.setValue({ fieldId: 'custbody_bulk_einvoice_error', value: error_msg });
 				}
 				
 				objRecord.setValue({ fieldId: 'custbody_psg_ei_certified_edoc', value: file_id});
@@ -730,6 +792,7 @@ return Dispatch_Details;
 	  
 	  var columns=[
 	   search.createColumn({name: "custbody_in_ei_irn_status", label: "irn_status"}),
+	   search.createColumn({name: "custbody_bulk_einvoice_error", label: "einvoice_error"}),
 	   search.createColumn({name: "tranid", label: "tranid"})
      
 	  
@@ -741,13 +804,14 @@ return Dispatch_Details;
 			 for (var b = 0; b < invoice_Details.length; b++) {
 			var irn_status = invoice_Details[b].irn_status;
 			var tranid = invoice_Details[b].tranid;
+			var einvoice_error = invoice_Details[b].einvoice_error;
 			if(irn_status == 'Y'){
 				var success_msg = 'Success';	
 			}else{
 				
 			var success_msg = 'Failled';		
 			}
-				var msg_val = "<tr><td>"+tranid+"</td><td>"+success_msg+"</td></tr>";
+				var msg_val = "<tr><td>"+tranid+"</td><td>"+success_msg+"</td><td>"+einvoice_error+"</td></tr>";
 			 message_array+=msg_val;
 			
 			}

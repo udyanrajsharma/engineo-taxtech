@@ -14,6 +14,7 @@ function(record, search, runtime, error, file, task,common,moment,url,https,emai
 	var scriptObj = runtime.getCurrentScript();
 	
 	var invoice_data = scriptObj.getParameter('custscript_invoice_data_map_email');
+	var email_sender = scriptObj.getParameter('custscript_bulk_email_sender');
 		var invoice_data =	JSON.parse(invoice_data);
 		
 	
@@ -72,7 +73,7 @@ log.debug('summary summary subtotal --', subtotal+ " --tax--"+taxtotal+" -igst--
 			
 			if(entity_email != ""){
 			
-			var senderId = 53024;
+			var senderId = email_sender;
 		var email_body = '<p >Your invoice details are as follows: </p>';
 		var email_body3 = '<br>';
 		var email_body1 = '<table border="1">';
