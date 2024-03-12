@@ -12,6 +12,10 @@ AS
           P_DAY IN NUMBER
           
     );
+    PROCEDURE PREP_JSON_REQ_RETENTION
+    ( 
+        P_TRX_NUM       VARCHAR2
+    );
     PROCEDURE PREP_JSON_REQ
     (
         P_TRX_NUM       VARCHAR2
@@ -27,4 +31,5 @@ AS
         P_TRX_NUMB       VARCHAR2,
         P_JSON_RES       CLOB
     );
+    
 END XX_TEST_EINV_PKG;

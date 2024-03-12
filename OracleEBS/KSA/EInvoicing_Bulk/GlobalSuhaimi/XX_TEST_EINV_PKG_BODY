@@ -9,161 +9,15 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
        
     ) IS
     
---   L_FROM_DATE              VARCHAR2 (30) := P_FROM_DATE;
-   
---   V_DEVICE_ID              VARCHAR2 (250);
---   V_DOCUMENT_TYPE          VARCHAR2 (50);
---   V_INVOICE_TYPE_CODE      VARCHAR2 (100);
---   V_TRX_NUMBER             RA_CUSTOMER_TRX_ALL.TRX_NUMBER%TYPE;
---   V_INVOICE_ISSUE_DATE     VARCHAR2 (15);
---   V_INVOICE_ISSUE_TIME     VARCHAR2 (15);
---   V_INVOICE_CURRENCY       VARCHAR2 (10);
---   V_BILLING_REF_ID         VARCHAR2 (10);
---   V_SUPPLY_DATE            VARCHAR2 (10);
---   V_SELLER_NAME            VARCHAR2 (50);
---   V_SELLER_NAME_AR         VARCHAR2 (50);
---   V_SELLER_VAT             VARCHAR2 (50);
---   V_SELLER_OTH_ID          VARCHAR2 (50);
---   V_SELLER_OTH_ID_TYPE     VARCHAR2 (50);
---   V_SELLER_STREET          VARCHAR2 (50);
---   V_SELLER_STREET_AR       VARCHAR2 (50);
---   V_SELLER_BLDG_NO         VARCHAR2 (50);
---   V_SELLER_ADNL_NO         VARCHAR2(50);
---   V_SELLER_CITY            VARCHAR2 (50);
---   V_SELLER_CITY_AR         VARCHAR2 (50);
---   V_POSTAL_CODE            VARCHAR2 (50);
---   V_SELLER_PROVINCE        VARCHAR2 (50);
---   V_SELLER_PROVINCE_AR     VARCHAR2 (50);
---   V_SELLER_DISTRICT        VARCHAR2 (50);
---   V_SELLER_DISTRICT_AR     VARCHAR2 (50);
---   V_SELLER_COUNTRY_CODE    VARCHAR2 (50);
---   V_BUYER_NAME             VARCHAR2 (100);
---   V_BUYER_NAME_ARAB        VARCHAR2 (100);
---   V_BUYER_VAT              VARCHAR2(50);
---   V_BUYER_STREET           VARCHAR2 (100);
---   V_BUYER_STREET_ARAB      VARCHAR2 (100);
---   V_BUYER_BLDG_NO          VARCHAR2(50);
---   V_BUYER_CITY             VARCHAR2 (100);
---   V_BUYER_CITY_ARAB        VARCHAR2 (100);
---   V_BUYER_POSTAL           VARCHAR2(50);
---   V_BUYER_PROVINCE         VARCHAR2 (100);
---   V_BUYER_PROVINCE_ARAB    VARCHAR2 (100);
---   V_BUYER_DISTRICT         VARCHAR2 (100);
---   V_BUYER_DISTRICT_ARAB    VARCHAR2 (100);
---   V_BUYER_COUNTRY_CODE     VARCHAR2 (50);
---   V_INV_LINE_ID            VARCHAR2 (50);
---   V_LINE_NAME              VARCHAR2 (100);
---   V_DESCRIPTION_ARAB       VARCHAR2 (50);
---   V_INV_UOM                VARCHAR2 (50);
---   V_ITEM_NET_PRICE         NUMBER(15);
---   V_ITEM_QTY               NUMBER(15);
---   V_INV_LINE_NET_AMT       NUMBER(15);
---   V_INV_LINE_VAT_CATEGORY  VARCHAR2 (100);
---   V_INV_LINE_VAT_RATE      NUMBER(15);
---   V_VAT_LINE_AMT           NUMBER(15);
---   V_LINE_AMT_INCL_VAT      NUMBER(15);
---   V_TAX_CURR_CODE          VARCHAR2 (50);
---   V_EXCHANGE_RATE          VARCHAR2 (50);
---   V_INV_TOT_VAT_ACURR      VARCHAR2 (50);
---   V_PAYABLE_MEANS_TYPE_C   VARCHAR2 (50);
---   V_PAY_TERMS              VARCHAR2 (100);
---   V_PAY_TERMS_ARAB         VARCHAR2 (100);
---   V_INV_NOTE               VARCHAR2 (100);
---   V_INVOICE_NOTE_ARAB      VARCHAR2 (100);
---   V_PO_NO                  VARCHAR2(50);
---   V_JOB_NO                 VARCHAR2(50);
---   V_INVOICE_PERIOD         VARCHAR2 (100);
---   V_INVOICE_PERIOD_ARAB    VARCHAR2 (100);
---   V_SERVICE_LOC            VARCHAR2 (100);
---   V_SERVICE_LOC_ARAB       VARCHAR2 (100);
---   V_CONTACT_PERSON         VARCHAR2 (100);
---   V_CONTACT_PERSON_AR      VARCHAR2 (100);
---   V_LINE_AMT_INCL_VAT_WORDS VARCHAR2(200) ;
---   V_LINE_AMT_INCL_VAT_WORDS_AR VARCHAR2(200) ;
-
-
         V_DAYS NUMBER;
 
         CURSOR trx_number_cursor (
---            l_from_date VARCHAR2   ,
---            l_to_date VARCHAR2 
             l_day NUMBER
         ) IS
         SELECT
            DISTINCT rcta.trx_number invoice_number,
-            trx_date invoice_issue_date
---
---   INTO
---      V_DEVICE_ID,
---      V_DOCUMENT_TYPE,
---      V_INVOICE_TYPE_CODE,
---      V_TRX_NUMBER,
---      V_INVOICE_ISSUE_DATE,
---      V_INVOICE_ISSUE_TIME,
---      V_INVOICE_CURRENCY,
---      V_BILLING_REF_ID,
---      V_SUPPLY_DATE,
---      V_SELLER_NAME,
---      V_SELLER_NAME_AR,
---      V_SELLER_VAT,
---      V_SELLER_OTH_ID,
---      V_SELLER_OTH_ID_TYPE,
---      V_SELLER_STREET,
---      V_SELLER_STREET_AR,
---      V_SELLER_BLDG_NO,
---      V_SELLER_ADNL_NO,
---      V_SELLER_CITY,
---      V_SELLER_CITY_AR,
---      V_POSTAL_CODE,
---      V_SELLER_PROVINCE,
---      V_SELLER_PROVINCE_AR,
---      V_SELLER_DISTRICT,
---      V_SELLER_DISTRICT_AR,
---      V_SELLER_COUNTRY_CODE,
---      V_BUYER_NAME,
---      V_BUYER_NAME_ARAB,
---      V_BUYER_VAT,
---      V_BUYER_STREET,
---      V_BUYER_STREET_ARAB,
---      V_BUYER_BLDG_NO,
---      V_BUYER_CITY,
---      V_BUYER_CITY_ARAB,
---      V_BUYER_POSTAL,
---      V_BUYER_PROVINCE,
---      V_BUYER_PROVINCE_ARAB,
---      V_BUYER_DISTRICT,
---      V_BUYER_DISTRICT_ARAB,
---      V_BUYER_COUNTRY_CODE,
---      V_INV_LINE_ID,
---      V_LINE_NAME,
---      V_DESCRIPTION_ARAB,
---      V_INV_UOM,
---      V_ITEM_NET_PRICE,
---      V_ITEM_QTY,
---      V_INV_LINE_NET_AMT,
---      V_INV_LINE_VAT_CATEGORY,
---      V_INV_LINE_VAT_RATE,
---      V_VAT_LINE_AMT,
---      V_LINE_AMT_INCL_VAT,
---      V_TAX_CURR_CODE,
---      V_EXCHANGE_RATE,
---      V_INV_TOT_VAT_ACURR,
---      V_PAYABLE_MEANS_TYPE_C,
---      V_PAY_TERMS,
---      V_PAY_TERMS_ARAB,
---      V_INV_NOTE,
---      V_INVOICE_NOTE_ARAB,
---      V_PO_NO,
---      V_JOB_NO,
---      V_INVOICE_PERIOD,
---      V_INVOICE_PERIOD_ARAB,
---      V_SERVICE_LOC,
---      V_SERVICE_LOC_ARAB,
---      V_CONTACT_PERSON,
---      V_CONTACT_PERSON_AR,
---      V_LINE_AMT_INCL_VAT_WORDS,
---      V_LINE_AMT_INCL_VAT_WORDS_AR
-
+            trx_date invoice_issue_date,
+            rctla.attribute4 Prepayment_Invoice_Id
         FROM
             ra_customer_trx_all          rcta,
             ra_customer_trx_lines_all    rctla,
@@ -185,16 +39,14 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
             gl_sets_of_books             gsb,
             pa_projects_prm_v            ppm,
             xle_entity_profiles          xle,
-            hz_parties                   xle_hp
---      ,HZ_LOCATIONS xle_hl
-            ,
+            hz_parties                   xle_hp,
             xle_registrations            xreg,
             hr_locations_all             hla
         WHERE
                 1 = 1
                 
             AND trx_date BETWEEN TO_DATE(TO_CHAR(SYSDATE - l_day,'DD-MON-YY')) and TO_DATE(TO_CHAR(SYSDATE,'DD-MON-YY'))
---            AND (trx_date)  BETWEEN l_from_date and l_to_date
+
             
             AND ppm.segment1 = gcc.segment7
             AND rcta.complete_flag = 'Y'
@@ -227,15 +79,9 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
             AND xle.party_id = xle_hp.party_id
             AND xreg.location_id = hla.location_id
             AND hou.default_legal_context_id = xreg.source_id
---       AND rcta.trx_number in ('16134')
             ;
     
---    CURSOR trx_num_tab
---             IS
---                SELECT
---                    trx_number, json_req
---                FROM
---                    xxgs_einv_stg_t;
+
 
     
     
@@ -248,11 +94,1214 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
     
         FOR i IN trx_number_cursor(V_DAYS) 
         LOOP
-            prep_json_req(i.invoice_number);
+            
+            IF i.Prepayment_Invoice_Id is NUll THEN
+                prep_json_req(i.invoice_number);
+            ELSE
+                prep_json_req_retention(i.invoice_number);
+            END IF;
+            
         END LOOP;
         o_chr_retcode := '0';  -- 0 - Normal 1 - Warning 2 - Error
 	    o_chr_errbuf := 'No Error';
     END get_applicable_txns;
+
+PROCEDURE prep_json_req_retention(
+    p_trx_num VARCHAR2
+) IS
+
+    v_trx                        VARCHAR2(10) := p_trx_num;
+    v_device_id                  VARCHAR2(250);
+    v_document_type              VARCHAR2(50);
+    v_invoice_type_code          VARCHAR2(100);
+    v_trx_number                 VARCHAR2(10);
+    v_invoice_issue_date         VARCHAR2(15);
+    v_invoice_issue_time         VARCHAR2(15);
+    v_invoice_currency           VARCHAR2(10);
+    v_billing_ref_id             VARCHAR2(10);
+    v_ref_4_issuance_cm          VARCHAR2(50);
+    v_supply_date                VARCHAR2(10);
+    v_supply_end_date            VARCHAR2(10);
+    v_seller_name                VARCHAR2(50);
+    v_seller_name_ar             VARCHAR2(50);
+    v_seller_vat                 VARCHAR2(50);
+    v_seller_oth_id              VARCHAR2(50);
+    v_seller_oth_id_type         VARCHAR2(50);
+    v_seller_street              VARCHAR2(50);
+    v_seller_street_ar           VARCHAR2(50);
+    v_seller_additional_street   VARCHAR2(200);
+    v_seller_additional_street_ar VARCHAR2(200);
+    v_seller_bldg_no             VARCHAR2(50);
+    v_seller_adnl_no             VARCHAR2(50);
+    v_seller_city                VARCHAR2(50);
+    v_seller_city_ar             VARCHAR2(50);
+    v_postal_code                VARCHAR2(50);
+    v_seller_province            VARCHAR2(50);
+    v_seller_province_ar         VARCHAR2(50);
+    v_seller_district            VARCHAR2(50);
+    v_seller_district_ar         VARCHAR2(50);
+    v_seller_country_code        VARCHAR2(50);
+    v_buyer_name                 VARCHAR2(100);
+    v_buyer_name_arab            VARCHAR2(100);
+    v_buyer_vat                  VARCHAR2(50);
+    v_buyer_street               VARCHAR2(100);
+    v_buyer_street_arab          VARCHAR2(100);
+    v_buyer_bldg_no              VARCHAR2(50);
+    v_buyer_city                 VARCHAR2(100);
+    v_buyer_city_arab            VARCHAR2(100);
+    v_buyer_postal               VARCHAR2(50);
+    v_buyer_province             VARCHAR2(100);
+    v_buyer_province_arab        VARCHAR2(100);
+    v_buyer_district             VARCHAR2(100);
+    v_buyer_district_arab        VARCHAR2(100);
+    v_buyer_country_code         VARCHAR2(50);
+    v_inv_line_id                VARCHAR2(50);
+    v_line_name                  VARCHAR2(100);
+    v_description_arab           VARCHAR2(50);
+    v_inv_uom                    VARCHAR2(50);
+    v_item_net_price             VARCHAR2(20);
+    v_item_qty                   VARCHAR2(20);
+    v_inv_line_net_amt           VARCHAR2(20);
+    v_inv_line_vat_category      VARCHAR2(100);
+    v_inv_line_vat_rate          VARCHAR2(20);
+    v_vat_line_amt               VARCHAR2(20);
+    v_line_amt_incl_vat          VARCHAR2(20);
+    v_prepay_doc_no              VARCHAR2(50);
+    v_prepay_doc_iss_date        VARCHAR2(15);
+    v_prepay_doc_iss_time        VARCHAR2(15);
+    v_prepay_doc_type_code       VARCHAR2(15);
+    v_prepay_taxable_amt         VARCHAR2(20);
+    v_prepay_tax_cat             VARCHAR2(20);
+    v_prepay_tax_pct             VARCHAR2(20);
+    v_prepay_tax_amt             VARCHAR2(20);
+    v_tax_curr_code              VARCHAR2(50);
+    v_exchange_rate              VARCHAR2(50);
+    v_inv_tot_vat_acurr          VARCHAR2(50);
+    v_payable_means_type_c       VARCHAR2(50);
+    v_prepaid_amount             VARCHAR2(20);
+    v_pay_terms                  VARCHAR2(100);
+    v_pay_terms_arab             VARCHAR2(100);
+    v_inv_note                   VARCHAR2(100);
+    v_invoice_note_arab          VARCHAR2(100);
+    v_po_no                      VARCHAR2(50);
+    v_job_no                     VARCHAR2(50);
+    v_less_advance_payment       VARCHAR2(20);
+    v_taxable_amount             VARCHAR2(20);
+    v_vat_15_percentage          VARCHAR2(20);
+    v_total_amount_including_vat VARCHAR2(20);
+    v_retention                  VARCHAR2(20);
+    v_due_after_retention        VARCHAR2(20);
+    v_invoice_period             VARCHAR2(100);
+    v_invoice_period_arab        VARCHAR2(100);
+    v_service_loc                VARCHAR2(100);
+    v_service_loc_arab           VARCHAR2(100);
+    v_contact_person             VARCHAR2(100);
+    v_contact_person_ar          VARCHAR2(100);
+    v_line_amt_incl_vat_words    VARCHAR2(200);
+    v_line_amt_incl_vat_words_ar VARCHAR2(200);
+    json_data                    CLOB;
+BEGIN
+    INSERT INTO xx_log (
+        request_id,
+        log_text
+    ) VALUES (
+        2,
+        'Under Procedure prep_json_req_retention, Trx_Number is ' || v_trx
+    );
+
+    BEGIN
+        SELECT
+            '1bd10d8a-18fc-4f4b-ba1a-73b783f000e2'                                                                                                    device_id
+            ,
+            'Standard'                                                                                                                                document_type
+            ,
+            decode(rctta.type, 'INV', 'Tax Invoice', 'CM', 'Credit Note')                                                                             invoice_type_code
+            ,
+            rcta.trx_number                                                                                                                           invoice_number
+            ,
+            to_char(trx_date, 'YYYY-MM-DD')                                                                                                           invoice_issue_date
+            ,
+            to_char(trx_date, 'HH:MM:SS')                                                                                                             invoice_issue_time
+            ,
+            rcta.invoice_currency_code                                                                                                                invoice_currency
+            ,
+            rcta.customer_reference                                                                                                                   billing_ref_id
+            ,				
+            rcta.reason_code                                                                                                                          ref_4_issuance_cm
+            ,
+            to_char(trx_date, 'YYYY-MM-DD')                                                                                                           supply_date
+            ,
+            NULL                                                                                                                                      supply_end_date
+            ,
+            xreg.registered_name                                                                                                                      seller_name
+            ,
+            xreg.alternate_registered_name                                                                                                            seller_name_ar
+            ,
+            xreg.registration_number                                                                                                                  seller_vat
+            ,
+            substr(xreg.registration_number, 1, 10)                                                                                                   seller_oth_id
+            ,
+            'CRN'                                                                                                                                     seller_oth_id_type
+            ,
+            hla.address_line_2                                                                                                                        seller_street
+            ,
+            hla.loc_information14                                                                                                                     seller_street_ar
+            ,
+            NULL                                                                                                                                      seller_additional_street
+            ,
+            NULL                                                                                                                                      seller_additional_street_ar
+            ,
+            hla.address_line_1                                                                                                                        seller_bldg_no
+            ,
+            hla.region_3                                                                                                                              seller_adnl_no
+            ,
+            (
+                SELECT
+                    meaning
+                FROM
+                    fnd_lookup_values flv
+                WHERE
+                        flv.lookup_code = hla.town_or_city
+                    AND lookup_type = 'SA_CITY'
+                    AND language = 'US'
+            )                                                                                                                                         seller_city
+            ,
+            (
+                SELECT
+                    description
+                FROM
+                    fnd_lookup_values flv
+                WHERE
+                        flv.lookup_code = hla.town_or_city
+                    AND lookup_type = 'SA_CITY'
+                    AND language = 'US'
+            )                                                                                                                                         seller_city_ar
+            ,
+            hla.postal_code,
+            hla.region_1                                                                                                                              seller_province
+            ,
+            hla.region_2                                                                                                                              seller_province_ar
+            ,
+            hla.address_line_3                                                                                                                        seller_district
+            ,
+            hla.loc_information15                                                                                                                     seller_district_ar
+            ,
+            decode(hla.country, 'Saudi Arabia', 'SA', hla.country)                                                                                    seller_country_code
+            ,
+            hca.account_name                                                                                                                          buyer_name
+            ,
+            hp.organization_name_phonetic                                                                                                             buyer_name_arab
+            ,
+            zptp.rep_registration_number                                                                                                              buyer_vat
+            ,
+--            NULL                                                                                                                                      buyer_oth_id
+--            ,
+--            NULL                                                                                                                                      buyer_oth_id_type
+--            ,
+            hl.address2                                                                                                                               buyer_street
+            ,
+            hl.address3                                                                                                                               buyer_street_arab
+            ,
+--            NULL                                                                                                                                      buyer_add_street
+--            ,
+--            NULL                                                                                                                                      buyer_add_street_arab
+--            ,
+            hl.address1                                                                                                                               buyer_bldg_no
+            ,
+--            NULL                                                                                                                                      buyer_adnl_no
+--            ,
+            TRIM(substr(hl.city,
+                        0,
+                        instr(hl.city, '||', 1) - 1))                                                                                                             buyer_city
+                        ,
+            TRIM(substr(hl.city,
+                        instr(hl.city, '||', 1) + 2,
+                        (length(hl.city) - instr(hl.city, '||', 1) + 2)))                                                                                         buyer_city_arab
+                        ,
+            hl.postal_code                                                                                                                            buyer_postal
+            ,
+            hl.state                                                                                                                                  buyer_province
+            ,
+            hl.province                                                                                                                               buyer_province_arab
+            ,
+            TRIM(substr(hl.county,
+                        0,
+                        instr(hl.county, '||', 1) - 1))                                                                                                           buyer_district
+                        ,
+            TRIM(substr(hl.county,
+                        instr(hl.county, '||', 1) + 2,
+                        (length(hl.county) - instr(hl.county, '||', 1) + 2)))                                                                                     buyer_district_arab
+                        ,
+            'SA'                                                                                                                                      buyer_country_code
+            ,
+            rctla.line_number                                                                                                                         inv_line_id
+            ,
+
+            rctla.description                                                                                                                         line_name
+            ,
+            rctla.translated_description                                                                                                              description_arab
+            ,
+            'LS'                                                                                                                                      inv_uom
+            ,
+--            NULL                                                                                                                                      item_gross_price
+--            ,
+--            NULL                                                                                                                                      item_price_disc
+--            ,
+            rctla.unit_selling_price                                                                                                                  item_net_price
+            ,									
+            decode(rctla.quantity_invoiced,
+                   NULL,
+                   abs(rctla.quantity_credited),
+                   rctla.quantity_invoiced)                                                                                                           item_qty
+                   , 	
+--            NULL                                                                                                                                      inv_allw_base_amt
+--            ,
+--            NULL                                                                                                                                      inv_allw_base_pct
+--            ,
+--            NULL                                                                                                                                      inv_allw_dist_amt
+--            ,
+--            NULL                                                                                                                                      inv_allw_reason
+--            ,
+--            NULL                                                                                                                                      inv_allw_reason_code
+--            ,
+            abs(rctla.revenue_amount)                                                                                                                 inv_line_net_amt
+            ,
+            decode(rctlatax.tax_rate, 15, 'S', 0, 'E')                                                                                                inv_line_vat_category
+            ,
+            rctlatax.tax_rate                                                                                                                         inv_line_vat_rate
+            ,
+--            NULL                                                                                                                                      vat_exempt_rsn
+--            ,
+--            NULL                                                                                                                                      vat_exempt_rsn_code
+--            ,
+--            NULL                                                                                                                                      vat_exempt_rsn_arab
+--            ,
+            abs(rctlatax.extended_amount)                                                                                                             vat_line_amt
+            ,									
+            abs(rctla.revenue_amount) + abs(rctlatax.extended_amount)                                                                                 line_amt_incl_vat
+            ,				
+--            NULL                                                                                                                                      item_prc_base_qty
+--            ,
+--            NULL                                                                                                                                      item_prc_base_qty_code
+--            ,
+            rctla.attribute4                                                                                                                          prepay_doc_no
+            ,
+--            NULL                                                                                                                                      prepay_doc_uuid
+--            ,
+            (
+                SELECT
+                    to_char(trx_date, 'YYYY-MM-DD')
+                FROM
+                    ra_customer_trx_all
+                WHERE
+                    trx_number = rctla.attribute4
+            )                                                                                                                                         prepay_doc_iss_date
+            ,
+            (
+                SELECT
+                    to_char(trx_date, 'HH:MM:SS')
+                FROM
+                    ra_customer_trx_all
+                WHERE
+                    trx_number = rctla.attribute4
+            )                                                                                                                                         prepay_doc_iss_time
+            ,
+            386                                                                                                                                       prepay_doc_type_code
+            ,                                               
+            nvl(rctla.attribute2, 0)                                                                                                                  prepay_taxable_amt
+            ,                            
+            decode(rctlatax.tax_rate, 15, 'S', 0, 'E')                                                                                                prepay_tax_cat
+            ,                  
+            rctlatax.tax_rate                                                                                                                         prepay_tax_pct
+            ,                                       
+            nvl(rctla.attribute3, 0)                                                                                                                  prepay_tax_amt
+            ,                                 
+--            NULL                                                                                                                                      doc_allw_base_amt
+--            ,
+--            NULL                                                                                                                                      doc_allw_base_pct
+--            ,
+--            NULL                                                                                                                                      doc_allw_amt
+--            ,
+--            NULL                                                                                                                                      doc_allw_vat_cat
+--            ,
+--            NULL                                                                                                                                      doc_allw_vat_rate
+--            ,
+            rcta.invoice_currency_code                                                                                                                tax_curr_code
+            ,
+            rcta.exchange_rate                                                                                                                        exchange_rate
+            ,
+            NULL                                                                                                                                      inv_tot_vat_acurr
+            ,
+            nvl(rctla.attribute2, 0) + nvl(rctla.attribute3, 0)                                                                                       prepaid_amount
+            ,                                    
+--            NULL                                                                                                                                      payable_rnd_amt
+--            ,
+            10                                                                                                                                        payable_means_type_c
+            ,
+            nvl(rtt.description, rtt.name)                                                                                                            pay_terms
+            ,
+            (
+                SELECT
+                    rt.attribute1
+                FROM
+                    ra_terms rt
+                WHERE
+                    rt.term_id = rtt.term_id
+            )                                                                                                                                         pay_terms_arab
+            ,
+            TRIM(substr(rcta.attribute3,
+                        0,
+                        instr(rcta.attribute3, '||', 1) - 1))                                                                                                     inv_note
+                        ,
+            TRIM(substr(rcta.attribute3,
+                        instr(rcta.attribute3, '||', 1) + 2,
+                        (length(rcta.attribute3) - instr(rcta.attribute3, '||', 1) + 2)))                                                                         invoice_note_arab
+                        ,
+            rcta.attribute2                                                                                                                           po_no
+            ,
+            gcc.segment7                                                                                                                              job_no
+            ,
+--            NULL                                                                                                                                      item_buyer_id
+--            ,
+--            NULL                                                                                                                                      item_seller_id
+--            ,
+--            NULL                                                                                                                                      item_standard_id
+--            ,
+            to_char(nvl(rctla.attribute2, 0),
+                    '999,999,999.99')                                                                                                                 less_advance_payment
+                    ,                                 
+            to_char((abs(rctla.revenue_amount) - nvl(rctla.attribute2, 0)),
+                    '999,999,999.99')                                                                                                                 taxable_amount
+                    ,    
+            to_char(((abs(rctla.revenue_amount) - nvl(rctla.attribute2, 0)) * rctlatax.tax_rate / 100),
+                    '999,999,999.99')                                                                                                                 vat_15_percentage
+                    ,  
+            to_char(((abs(rctla.revenue_amount) - nvl(rctla.attribute2, 0)) *(1 + rctlatax.tax_rate / 100)),
+                    '999,999,999.99')                                                                                                                 total_amount_including_vat
+                    , 
+            to_char(nvl(rcta.interface_header_attribute1, 0),
+                    '999,999,999.99')                                                                                                                 retention
+                    ,                             
+            to_char((((abs(rctla.revenue_amount) - nvl(rctla.attribute2, 0)) *(1 + rctlatax.tax_rate / 100)) - nvl(rcta.interface_header_attribute1
+            , 0)),
+                    '999,999,999.99')                                                                                                                 due_after_retention
+                    , 
+   
+            CASE
+                WHEN instr(rcta.attribute5, '||', 1) = 0 THEN
+                    rcta.attribute5
+                ELSE
+                    TRIM(substr(rcta.attribute5,
+                                0,
+                                instr(rcta.attribute5, '||', 1) - 1))
+            END                                                                                                                                       invoice_period
+            ,
+            CASE
+                WHEN instr(rcta.attribute5, '||', 1) = 0 THEN
+                    rcta.attribute5
+                ELSE
+                    TRIM(substr(rcta.attribute5,
+                                instr(rcta.attribute5, '||', 1) + 2,
+                                (length(rcta.attribute5) - instr(rcta.attribute5, '||', 1) + 2)))
+            END                                                                                                                                       invoice_period_arab
+            ,
+
+            TRIM(substr(nvl2(rcta.attribute4, rcta.attribute4, ppm.attribute1),
+                        0,
+                        instr(nvl2(rcta.attribute4, rcta.attribute4, ppm.attribute1),
+                              '||',
+                              1) - 1))                                                                                                                                 service_loc
+                              ,
+            TRIM(substr(nvl2(rcta.attribute4, rcta.attribute4, ppm.attribute1),
+                        instr(nvl2(rcta.attribute4, rcta.attribute4, ppm.attribute1),
+                              '||',
+                              1) + 2,
+                        (length(nvl2(rcta.attribute4, rcta.attribute4, ppm.attribute1)) - instr(nvl2(rcta.attribute4, rcta.attribute4
+                        , ppm.attribute1),
+                                                                                                '||',
+                                                                                                1) + 2)))                                                                                                                                 service_loc_arab
+                                                                                                ,
+            (
+                SELECT
+                    cont_full_name
+                FROM
+                    hz_contact_find_v
+                WHERE
+                        customer_id = rcta.ship_to_customer_id
+                    AND status = 'A'
+            )                                                                                                                                         contact_person
+            ,
+            (
+                SELECT
+                    cont_full_name
+                FROM
+                    hz_contact_find_v
+                WHERE
+                        customer_id = rcta.ship_to_customer_id
+                    AND status = 'A'
+            )                                                                                                                                         contact_person_ar
+            ,
+            xx_number_2_words(((abs(rctla.revenue_amount) - nvl(rctla.attribute2, 0)) *(1 + rctlatax.tax_rate / 100)) - nvl(rcta.interface_header_attribute1
+            , 0)) line_amt_incl_vat_words,  
+            decode(rcta.ct_reference,
+                   NULL,
+                   xx_number2words_ar(((abs(rctla.revenue_amount) - nvl(rctla.attribute2, 0)) *(1 + rctlatax.tax_rate / 100)) - nvl(rcta.interface_header_attribute1
+                   , 0)),
+                   rcta.ct_reference)                                                                                                                 line_amt_incl_vat_words_ar 		
+        INTO
+            v_device_id,
+            v_document_type,
+            v_invoice_type_code,
+            v_trx_number,
+            v_invoice_issue_date,
+            v_invoice_issue_time,
+            v_invoice_currency,
+            v_billing_ref_id,
+            v_ref_4_issuance_cm,
+            v_supply_date,
+            v_supply_end_date,
+            v_seller_name,
+            v_seller_name_ar,
+            v_seller_vat,
+            v_seller_oth_id,
+            v_seller_oth_id_type,
+            v_seller_street,
+            v_seller_street_ar,
+            v_seller_additional_street,
+            v_seller_additional_street_ar,
+            v_seller_bldg_no,
+            v_seller_adnl_no,
+            v_seller_city,
+            v_seller_city_ar,
+            v_postal_code,
+            v_seller_province,
+            v_seller_province_ar,
+            v_seller_district,
+            v_seller_district_ar,
+            v_seller_country_code,
+            v_buyer_name,
+            v_buyer_name_arab,
+            v_buyer_vat,
+            v_buyer_street,
+            v_buyer_street_arab,
+            v_buyer_bldg_no,
+            v_buyer_city,
+            v_buyer_city_arab,
+            v_buyer_postal,
+            v_buyer_province,
+            v_buyer_province_arab,
+            v_buyer_district,
+            v_buyer_district_arab,
+            v_buyer_country_code,
+            v_inv_line_id,
+            v_line_name,
+            v_description_arab,
+            v_inv_uom,
+            v_item_net_price,
+            v_item_qty,
+            v_inv_line_net_amt,
+            v_inv_line_vat_category,
+            v_inv_line_vat_rate,
+            v_vat_line_amt,
+            v_line_amt_incl_vat,
+            v_prepay_doc_no,
+            v_prepay_doc_iss_date,
+            v_prepay_doc_iss_time,
+            v_prepay_doc_type_code,
+            v_prepay_taxable_amt,
+            v_prepay_tax_cat,
+            v_prepay_tax_pct,
+            v_prepay_tax_amt,
+            v_tax_curr_code,
+            v_exchange_rate,
+            v_inv_tot_vat_acurr,
+            v_prepaid_amount,
+            v_payable_means_type_c,
+            v_pay_terms,
+            v_pay_terms_arab,
+            v_inv_note,
+            v_invoice_note_arab,
+            v_po_no,
+            v_job_no,
+            v_less_advance_payment,
+            v_taxable_amount,
+            v_vat_15_percentage,
+            v_total_amount_including_vat,
+            v_retention,
+            v_due_after_retention,
+            v_invoice_period,
+            v_invoice_period_arab,
+            v_service_loc,
+            v_service_loc_arab,
+            v_contact_person,
+            v_contact_person_ar,
+            v_line_amt_incl_vat_words,
+            v_line_amt_incl_vat_words_ar
+        FROM
+            ra_customer_trx_all          rcta,
+            ra_customer_trx_lines_all    rctla,
+            ra_customer_trx_lines_all    rctlatax,
+            ra_cust_trx_line_gl_dist_all rctlgda,
+            gl_code_combinations         gcc,
+            ra_terms_tl                  rtt,
+            zx_rates_vl                  zrv,
+            ra_cust_trx_types_all        rctta,
+            hz_cust_site_uses_all        hcsua,
+            hz_cust_acct_sites_all       hcasa,
+            hz_party_sites               hps,
+            hz_cust_accounts             hca,
+            hz_parties                   hp,
+            zx_party_tax_profile         zptp,
+            hz_locations                 hl,
+            fnd_territories_tl           ftt,
+            hr_operating_units           hou,
+            gl_sets_of_books             gsb,
+            pa_projects_prm_v            ppm,
+            xle_entity_profiles          xle,
+            hz_parties                   xle_hp,
+            xle_registrations            xreg,
+            hr_locations_all             hla
+        WHERE
+                1 = 1
+            AND ppm.segment1 = gcc.segment7
+            AND rcta.complete_flag = 'Y'
+            AND rcta.customer_trx_id = rctla.customer_trx_id
+            AND rctla.customer_trx_line_id = rctlatax.link_to_cust_trx_line_id (+)
+            AND rctlatax.vat_tax_id = zrv.tax_rate_id (+)
+            AND rctla.line_type = 'LINE'
+            AND rctlgda.customer_trx_id = rctla.customer_trx_id
+            AND rctlgda.customer_trx_line_id = rctla.customer_trx_line_id
+            AND rctlgda.account_class = 'REV'
+            AND gcc.code_combination_id = rctlgda.code_combination_id
+            AND rcta.cust_trx_type_id = rctta.cust_trx_type_id
+            AND rcta.term_id = rtt.term_id (+)
+            AND rtt.language (+) = userenv('LANG')
+            AND rcta.bill_to_site_use_id = hcsua.site_use_id
+            AND hcasa.cust_acct_site_id = hcsua.cust_acct_site_id
+            AND hcasa.party_site_id = hps.party_site_id
+            AND hcasa.cust_account_id = hca.cust_account_id
+            AND hps.party_id = hp.party_id
+            AND hp.party_id = hca.party_id
+            AND zptp.party_id = hp.party_id
+            AND zptp.party_type_code = 'THIRD_PARTY'
+            AND hps.location_id = hl.location_id
+            AND hl.country = ftt.territory_code
+            AND ftt.language = userenv('LANG')
+            AND hou.organization_id = rcta.org_id
+            AND hou.set_of_books_id = gsb.set_of_books_id
+            AND rcta.cust_trx_type_id NOT IN ( 1005, 1006 )
+            AND hou.default_legal_context_id = xle.legal_entity_id
+            AND xle.party_id = xle_hp.party_id
+            AND xreg.location_id = hla.location_id
+            AND hou.default_legal_context_id = xreg.source_id
+            AND rcta.trx_number =  v_trx;
+            
+         EXCEPTION WHEN OTHERS THEN 
+            INSERT INTO XX_LOG(Request_ID, Log_Text)Values(3,'Exception found for Trx_Number '||v_trx);
+
+        END;
+
+ json_data := '{
+   "DeviceId": "'
+                     ||v_device_id
+                     || '",
+   "EInvoice": {
+      "ProfileID": "reporting:1.0",
+      "ID": {
+         "en": "'
+                     || NVL(TO_CHAR(v_trx_number),0)
+                     || '",
+         "ar": "'
+                     || NVL(TO_CHAR(v_trx_number),0)
+                     || '"
+      },
+      "InvoiceTypeCode": {
+         "name": "'
+                     || v_invoice_type_code
+                     || '",
+         "value": "'
+                     || v_prepay_doc_type_code
+                     ||'"
+      },
+      "IssueDate": "'
+                     || v_invoice_issue_date
+                     || '",
+      "IssueTime": "'
+                     || v_invoice_issue_time
+                     || '",
+      "Delivery": [
+         {
+            "ActualDeliveryDate": "'
+                     || v_supply_date
+                     || '",
+            "LatestDeliveryDate": "'
+                     || v_supply_date
+                     || '"
+         }
+      ],
+      "BillingReference": [
+         {
+            "InvoiceDocumentReference": {
+               "ID": {
+                  "ar":  "'
+                     || v_billing_ref_id
+                     || '",
+                  "en": "'
+                     || v_billing_ref_id
+                     || '"
+               }
+            }
+         }
+      ],
+      "OrderReference": {											 
+         "ID": {
+            "ar": null,
+            "en": "'
+                     || v_po_no
+                     || '"
+         }
+      },
+      "ContractDocumentReference": [	  
+         {
+            "ID": {
+               "ar": null,
+               "en": "'
+                     || v_job_no
+                     || '"
+            }							  
+         }			 
+      ],
+      "DocumentCurrencyCode": "'
+                     || v_invoice_currency
+                     || '",
+      "TaxCurrencyCode": "'
+                     || v_tax_curr_code
+                     || '",
+      "AccountingSupplierParty": {
+         "Party": {					  
+            "PartyLegalEntity": {
+               "RegistrationName": {
+                  "en": "'
+                     || v_seller_name
+                     || '",
+                  "ar": "'
+                     || v_seller_name_ar
+                     || '"								  
+               }				 
+            },
+            "PartyTaxScheme": {
+               "CompanyID": "'
+                     || v_seller_vat
+                     || '",									   
+               "TaxScheme": {
+                  "ID": "VAT"						 
+               }		 
+            },
+            "PartyIdentification": {
+               "ID": {
+                  "schemeID": "'
+                     || v_seller_oth_id_type
+                     || '",
+                  "value": "'
+                     || v_seller_oth_id
+                     || '"							 
+               }		 
+            },
+            "PostalAddress": {
+               "StreetName": {
+                  "en": "'
+                     || v_seller_street
+                     || '",
+                  "ar": "'
+                     || v_seller_street_ar
+                     || '"												  
+               },
+               "AdditionalStreetName": {
+                  "en": "' || v_seller_additional_street ||'",
+                  "ar": "' || v_seller_additional_street_ar ||'"
+               },
+               "BuildingNumber": {
+                  "en": "'
+                     || v_seller_bldg_no
+                     || '",
+                  "ar": "'
+                     || v_seller_bldg_no
+                     || '"	 
+               },
+               "PlotIdentification": {
+                  "en": "'
+                     || v_seller_adnl_no
+                     || '",
+                  "ar": "'
+                     || v_seller_adnl_no
+                     || '"							
+               },
+               "CityName": {
+                  "en": "'
+                     || v_seller_city
+                     || '",
+                  "ar": "'
+                     || v_seller_city_ar
+                     || '"
+               },
+               "CitySubdivisionName": {
+                  "en": "'
+                     || v_seller_district
+                     || '",
+                  "ar": "'
+                     || v_seller_district_ar
+                     || '"								   
+               },
+               "PostalZone": "'
+                     || v_postal_code
+                     || '",
+               "CountrySubentity": {
+                  "en": "'
+                     || v_seller_province
+                     || '",
+                  "ar": "'
+                     || v_seller_province_ar
+                     || '"
+               },
+               "Country": {
+                  "IdentificationCode": "'
+                     || v_seller_country_code
+                     || '"	 
+               }
+            }
+         }
+      },
+      "AccountingCustomerParty": {
+         "Party": {
+            "PartyLegalEntity": {
+               "RegistrationName": {
+                  "en": "'
+                     || v_buyer_name
+                     || '",
+                  "ar": "'
+                     || v_buyer_name_arab
+                     || '"					   
+               }
+            },
+            "PartyTaxScheme": {
+               "CompanyID": "'
+                     || v_buyer_vat
+                     || '",
+               "TaxScheme": {			
+                  "ID": "VAT"
+               }
+            },
+			
+            "PostalAddress": {
+               "StreetName": {
+                  "en": "'
+                     || v_buyer_street
+                     || '",
+                  "ar": "'
+                     || v_buyer_street_arab
+                     || '"
+               },
+               "AdditionalStreetName": null,
+               "BuildingNumber": {
+                  "en": "'
+                     || v_buyer_bldg_no
+                     || '",
+                  "ar": "'
+                     || v_buyer_bldg_no
+                     || '"									 
+               },
+               "PlotIdentification": {
+                  "en": null,
+                  "ar": null
+               },
+               "CityName": {
+                  "en": "'
+                     || v_buyer_city
+                     || '",
+                  "ar": "'
+                     || v_buyer_city_arab
+                     || '"			 
+               },
+               "CitySubdivisionName": {
+                  "en": "'
+                     || v_buyer_district
+                     || '",
+                  "ar": "'
+                     || v_buyer_district_arab
+                     || '"						 
+               },
+               "PostalZone": "'
+                     || v_buyer_postal
+                     || '",
+               "CountrySubentity": {
+                  "en":"'
+                     || v_buyer_province
+                     || '",
+                  "ar": "'
+                     || v_buyer_province_arab
+                     || '"						   
+               },
+               "Country": {
+                  "IdentificationCode": "'
+                     || v_buyer_country_code
+                     || '"									  
+               }	 
+            }
+         }
+      },
+      "InvoiceLine": [';
+
+       
+        json_data := json_data
+                         || '{
+               "ID": "'
+                         || NVL(TO_CHAR(v_inv_line_id),0)
+                         || '",
+               "Item": {
+                  "Name": {
+                     "en": "'
+                         || v_line_name
+                         || '",
+                     "ar": "'
+                         || v_description_arab
+                         || '"
+                  },
+                  "ClassifiedTaxCategory": {
+                     "ID": "'
+                         || v_inv_line_vat_category
+                         || '",
+                     "Percent": "'
+                         || v_inv_line_vat_rate
+                         || '",
+                     "TaxScheme": {
+                        "ID": "VAT"
+                     }
+                  }
+               },
+               "Price": {
+                  "AllowanceCharge": {
+                     "ChargeIndicator": null,
+                     "BaseAmount": {
+                        "currencyID": "'
+                         || v_invoice_currency
+                         || '",
+                        "value": "'
+                         || v_item_net_price
+                         || '"
+                     },
+                     "Amount": {
+                        "currencyID":null,
+                        "value": null
+                     }
+                  },
+                
+                    "PriceAmount": {
+                     "currencyID": "'
+                         || v_invoice_currency
+                         || '",
+                     "value": "'
+                         || NVL(TO_CHAR(v_item_net_price),0)
+                         || '"
+                                    
+                                    
+                },
+               "InvoicedQuantity": {
+                  "unitCode": "'
+                         || v_inv_uom
+                         || '",
+                  "value": "'
+                         || v_item_qty
+                         || '"
+               },
+               "LineExtensionAmount": {
+                  "currencyID": "'
+                         || v_invoice_currency
+                         || '",
+                  "value": "'
+                         || v_inv_line_net_amt
+                         || '"
+               },
+               "TaxTotal": {
+                  "TaxAmount": {
+                     "currencyID": "'
+                         || v_invoice_currency
+                         || '",
+                     "value": "'
+                         || v_vat_line_amt
+                         || '"
+                  },
+                  "RoundingAmount": {
+                     "currencyID": "'
+                         || v_invoice_currency
+                         || '",
+                     "value": "'
+                         || v_line_amt_incl_vat
+                         || '"
+                  }
+               }
+            }';
+
+           
+
+
+                json_data := json_data || ',';
+            json_data := json_data || '
+                {  "ID": "'|| v_inv_line_id 
+                           ||'",
+                "Item": {
+                    "Name": {
+                        "en": "Prepayment adjustment",
+                        "ar": "????? ????? ??????"
+                    },
+                    "ClassifiedTaxCategory": {
+                        "ID": "'|| 
+                                    v_inv_line_vat_category
+                                    ||'",
+                        "Percent": "'|| 
+                                        v_vat_15_percentage
+                                        ||'",
+                        "TaxScheme": {
+                            "ID": "VAT"
+                        }
+                    }
+                },
+                "Price": {
+                    "PriceAmount": {
+                        "currencyID": "'
+                         || v_invoice_currency
+                         || '",
+                        "value": "0"
+                    }
+                },
+                "DocumentReference": {
+                    "ID": "'|| v_prepay_doc_no ||'",
+                    "IssueDate": "'|| v_prepay_doc_iss_date ||'",
+                    "IssueTime": "'|| v_prepay_doc_iss_time ||'",
+                    "InvoiceTypeCode": "'||  v_prepay_doc_type_code||'"
+                },
+                "InvoicedQuantity": {
+                    "unitCode": "EA",
+                    "value": "0.00"
+                },                                                                                          
+                "LineExtensionAmount": {
+                    "currencyID": "'||v_invoice_currency||'",
+                    "value": "0.00"
+                },
+                "TaxTotal": {
+                    "TaxAmount": {
+                        "value": "0.00",
+                        "currencyID": "'||v_invoice_currency||'"
+                    },
+                    "RoundingAmount": {
+                        "currencyID": "'||v_invoice_currency||'",
+                        "value": "0.00"
+                    },
+                    "TaxSubtotal": [
+                        {
+                            "TaxableAmount": {
+                                "value": "'|| v_prepay_taxable_amt ||'",
+                                "currencyID": "'|| v_invoice_currency ||'"
+                            },
+                            "TaxAmount": {
+                                "value": "'|| v_prepay_tax_amt ||'",
+                                "currencyID": "'||v_invoice_currency||'"
+                            },
+                            "TaxCategory": {
+                                "ID": "'|| v_prepay_tax_cat ||'",
+                                "Percent": "'|| v_prepay_tax_pct ||'",
+                                "TaxScheme": {
+                                    "ID": "'||v_invoice_currency||'"
+                                },
+                                "TaxExemptionReasonCode": "",
+                                "TaxExemptionReason": {
+                                    "ar": "",
+                                    "en": ""
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        ]';
+
+        
+        json_data := json_data || '"TaxTotal": [
+            {
+                "TaxAmount": {
+                     "currencyID": "'
+                     || v_tax_curr_code
+                     || '",
+                     "value": "'
+                     || v_vat_line_amt
+                     || '"
+                  }
+            ,
+                "TaxSubtotal": [
+                   {
+                      "TaxableAmount": {
+                         "currencyID": "'
+                     || v_tax_curr_code
+                     || '",
+                         "value": "'
+                     || v_taxable_amount
+                     || '"
+                      },
+                      "TaxAmount": {
+                         "currencyID": "'
+                     || v_tax_curr_code
+                     || '",
+                         "value": "'
+                     || v_vat_line_amt
+                     || '"
+                      },
+                      "TaxCategory": {
+                         "ID": "'||v_prepay_tax_cat||'",
+                         "Percent": "'
+                     || v_prepay_tax_pct
+                     || '",
+                         "TaxScheme": {
+                            "ID": "VAT"
+                         }
+                      }
+                   }
+                   
+                ]
+            }    
+        ],
+        "LegalMonetaryTotal": {
+            "LineExtensionAmount": {						
+                "currencyID": "'
+                     || v_invoice_currency
+                     || '",								  
+                "value": "'
+                     || v_taxable_amount
+                     || '"											
+            },
+            "TaxExclusiveAmount": {
+                "currencyID": "'
+                     || v_invoice_currency
+                     || '",
+                "value": "'
+                     || v_taxable_amount
+                     || '"
+            },
+            "TaxInclusiveAmount": {
+                "currencyID": "'
+                     || v_invoice_currency
+                     || '",
+                "value": "'
+                     || v_total_amount_including_vat
+                     || '"
+            },
+            "PrepaidAmount": {
+                "currencyID": "'
+                     || v_invoice_currency
+                     || '",
+                "value": "' ||v_prepaid_amount||' "
+            },
+            "PaybleRoundingAmount": {
+                "currencyID": "'
+                     || v_invoice_currency
+                     || '",
+                "value": "0"
+            },
+            "PayableAmount": {
+                "currencyID": "'
+                     || v_invoice_currency
+                     || '",
+                "value": "'
+                     || (v_line_amt_incl_vat - ( v_prepay_taxable_amt + v_prepay_tax_amt ) )
+                     || '"
+            }
+        },
+  "PaymentMeans": [
+   {
+      "PaymentMeansCode":  "'
+                     || v_payable_means_type_c
+                     || '",
+      "InstructionNote": {
+         "en": "'
+                     || v_pay_terms
+                     || '",
+         "ar": "'
+                     || v_pay_terms_arab
+                     || '"
+      },
+      "PayeeFinancialAccount": {
+         "PaymentNote": {
+            "en": "'
+                     || v_inv_note
+                     || '",
+            "ar": "'
+                     || v_invoice_note_arab
+                     || '"
+         }
+      }
+   }
+],
+
+"InvoicePeriod": "'
+                     || v_invoice_period
+                     || '",
+"InvoicePeriodArabic": "'
+                     || v_invoice_period_arab
+                     || '",
+"ServiceLocation": "'
+                     || v_service_loc
+                     || '",
+"ServiceLocationArabic": "'
+                     || v_service_loc_arab
+                     || '",
+"ContactPerson": "'
+                     || v_contact_person
+                     || '",
+"ContactPersonArabic": "'
+                     || v_contact_person_ar
+                     || '",
+"Less Advance Payment": "'||v_less_advance_payment
+                     ||'",
+"Taxable Amount":"'||v_taxable_amount||'",
+"VAT(15%)": "'||v_vat_15_percentage||'",
+"Total amount (Inc. VAT)":  "'||v_total_amount_including_vat||'",
+"Less Retension":"'||v_retention||'",
+"Net amount Due":"'||v_due_after_retention||'",
+"AmountInclVATWords": "'
+                     ||v_line_amt_incl_vat_words
+                     || '",
+"AmountInclVATWordsArabic": "'
+                     || v_line_amt_incl_vat_words_ar
+                     || '"
+}
+}';
+
+ INSERT INTO xxgs_einv_stg_t (
+            v_device_id,
+            document_type,
+            trx_number,
+            invoice_issue_date,
+            seller_name,
+            buyer_name,
+            json_req
+        ) VALUES (
+            v_device_id,
+            v_document_type,
+            v_trx_number,
+            v_invoice_issue_date,
+            v_seller_name,
+            v_buyer_name,
+            json_data
+        );
+           
+        COMMIT;
+    
+        call_cleartax_api(v_trx_number, json_data);
+END prep_json_req_retention;
+
+
+
+
+
+
 
     PROCEDURE prep_json_req (
         p_trx_num VARCHAR2
@@ -262,11 +1311,12 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
         v_device_id                  VARCHAR2(250);
         v_document_type              VARCHAR2(50);
         v_invoice_type_code          VARCHAR2(100);
-        v_trx_number                 VARCHAR2(10);
-        v_invoice_issue_date         VARCHAR2(15);
-        v_invoice_issue_time         VARCHAR2(15);
-        v_invoice_currency           VARCHAR2(10);
+        v_trx_number                 VARCHAR2(50);
+        v_invoice_issue_date         VARCHAR2(50);
+        v_invoice_issue_time         VARCHAR2(50);
+        v_invoice_currency           VARCHAR2(60);
         v_billing_ref_id             VARCHAR2(10);
+        v_REF_4_ISSUANCE_CM          VARCHAR2(50);
         v_supply_date                VARCHAR2(10);
         v_seller_name                VARCHAR2(50);
         v_seller_name_ar             VARCHAR2(50);
@@ -329,27 +1379,31 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
         v_line_amt_incl_vat_words    VARCHAR2(200);
         v_line_amt_incl_vat_words_ar VARCHAR2(200);
         json_data                    CLOB;
-        v_total_vat_amount           VARCHAR2(20) := 0;
-        v_total_taxable_amount       VARCHAR2(20) := 0;
-        v_tax_inclusive_amount       VARCHAR2(20) := 0;
-        v_vat_line_rate              VARCHAR2(15);
+        v_total_vat_amount           VARCHAR2(50) := 0;
+        v_total_taxable_amount       VARCHAR2(50) := 0;
+        v_tax_inclusive_amount       VARCHAR2(50) := 0;
+        v_vat_line_rate              VARCHAR2(50);
+        v_prepaid_amount             VARCHAR2(50) := 0;
+        v_invoice_type_code_value	 VARCHAR2(5);
         
         CURSOR line_items_cursor (
             trx_ VARCHAR2 := v_trx
         ) IS
         SELECT
-            rctla.line_number                               inv_line_id,
-            rctla.description                               line_name,
-            rctla.translated_description                    description_arab,
-            'LS'                                            inv_uom,
-            rctla.unit_selling_price                        item_net_price,
-            rctla.quantity_invoiced                         item_qty,
-            rctla.revenue_amount                            inv_line_net_amt,
-            decode(rctlatax.tax_rate, 15, 'S', 0, 'E')      inv_line_vat_category,
-            rctlatax.tax_rate                               inv_line_vat_rate,
-            rctlatax.extended_amount                        vat_line_amt,
-            rctla.revenue_amount + rctlatax.extended_amount line_amt_incl_vat,
-            rcta.invoice_currency_code                      tax_curr_code
+            rctla.line_number                                                                                                   inv_line_id,
+            rctla.description                                                                                                   line_name,
+            rctla.translated_description                                                                                        description_arab,
+            'LS'                                                                                                                inv_uom,
+            rctla.unit_selling_price                                                                                            item_net_price,
+            decode(rctla.QUANTITY_INVOICED, NULL,  abs(rctla.QUANTITY_CREDITED), rctla.QUANTITY_INVOICED)                       item_qty,
+            ABS(rctla.REVENUE_AMOUNT)                                                                                           inv_line_net_amt,
+            decode(rctlatax.tax_rate, 15, 'S', 0, 'E')                                                                          inv_line_vat_category,
+            rctlatax.tax_rate                                                                                                   inv_line_vat_rate,
+            ABS(rctlatax.EXTENDED_AMOUNT)                                                                                       vat_line_amt,
+            ABS(rctla.REVENUE_AMOUNT) + ABS(rctlatax.EXTENDED_AMOUNT)                                                           line_amt_incl_vat,
+            rcta.invoice_currency_code                                                                                          tax_curr_code,
+            NVL(TO_CHAR(rctla.Attribute2),0) + NVL(TO_CHAR(rctla.Attribute3),0)                                                                   PREPAID_AMOUNT
+            
         FROM
             ra_customer_trx_all          rcta,
             ra_customer_trx_lines_all    rctla,
@@ -371,9 +1425,7 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
             gl_sets_of_books             gsb,
             pa_projects_prm_v            ppm,
             xle_entity_profiles          xle,
-            hz_parties                   xle_hp
-    --      ,HZ_LOCATIONS xle_hl
-            ,
+            hz_parties                   xle_hp,
             xle_registrations            xreg,
             hr_locations_all             hla
         WHERE
@@ -425,7 +1477,8 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
                 to_char(trx_date, 'YYYY-MM-DD')                                   invoice_issue_date,
                 to_char(trx_date, 'HH:MM:SS')                                     invoice_issue_time,
                 rcta.invoice_currency_code                                        invoice_currency,
-                decode(rctta.type, 'INV', '', 'CM', 'Credit Note')                billing_ref_id,
+                rcta.Customer_Reference                                           billing_ref_id,
+                rcta.REASON_CODE                                                  REF_4_ISSUANCE_CM,
                 to_char(trx_date, 'YYYY-MM-DD')                                   supply_date,
                 xle_hp.party_name                                                 seller_name,
                 xreg.alternate_registered_name                                    seller_name_ar,
@@ -552,7 +1605,13 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
                         AND status = 'A'
                 )                                                                 contact_person_ar,
                 rcta.invoice_currency_code                                        tax_curr_code,
-                rctlatax.tax_rate                                                 line_vat_rate
+                rctlatax.tax_rate                                                 line_vat_rate,
+                CASE 
+					WHEN rctla.Attribute2 IS NULL AND rctla.Attribute3 IS NULL
+						THEN '388'
+					WHEN rctla.Attribute2 IS NOT NULL AND rctla.Attribute3 IS NOT NULL
+						THEN '386'
+				END 												 NVOICE_TYPE_CODE_VALUE
             INTO
                 v_device_id,
                 v_document_type,
@@ -562,6 +1621,7 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
                 v_invoice_issue_time,
                 v_invoice_currency,
                 v_billing_ref_id,
+                v_REF_4_ISSUANCE_CM,
                 v_supply_date,
                 v_seller_name,
                 v_seller_name_ar,
@@ -609,7 +1669,8 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
                 v_contact_person,
                 v_contact_person_ar,
                 v_tax_curr_code,
-                v_vat_line_rate
+                v_vat_line_rate,
+                v_invoice_type_code_value
             FROM
                 ra_customer_trx_all          rcta,
                 ra_customer_trx_lines_all    rctla,
@@ -631,9 +1692,7 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
                 gl_sets_of_books             gsb,
                 pa_projects_prm_v            ppm,
                 xle_entity_profiles          xle,
-                hz_parties                   xle_hp
-        --      ,HZ_LOCATIONS xle_hl
-                ,
+                hz_parties                   xle_hp,
                 xle_registrations            xreg,
                 hr_locations_all             hla
             WHERE
@@ -713,9 +1772,13 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
                 ppm.attribute1,
                 rcta.ship_to_customer_id,
                 rcta.invoice_currency_code,
-                rctlatax.tax_rate;
+                rctlatax.tax_rate,
+                rctla.Attribute2,
+                rctla.Attribute3,
+                rcta.Customer_Reference,
+                rcta.REASON_CODE;
             EXCEPTION WHEN OTHERS THEN 
-            INSERT INTO XX_LOG(Request_ID, Log_Text)Values(3,'Exception found for Trx_Number '||v_trx);
+            INSERT INTO XX_LOG(Request_ID, Log_Text)Values(3,'Exception found for procedure 2 Trx_Number '||v_trx);
 --            o_chr_retcode := '1';  -- 0 - Normal 1 - Warning 2 - Error
 --	        o_chr_errbuf := 'Exception found for Trx_Number '||v_trx;
             END;
@@ -737,7 +1800,9 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
          "name": "'
                      || v_invoice_type_code
                      || '",
-         "value": "386"
+         "value": "'
+                     || v_invoice_type_code_value
+                     ||'"
       },
       "IssueDate": "'
                      || v_invoice_issue_date
@@ -1076,6 +2141,8 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
             v_total_vat_amount := v_total_vat_amount + NVL(TO_CHAR(itr.vat_line_amt),0);
             v_total_taxable_amount := v_total_taxable_amount + NVL(TO_CHAR(itr.inv_line_net_amt),0);
             v_tax_inclusive_amount := v_tax_inclusive_amount + NVL(TO_CHAR(itr.line_amt_incl_vat),0);
+            v_prepaid_amount := v_prepaid_amount + itr.PREPAID_AMOUNT;
+            
             IF line_items_cursor%found THEN
                 json_data := json_data || ',';
             END IF;
@@ -1171,7 +2238,7 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
                 "currencyID": "'
                      || v_invoice_currency
                      || '",
-                "value": " "
+                "value": "' ||v_prepaid_amount||' "
             },
             "PaybleRoundingAmount": {
                 "currencyID": "'
@@ -1233,10 +2300,10 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
                      || v_contact_person_ar
                      || '",
 "AmountInclVATWords": "'
-                     || XX_NUMBER_2_WORDS (V_TAX_INCLUSIVE_AMOUNT)
+                     ||XX_NUMBER_2_WORDS(V_TAX_INCLUSIVE_AMOUNT - v_prepaid_amount)
                      || '",
 "AmountInclVATWordsArabic": "'
-                     || XX_NUMBER2WORDS_AR (V_TAX_INCLUSIVE_AMOUNT)
+                     ||  XX_NUMBER2WORDS_AR(V_TAX_INCLUSIVE_AMOUNT - v_prepaid_amount)
                      || '"
 }
 }';
@@ -1307,8 +2374,7 @@ create or replace PACKAGE BODY      xx_test_einv_pkg AS
         v_content         CLOB := p_json_req;
     BEGIN
        
---        SELECT json_req into v_content from xxgs_einv_stg_t WHERE trx_number = v_trx_numb;
---            
+          
         
         url := utl_url.escape(url, FALSE, 'UTF-8');
         v_length := dbms_lob.getlength(v_content);
@@ -1391,10 +2457,10 @@ PROCEDURE save_cleartax_response
     v_pih := REGEXP_SUBSTR(v_res, '"PIH": "(.*?)"', 1, 1, null, 1);
     v_invoice_hash := REGEXP_SUBSTR(v_res, '"InvoiceHash": "(.*?)"', 1, 1, null, 1);
     v_invoice_type := REGEXP_SUBSTR(v_res, '"InvoiceType": "(.*?)"', 1, 1, null, 1);
---    v_issue_date := REGEXP_SUBSTR(v_res, '"IssueDate": "(.*?)"', 1, 1, null, 1);
---    v_issue_time := REGEXP_SUBSTR(v_res, '"IssueTime": "(.*?)"', 1, 1, null, 1);
---    v_generated_date := REGEXP_SUBSTR(v_res, '"GeneratedDate": "(.*?)"', 1, 1, null, 1);
---    v_generated_time := REGEXP_SUBSTR(v_res, '"GeneratedTime": "(.*?)"', 1, 1, null, 1);
+    v_issue_date := REGEXP_SUBSTR(v_res, '"IssueDate": "(.*?)"', 1, 1, null, 1);
+    v_issue_time := REGEXP_SUBSTR(v_res, '"IssueTime": "(.*?)"', 1, 1, null, 1);
+    v_generated_date := REGEXP_SUBSTR(v_res, '"GeneratedDate": "(.*?)"', 1, 1, null, 1);
+    v_generated_time := REGEXP_SUBSTR(v_res, '"GeneratedTime": "(.*?)"', 1, 1, null, 1);
     v_error_code := REGEXP_SUBSTR(v_res, '"ErrorCode": "(.*?)"', 1, 1, null, 1);
     v_error_message := REGEXP_SUBSTR(v_res, '"ErrorMessage": "(.*?)"', 1, 1, null, 1);
     v_error_source := REGEXP_SUBSTR(v_res, '"ErrorSource": "(.*?)"', 1, 1, null, 1);
@@ -1427,6 +2493,18 @@ PROCEDURE save_cleartax_response
     MESSAGE = v_message 
     WHERE trx_number = v_trx_number;
     
+    IF v_qrcode_status = 'GENERATED' THEN
+        UPDATE ra_customer_trx_all
+        SET
+        ATTRIBUTE6 = v_qrcode_status,
+        ATTRIBUTE7 = v_generated_date
+        WHERE trx_number = v_trx_number;
+    ELSE
+        UPDATE ra_customer_trx_all
+        SET
+        ATTRIBUTE6 = v_error_message
+        WHERE trx_number = v_trx_number;
+    END IF;
     COMMIT;
 
 
