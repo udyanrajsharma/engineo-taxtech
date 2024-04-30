@@ -3,6 +3,8 @@ from datetime import datetime
 import requests
 import json
 from application.IRISgst import IRISgst
+import threading
+import time
 
 app = Flask(__name__)
 
@@ -15,7 +17,13 @@ def api_gstr1():
         created_by = data.get('Created_By','')
         request_id = data.get('Request_Id','')
 
-        IRISgst.gstr1_v(from_date, to_date, created_by, request_id)
+        def long_running_task():
+            IRISgst.gstr1_v(from_date, to_date, created_by, request_id)
+
+        thread1 = threading.Thread(target=long_running_task)
+        thread1.start()
+
+        # IRISgst.gstr1_v(from_date, to_date, created_by, request_id)
         message = "GSTR1 API called successfully AND From date : {} AND To date : {}".format(from_date,to_date)
         return jsonify(message), 200
     
@@ -32,19 +40,21 @@ def api_gstr2():
         created_by = data.get('Created_By','')
         request_id = data.get('Request_Id','')
 
-        IRISgst.gstr2_v(from_date, to_date, created_by, request_id)
-        message = "GSTR2 API called successfully"
+        def long_running_task():
+            IRISgst.gstr2_v(from_date, to_date, created_by, request_id)
+
+        thread1 = threading.Thread(target=long_running_task)
+        thread1.start()
+
+        message = "GSTR2 API called successfully AND From date : {} AND To date : {}".format(from_date,to_date)
         return jsonify(message), 200
     
     except Exception as e:
         return jsonify({'result': 'error', 'message': str(e)})
 
-
 if __name__ == '__main__':
     app.run(host='0.0.0.0',port=5500, debug=True)
 
-
-# pyinstaller main.py
 
 
 
