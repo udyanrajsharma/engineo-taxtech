@@ -8,7 +8,6 @@ class gstDataModel:
     
     # GSTR1
     def getGstr1HeaderData(from_date, to_date):
-        print("In Header Query")
         return database.executeGSTR1HeaderQuery(from_date, to_date)
     
     def getGstr1LineItemData(document_No):

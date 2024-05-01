@@ -58,7 +58,7 @@ class apiDetails:
             json=json.loads(json.dumps(payload, default=decimal_default))
             )
         res_status_code = response.status_code
-        print(response.json())
+        # print(response.json())
         return response,res_status_code
     
     # IRIS GSTR2 API
@@ -79,7 +79,7 @@ class apiDetails:
             json=json.loads(json.dumps(payload, default=decimal_default))
             )
         res_status_code = response.status_code
-        print(response.json())
+        # print(response.json())
         return response,res_status_code
     
     # IRIS E-INVOICE API
@@ -100,7 +100,7 @@ class apiDetails:
             json=json.loads(json.dumps(payload, default=decimal_default))
             )
         res_status_code = response.status_code
-        print(response.json())
+        # print(response.json())
         return response,res_status_code
 
     

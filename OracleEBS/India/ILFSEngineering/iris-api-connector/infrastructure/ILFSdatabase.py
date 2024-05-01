@@ -59,7 +59,7 @@ class database:
         cur = connection.cursor()
         if res_status_code == 200:
             response_data = response.json()
-            print("Inside status 200")
+            # print("Inside status 200")
             # Extract fields from the response and save them to another table
             status = response_data.get('status')
             response = response_data.get("response", [])
@@ -81,7 +81,7 @@ class database:
         
         elif res_status_code == 403:
             response_data = response.json()
-            print("Inside status 403")
+            # print("Inside status 403")
             timestamp = response_data.get('timestamp')
             # date_string = timestamp.rsplit(' ',2)[0]
             status_line = response_data.get('status')
@@ -113,7 +113,7 @@ class database:
     def persistInsertGstr2RequestInDB(payload,invoice_id,invoice_date,return_period, created_by, request_id):
         cur = connection.cursor()
         json_payload = json.dumps(payload)
-        print("Inside  insert request into DB")
+        # print("Inside  insert request into DB")
         # print("\nPayload: ",json_payload,"\nInvoice ID:",invoice_id,"\nInvoice Date: ",invoice_date,"\nReturn Period: ",return_period)
         # Insert_Query = "INSERT INTO XX_IRIS_GSTR2_LOG_T (TRX_NUMBER, TRX_DATE, RETURN_PERIOD, UPLOAD_TIME, CREATED_BY, CREATION_DATE,REQUEST_PAYLOAD, REQUEST_ID) VALUES ('{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', '{}')"
         # foramat_insert_query = Insert_Query.format(invoice_id, invoice_date, return_period, date.today().strftime('%d-%m-%Y'), created_by, date.today().strftime('%d-%m-%Y'), json_payload, request_id)
@@ -123,18 +123,19 @@ class database:
         # print("Insert Query:",foramat_insert_query)
         cur.execute(foramat_insert_query)
         connection.commit()
-        print("GSTR2 Insert Query Done")
+        # print("GSTR2 Insert Query Done")
         cur.close()
     
     def persistUpdateGstr2ResponseInDB(response,res_status_code,invoice_id):
         cur = connection.cursor()
         if res_status_code == 200:
             response_data = response.json()
-            print("Inside status 200")
+            # print("Inside status 200")
             # Extract fields from the response and save them to another table
             status = response_data.get('status')
             response = response_data.get("response", [])
             if status != 400:
+                failure_status = "FAILURE"
                 for res in response:
                     inv_no = res.get('inv_no')
                     status_line = res.get('status')
@@ -142,27 +143,26 @@ class database:
                     # date_string = timeStamp.rsplit(' ',2)[0]
                     message = res.get('message')
                 Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e"
-                cur.execute(Update_Query, {'a': status, 'b': message,'c': 'null' ,'e': invoice_id})
+                cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' ,'e': invoice_id})
                 Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :a , LAST_UPDATED_BY = :c where TRX_NUMBER = :e"
                 cur.execute(Update_Query, {'a': status,'c': 'null' ,'e': invoice_id})
                 connection.commit()
                 cur.close()
             
             else:
-               
+                failure_status = "FAILURE"
                 fieldError = response_data.get("fieldErrors", [])
                 for res in fieldError:
                     message = res.get('defaultMessage')
+                    
                 Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e"
-                cur.execute(Update_Query, {'a': status, 'b': message,'c': 'null' ,'e': invoice_id})
-                Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :a , LAST_UPDATED_BY = :c where TRX_NUMBER = :e"
-                cur.execute(Update_Query, {'a': status,'c': 'null' ,'e': invoice_id})
+                cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' ,'e': invoice_id})
                 connection.commit()
                 cur.close()
         
         elif res_status_code == 403:
             response_data = response.json()
-            print("Inside status 403")
+            # print("Inside status 403")
             timestamp = response_data.get('timestamp')
             # date_string = timestamp.rsplit(' ',2)[0]
             status_line = response_data.get('status')
@@ -175,7 +175,7 @@ class database:
 
         else:
             response_data = response.json()
-            print("Inside status other than 200 and 403")
+            # print("Inside status other than 200 and 403")
             status = response_data.get('status')
             fieldError = response_data.get("fieldErrors", [])
             for res in fieldError:
@@ -216,7 +216,7 @@ class database:
         cur = connection.cursor()
         if res_status_code == 200:
             response_data = response.json()
-            print("Inside status 200")
+            # print("Inside status 200")
             # Extract fields from the response and save them to another table
             status = response_data.get('status')
             response = response_data.get("response", [])
@@ -233,7 +233,7 @@ class database:
         
         elif res_status_code == 403:
             response_data = response.json()
-            print("Inside status 403")
+            # print("Inside status 403")
             timestamp = response_data.get('timestamp')
             # date_string = timestamp.rsplit(' ',2)[0]
             status_line = response_data.get('status')
