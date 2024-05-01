@@ -3,6 +3,7 @@ from datetime import datetime
 import requests
 import json
 from application.IRISgst import IRISgst
+from application.IRISeinv import IRISeinv
 import threading
 import time
 
@@ -34,7 +35,7 @@ def api_gstr1():
 def api_gstr2():
     try:
         data = request.get_json()
-        print("API Called")
+        # print("API Called")
         from_date = data.get('From_date','')
         to_date = data.get('To_Date','')
         created_by = data.get('Created_By','')
@@ -49,6 +50,27 @@ def api_gstr2():
         message = "GSTR2 API called successfully AND From date : {} AND To date : {}".format(from_date,to_date)
         return jsonify(message), 200
     
+    except Exception as e:
+        return jsonify({'result': 'error', 'message': str(e)})
+    
+@app.route('/ilfs/einvoice/', methods=['POST'])
+def api_gstr2():
+    try:
+        data = request.get_json()
+        # print("API Called")
+        from_date = data.get('From_date','')
+        to_date = data.get('To_Date','')
+        created_by = data.get('Created_By','')
+        request_id = data.get('Request_Id','')
+
+        def long_running_task():
+            IRISeinv.einvoice_v(from_date, to_date, created_by, request_id)
+
+        thread1 = threading.Thread(target=long_running_task)
+        thread1.start()
+
+        message = "E-Invoice API called successfully AND From date : {} AND To date : {}".format(from_date,to_date)
+        return jsonify(message), 200    
     except Exception as e:
         return jsonify({'result': 'error', 'message': str(e)})
 

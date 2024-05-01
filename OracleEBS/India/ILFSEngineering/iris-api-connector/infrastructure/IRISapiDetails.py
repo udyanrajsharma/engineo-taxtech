@@ -2,15 +2,22 @@ import requests
 import json
 import decimal
 from decimal import Decimal
+from dotenv import load_dotenv
+import os
 
 def decimal_default(obj):
     if isinstance(obj, Decimal):
         return float(obj)  # Convert Decimal to float
     raise TypeError
 
+load_dotenv()
+email = os.getenv("login_email")
+password = os.getenv("login_password")
+oracle_client_dirpath = os.getenv("client_dir_path")
+
 class apiDetails:
 
-    # IRIR Login API
+    # IRIS Login API
     def InvokeIRISLoginAPI():
         IRIS_login_api_url = "https://api.irisgst.com/irisgst/mgmt/login"
         request_headers_login = {
@@ -18,8 +25,8 @@ class apiDetails:
             'Content-Type': 'application/json'
         }
         payload ={
-            "email": "sapphire@gmail.com",
-            "password": "Abcd@12345"
+            "email": email,
+            "password": password
         }
         response1 = requests.post(url= IRIS_login_api_url, headers=request_headers_login, json=json.loads(json.dumps(payload)))
         response = response1.json()

@@ -1,5 +1,5 @@
-from infrastructure.database import database
-from infrastructure.apiDetails import apiDetails
+from infrastructure.ILFSdatabase import database
+from infrastructure.IRISapiDetails import apiDetails
 
 class gstDataModel:
 
