@@ -3,8 +3,14 @@ from dotenv import load_dotenv
 import os
 import json
 from datetime import date
+import sys
 
-load_dotenv()
+# load_dotenv()
+extDataDir = os.getcwd()
+if getattr(sys, "frozen", False):
+    extDataDir = sys._MEIPASS
+load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
+
 user_name = os.getenv("user_name")
 password = os.getenv("password")
 dsn = os.getenv("dsn")

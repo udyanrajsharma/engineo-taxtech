@@ -4,13 +4,19 @@ import decimal
 from decimal import Decimal
 from dotenv import load_dotenv
 import os
+import sys
 
 def decimal_default(obj):
     if isinstance(obj, Decimal):
         return float(obj)  # Convert Decimal to float
     raise TypeError
 
-load_dotenv()
+# load_dotenv()
+extDataDir = os.getcwd()
+if getattr(sys, "frozen", False):
+    extDataDir = sys._MEIPASS
+load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
+
 email = os.getenv("login_email")
 password = os.getenv("login_password")
 oracle_client_dirpath = os.getenv("client_dir_path")
