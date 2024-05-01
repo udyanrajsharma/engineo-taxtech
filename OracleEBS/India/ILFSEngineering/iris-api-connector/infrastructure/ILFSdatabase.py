@@ -8,7 +8,8 @@ load_dotenv()
 user_name = os.getenv("user_name")
 password = os.getenv("password")
 dsn = os.getenv("dsn")
-oracle_client_dirpath = os.getenv("client_dir_path")
+oracle_client_dirpath = os.getenv("oracle_client_dir")
+print("oracle_client_dirpath = " , oracle_client_dirpath)
 
 # Connect to Oracle database
 oracledb.init_oracle_client(lib_dir=oracle_client_dirpath)
@@ -67,7 +68,6 @@ class database:
                 fieldError = response_data.get("fieldErrors", [])
                 for res in fieldError:
                     message = res.get('defaultMessage')
-                    print()
                 Update_Query = "UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e"
                 cur.execute(Update_Query, {'a': status, 'b': message,'c': 'null' ,'e': invoice_id})
                 connection.commit()
@@ -143,7 +143,7 @@ class database:
                 cur.close()
             
             else:
-                print()
+               
                 fieldError = response_data.get("fieldErrors", [])
                 for res in fieldError:
                     message = res.get('defaultMessage')

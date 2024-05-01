@@ -8,7 +8,7 @@ class gstDataModel:
     
     # GSTR1
     def getGstr1HeaderData(from_date, to_date):
-        print("In Header  Data")
+        print("In Header Query")
         return database.executeGSTR1HeaderQuery(from_date, to_date)
     
     def getGstr1LineItemData(document_No):
@@ -24,7 +24,7 @@ class gstDataModel:
         return database.persistUpdateGstr1ResponseInDB(response,res_status_code,invoice_id)
     
     def createGstr1Paylod(row):
-        print("In the Create Payload")
+        print("Inside Create Payload for GSTR1")
 
         sval = 0.00
         txval = 0.00
@@ -135,7 +135,7 @@ class gstDataModel:
         return database.persistUpdateGstr2ResponseInDB(response,res_status_code,invoice_id)
     
     def createGstr2Paylod(row):
-        print("Inside Create Payload")
+        print("Inside Create Payload for GSTR2")
         sval = 0.00
         txval = 0.00
         iamt = 0.00
@@ -222,7 +222,7 @@ class gstDataModel:
 
         total_Amount_2 = txval + iamt + camt + samt + csamt
         payload["invoices"][0]["val"] = round(total_Amount_2,2)
-        print("PAYLOAD :",payload)
+        # print("PAYLOAD :",payload)
         print("\nPayload Created")
         return payload, invoice_id, gstIn, invoice_date, return_period
     

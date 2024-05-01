@@ -54,7 +54,7 @@ def api_gstr2():
         return jsonify({'result': 'error', 'message': str(e)})
     
 @app.route('/ilfs/einvoice/', methods=['POST'])
-def api_gstr2():
+def api_eInvoicing():
     try:
         data = request.get_json()
         # print("API Called")
