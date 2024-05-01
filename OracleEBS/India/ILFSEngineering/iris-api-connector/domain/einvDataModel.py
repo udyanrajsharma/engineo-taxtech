@@ -13,13 +13,13 @@ class einvDataModel:
     def getEinvLineItemData(document_No):
         return database.executeEinvHeaderQuery(document_No)
     
-    def initiateEinvoiceFilingForInvoice(payload,invoice_id,invoice_date,return_period):
+    def initiateEinvoicingProcess(payload,invoice_id,invoice_date,return_period):
         return database.persistInsertEinvRequestInDB(payload,invoice_id,invoice_date,return_period)
 
-    def fileEinvData(payload,gstIn,token,companyid):
+    def performEinvoicing(payload,gstIn,token,companyid):
         return apiDetails.InvokeEInvoice_IRIS_API(payload,gstIn,token,companyid)
     
-    def finishEinvFilingForInvoice(response,res_status_code,invoice_id):
+    def finishEinvoicingProcess(response,res_status_code,invoice_id):
         return database.persistUpdateEinvResponseInDB(response,res_status_code,invoice_id)
     
     def createEinvoicePayload(row):
