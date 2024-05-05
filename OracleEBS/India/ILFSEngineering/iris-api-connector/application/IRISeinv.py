@@ -9,7 +9,7 @@ class IRISeinv:
         response_login = einvDataModel.executeIRISLoginAPI()
         for row in Header_Eibv_data:
             response_payload = einvDataModel.createEinvoicePayload(row)
-            einvDataModel.initiateEinvoicingProcess(response_payload[0],response_payload[1],response_payload[3],response_payload[4], created_by, request_id)
+            einvDataModel.initiateEinvoicingProcess(response_payload[0],response_payload[1],response_payload[3], created_by, request_id)
             response_einv = einvDataModel.performEinvoicing(response_payload[0],response_payload[2],response_login[0],response_login[1])
-            einvDataModel.finishEinvoicingProcess(response_einv[0],response_einv[1],response_payload[1])
+            einvDataModel.finishEinvoicingProcess(response_einv[0],response_einv[1],response_payload[1],response_login[0],response_login[1])
             print("E-Invoice Completed for a invoice")
