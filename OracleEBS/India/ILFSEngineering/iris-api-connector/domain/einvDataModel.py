@@ -31,8 +31,8 @@ class einvDataModel:
     # def downloadEinvoicePdf(Id,companyId,token):
     #     return apiDetails.getPDFfromEInvIO(Id,companyId,token)
     
-    def finishEinvoicingProcess(response,res_status_code,invoice_id,gstin,token,companyid):
-        return database.persistUpdateEinvResponseInDB(response,res_status_code,invoice_id,gstin,token,companyid)
+    def finishEinvoicingProcess(response, res_status_code, invoice_id, gstin, token, companyid, request_id):
+        return database.persistUpdateEinvResponseInDB(response, res_status_code, invoice_id, gstin, token, companyid, request_id)
     
     def createEinvoicePayload(row):
         print("Creation of E-Invoice Payload")
@@ -346,7 +346,7 @@ class einvDataModel:
         return database.CancelInvoiceQuery(invoice_id)
     
     def iniateCancelIrnProcess(payload, invoice_id, invoice_date, created_by, request_id):
-        return database.persistInsertCancelIRNRequestInDB(payload, invoice_id, invoice_date, created_by, request_id)
+        return database.persistInsertCancelIrnRequestInDB(payload, invoice_id, invoice_date, created_by, request_id)
     
     def performCancelIrn(companyId,token,payload):
         return apiDetails.InvokecancelIrn(companyId,token,payload)
