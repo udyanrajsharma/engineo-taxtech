@@ -8,7 +8,7 @@ import win32service
 import win32event
 import servicemanager
 
-# from application.ClearTaxEWBwithoutIRN import ClearTaxEWBwithoutIRN
+from application.ClearTaxEWBwithoutIRN import ClearTaxEWBwithoutIRN
 import time
 import logging
 import logging.handlers
@@ -66,9 +66,9 @@ class WindowsServiceScheduler(win32serviceutil.ServiceFramework):
         servicelogger.info("... STARTING SCHEDULE PROCESS ...\n")
         schedule.every(10).seconds.do(self.scheduler)
 
-        # schedule.every(5).minutes.do(ClearTaxEWBwithoutIRN.EWBwithoutIRN)
-        # schedule.every(5).minutes.do(ClearTaxEWBwithoutIRN.updateEWB)
-        # schedule.every(5).minutes.do(ClearTaxEWBwithoutIRN.cancelEWB)
+        schedule.every(5).minutes.do(ClearTaxEWBwithoutIRN.EWBwithoutIRN)
+        schedule.every(5).minutes.do(ClearTaxEWBwithoutIRN.updateEWB)
+        schedule.every(5).minutes.do(ClearTaxEWBwithoutIRN.cancelEWB)
         # run main loop for schedule process while service runs
         while True:
             # execute task on schedule
