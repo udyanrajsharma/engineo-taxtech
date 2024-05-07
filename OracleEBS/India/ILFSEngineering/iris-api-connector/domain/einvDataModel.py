@@ -28,11 +28,14 @@ class einvDataModel:
     def performEinvoicing(payload,gstIn,token,companyid):
         return apiDetails.InvokeEInvoice_IRIS_API(payload,gstIn,token,companyid)
     
-    def finishEinvoicingProcess(response,res_status_code,invoice_id,token,companyid):
-        return database.persistUpdateEinvResponseInDB(response,res_status_code,invoice_id,token,companyid)
+    # def downloadEinvoicePdf(Id,companyId,token):
+    #     return apiDetails.getPDFfromEInvIO(Id,companyId,token)
+    
+    def finishEinvoicingProcess(response,res_status_code,invoice_id,gstin,token,companyid):
+        return database.persistUpdateEinvResponseInDB(response,res_status_code,invoice_id,gstin,token,companyid)
     
     def createEinvoicePayload(row):
-        print("Inside Create E-Invoice Payload")
+        print("Creation of E-Invoice Payload")
         sval = 0.00
         txval = 0.00
         iamt = 0.00
@@ -51,8 +54,8 @@ class einvDataModel:
         payload = {
             # "userGstin": row[1],
             "userGstin": "24AAACI9260R002",
-            # "pobCode": row[2],
-            "pobCode": None,
+            "pobCode": row[2],
+            # "pobCode": None,
             "supplyType": row[3],
             "ntr": row[4],
             "docType": row[5],
@@ -75,8 +78,8 @@ class einvDataModel:
             "sflno": row[155],
             "sloc": row[156],
             "sdst": row[157],
-            "sstcd": row[17],
-            # "sstcd": "24",
+            # "sstcd": row[17],
+            "sstcd": "24",
             # "spin": row[152],
             "spin": "320008",
             "sph": row[18],
@@ -89,8 +92,8 @@ class einvDataModel:
             "bloc": row[25],
             "bdst": row[26],
             "bstcd": row[27],
-            # "bpin": row[28],
-            "bpin": "380006",
+            "bpin": row[28],
+            # "bpin": "380006",
             "bph": row[29],
             "bem": row[30],
             "dgstin": row[31],
@@ -336,3 +339,27 @@ class einvDataModel:
         payload["totinvval"] = round(total_Amount_2,2)
         print("\nPayload Created")
         return payload, invoice_id, gstIn, invoice_date
+    
+
+    # CANCEL IRN
+    def getCancelirnQuery(invoice_id):
+        return database.CancelInvoiceQuery(invoice_id)
+    
+    def iniateCancelIrnProcess(payload, invoice_id, invoice_date, created_by, request_id):
+        return database.persistInsertCancelIRNRequestInDB(payload, invoice_id, invoice_date, created_by, request_id)
+    
+    def performCancelIrn(companyId,token,payload):
+        return apiDetails.InvokecancelIrn(companyId,token,payload)
+    
+    def finishCancelIrnProcess(response, res_status_code, invoice_id):
+        return database.persistUpdateCancelIrnResponseInDB(response, res_status_code, invoice_id)
+
+    # Create Cancel IRN Payload
+    def cancelIRNpayload(irn,userGstin, cancel_reason, cancel_remark):
+        payload = {
+            "irn": irn,
+            "cnlRsn": cancel_reason,
+            "cnlRem": cancel_remark,
+            "userGstin": userGstin
+        }
+        return payload

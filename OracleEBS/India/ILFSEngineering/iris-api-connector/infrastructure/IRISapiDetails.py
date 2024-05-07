@@ -114,14 +114,14 @@ class apiDetails:
             'tenant':'asp',
             'Content-Type': 'application/json'
         }
-        print("Paylod in IRIS API: \n",json.loads(json.dumps(payload, default=decimal_default)))
+        # print("Paylod in IRIS API: \n",json.loads(json.dumps(payload, default=decimal_default)))
         response = requests.post(
             url=IRIS_EINV_api_url, 
             headers=request_headers_einv, 
             json=json.loads(json.dumps(payload, default=decimal_default))
             )
         res_status_code = response.status_code
-        print("Response from IRIS API for E-Invoic =\n",response.json())
+        # print("Response from IRIS API for E-Invoic =\n",response.json())
         return response,res_status_code
 
     # IRIS E-INVOICE Print PDF
@@ -137,4 +137,22 @@ class apiDetails:
             headers=request_headers_einv_Pdf
             )
         return response
+    
+    def InvokecancelIrn(companyId,token,payload):
+        IRIS_cancelIRN_api_url = "https://stage-api.irisgst.com/irisgst/onyx/irn/cancel"
+        request_header_cancelIRN = {
+            "accept": "application/json",
+            "companyId" : str(companyId),
+            "X-Auth-Token": token,
+            "product": "ONYX",
+            "Content-Type": "application/json"
+        }
+        response = requests.post(
+            url=IRIS_cancelIRN_api_url, 
+            headers=request_header_cancelIRN, 
+            json=json.loads(json.dumps(payload, default=decimal_default))
+            )
+        res_status_code = response.status_code
+        # print("Response from IRIS API for Cancel IRN =\n",response.json())
+        return response,res_status_code
        

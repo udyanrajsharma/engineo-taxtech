@@ -73,6 +73,28 @@ def api_eInvoicing():
         return jsonify(message), 200    
     except Exception as e:
         return jsonify({'result': 'error', 'message': str(e)})
+    
+@app.route('/ilfs/cancelirn/', methods=['POST'])
+def api_eInvoicing():
+    try:
+        data = request.get_json()
+        # print("Cancel Reason, Cancel Remark, Invoice Id")
+        cancel_reason = data.get('CANCEL_REASON','')
+        cancel_remark = data.get('CANCEL_REMARK','')
+        invoice_id = data.get('INVOICE_ID','')
+        created_by = data.get('Created_By','')
+        request_id = data.get('Request_Id','')
+
+        def long_running_task():
+            IRISeinv.cancelIRN(cancel_reason, cancel_remark, invoice_id, created_by, request_id)
+
+        thread1 = threading.Thread(target=long_running_task)
+        thread1.start()
+
+        message = "Cancel IRN API called successfully for Invoice ID {}".format(invoice_id)
+        return jsonify(message), 200    
+    except Exception as e:
+        return jsonify({'result': 'error', 'message': str(e)})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0',port=5500, debug=True)

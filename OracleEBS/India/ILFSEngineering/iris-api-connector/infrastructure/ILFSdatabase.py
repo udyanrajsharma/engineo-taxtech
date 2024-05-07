@@ -1,4 +1,4 @@
-from infrastructure.IRISapiDetails import apiDetails
+from infrastructure.IRISapiDetails import  apiDetails
 import oracledb
 from dotenv import load_dotenv
 import os
@@ -60,7 +60,6 @@ class database:
         cur = connection.cursor()
         response_data = response.json()
         if res_status_code == 200:
-            # print("Inside status 200")
             # Extract fields from the response and save them to another table
             status = response_data.get('status')
             response = response_data.get("response", [])
@@ -197,7 +196,7 @@ class database:
     # E-INVOICE
     def executeEinvHeaderQuery(from_date, to_date):
         cur = connection.cursor()
-        print("Inside Header Query")
+        # print("Inside Header Query")
         Header_einv_Query = "select distinct NO doc_num, USERGSTIN, POBCODE, SUPPLYTYPE, NTR, DOCTYPE, CATG, DST, TRNTYP, DT, POS, DIFFPRCNT, ETIN, RCHRG, SGSTIN, STRDNM, SLGLNM, SSTCD, SPH, SEM, BGSTIN, BTRDNM, BLGLNM, BBNM, BFLNO, BLOC, BDST, BSTCD, bpin, BPH, BEM, DGSTIN, DTRDNM, DLGLNM, DBNM, DFLNO, DLOC, DDST, DSTCD, DPIN, DPH, DEM, TOGSTIN, TOTRDNM, TOLGLNM, TOBNM, TOFLNO, TOLOC, TODST, TOSTCD, TOPIN, TOPH, TOEM, SBNUM, SBDT, PORT, EXPDUTY, CNTCD, FORCUR, INVFORCUR, TAXSCH, TOTINVVAL, TOTDISC, TOTFRT, TOTINS, TOTPKG, TOTOTHCHRG, TOTTXVAL, TOTIAMT, TOTCAMT, TOTSAMT, TOTCSAMT, TOTSTCSAMT, RNDOFFAMT, SEC7ACT, INVSTDT, INVENDDT, INVRMK, OMON, ODTY, OINVTYP, OCTIN, USERIRN, PAYNM, ACCTDET, PA, IFSC, PAYTERM, PAYINSTR, CRTRN, DIRDR, CRDAY, BALAMT, PAIDAMT, PAYDUEDT, TRANSID, SUBSPLYTYP, SUBSPLYDES, KDREFINUM, KDREFIDT, TRANSMODE, VEHTYP, TRANSDIST, TRANSNAME, TRANSDOCNO, TRANSDOCDATE, VEHNO,  CLMRFND, RFNDELG, BOEF, FY, REFNUM, PDT, IVST, CPTYCDE, GEN1, GEN2, GEN3, GEN4, GEN5, GEN6, GEN7, GEN8, GEN9, GEN10, GEN11, GEN12, GEN13, GEN14, GEN15, GEN16, GEN17, GEN18, GEN19, GEN20, GEN21, GEN22, GEN23, GEN24, GEN25, GEN26, GEN27, GEN28, GEN29, GEN30, POBEWB, POBRET, TCSRT, TCSAMT, PRETCS, GENIRN, GENEWB, SPIN, refinum, sbnm, sflno, sloc, sdst from XX_ILFS_EINV_DATA_V WHERE TO_DATE(dt,'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY')".format(from_date, to_date)        
         cur.execute(Header_einv_Query)
         rows = cur.fetchall()
@@ -207,41 +206,41 @@ class database:
     
     def executeEinvLine1Query(document_No):
         cur = connection.cursor()
-        print("Inside Line Item 1 Query")
+        # print("Inside Line Item 1 Query")
         Line_einv_Query = "select BARCDE, BCHEXPDT, BCHWRDT, BCHNM, NVL(CAMT,0), CESNONADVAL, STCESNONADVL, NVL(CRT,0), NVL(CSAMT,0), NVL(CSRT,0), DISC, FREEQTY, HSNCD, NVL(IAMT,0), NVL(IRT,0), ISSERVC, ITMGEN1, ITMGEN2, ITMGEN3, ITMGEN4, ITMGEN5, ITMGEN6, ITMGEN7, ITMGEN8, ITMGEN9, ITMGEN10, ITMVAL, NUM, ORDLINEREF, ORGCNTRY, OTHCHRG, PRDDESC, PRDNM, PRDSLNO, PRETAXVAL, QTY, RT, NVL(SAMT,0), NVL(SRT,0), STCSAMT, STCSRT, NVL(SVAL,0), TXP, NVL(TXVAL,0), UNIT, UNITPRICE from XX_ILFS_EINV_DATA_V  where no = '{}'".format(document_No)
         cur.execute(Line_einv_Query)
         rows = cur.fetchall()
-        print("Line Query 1 Executed")
+        # print("Line Query 1 Executed")
         cur.close()
         return rows
     
     def executeEinvLine2Query(document_No):
         cur = connection.cursor()
-        print("Inside Line Item 2 Query")
+        # print("Inside Line Item 2 Query")
         Line_einv_Query = "select URL, DOCS, INFODTLS from XX_ILFS_EINV_DATA_V where no = '{}'".format(document_No)
         cur.execute(Line_einv_Query)
         rows = cur.fetchall()
-        print("Line Query 2 Executed")
+        # print("Line Query 2 Executed")
         cur.close()
         return rows
     
     def executeEinvLine3Query(document_No):
         cur = connection.cursor()
-        print("Inside Line Item 3 Query")
+        # print("Inside Line Item 3 Query")
         Line_einv_Query = "select RAREF, RADT, TENDREF, CONTREF, EXTREF, PROJREF, POREF, POREFDT from XX_ILFS_EINV_DATA_V where no = '{}'".format(document_No)
         cur.execute(Line_einv_Query)
         rows = cur.fetchall()
-        print("Line Query 3 Executed")
+        # print("Line Query 3 Executed")
         cur.close()
         return rows
     
     def executeEinvLine4Query(document_No):
         cur = connection.cursor()
-        print("Inside Line Item 4 Query")
+        # print("Inside Line Item 4 Query")
         Line_einv_Query = "select OINUM, OIDT, OTHREFNO from XX_ILFS_EINV_DATA_V where no = '{}'".format(document_No)
         cur.execute(Line_einv_Query)
         rows = cur.fetchall()
-        print("Line Query 4 Executed")
+        # print("Line Query 4 Executed")
         cur.close()
         return rows
     
@@ -256,12 +255,12 @@ class database:
         print(" E-invoive Record inserted successfully")
         cur.close()
     
-    def persistUpdateEinvResponseInDB(response,res_status_code,invoice_id,token,companyid):
+    def persistUpdateEinvResponseInDB(response,res_status_code,invoice_id,gstin, token,companyid):
         cur = connection.cursor()
         response_data = response.json()
-        print("Inside updation of table")
+        # print("Inside updation of table")
         if res_status_code == 200:
-            print("Inside status 200")
+            # print("Inside status 200")
             # Extract fields from the response and save them to another table
             response_status = response_data.get('status')
             message = response_data.get("message", '')
@@ -280,18 +279,11 @@ class database:
                 EwbValidTill = response_data.get('response').get('EwbValidTill', None)
 
                 response_pdf = apiDetails.getPDFfromEInvIO(iris_id,companyid,token)
-                # print("Response_ Content_ =",response_pdf.content)
-                
-                # with open(file_path, 'wb') as f:
-                #     # Step 2: Write the PDF content to the file
-                #     try:
-                #         f.write(response_pdf.content)
-                #     except:
-                #         print(Exception)
-
                 Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c, IRIS_QRCODE = :f, IRIS_NO = :g, IRIS_ID = :h,IRIS_STATUS = :i , IRIS_ACK_NO = :j , IRIS_ACK_DATE = :k , IRIS_SIGNED_INVOICE = :l , IRIS_SIGNED_QR_CODE = :m , IRIS_EWB_NO = :n , IRIS_EWB_DATE = :o , IRIS_EWB_VALID_TILL = :p, IRIS_IRN_NO = :q, INVOICE_PDF = :r   where TRX_NUMBER = :e"
                 cur.execute(Update_Query, {'a': response_status, 'b': message,'c': 'null' ,'e': invoice_id, 'f': qr_code, 'g': iris_no, 'h': iris_id, 'i': status, 'j': ackNo, 'k': ackDt, 'l': signedInvoice, 'm': signedQrCode, 'n': EwbNo, 'o': EwbDt, 'p': EwbValidTill, 'q': irn, 'r': response_pdf.content})
                 connection.commit()
+                # attachment procedure
+
                 print("Invoice detail Updated - success")
                 cur.close()
             
@@ -299,7 +291,7 @@ class database:
                 Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e"
                 cur.execute(Update_Query, {'a': response_status, 'b': message,'c': 'null' ,'e': invoice_id})
                 connection.commit()
-                print("Invoice detail Updated - fail(403)")
+                print("Invoice detail Updated - Structural Error")
                 cur.close()
 
         
@@ -326,3 +318,70 @@ class database:
             print("Invoice detail Updated - fail")
             cur.close()
 
+    # Cancel IRN
+    def CancelInvoiceQuery(invoice_id):
+        cur = connection.cursor()
+        irn_query = "SELECT DISTINCT IRIS_IRN_NO, USERGSTIN, TRX_DATE FROM XX_IRIS_EINV_LOG_T WHERE TRX_NUMBER = {}".format(invoice_id)
+        cur.execute(irn_query)
+        rows = cur.fetchall()
+        print("Header Query Executed")
+        cur.close()
+        return rows
+    
+    def persistInsertCancelIrnRequestInDB(payload, invoice_id, invoice_date, created_by, request_id):
+        cur = connection.cursor()
+        json_payload = json.dumps(payload)
+        Insert_Query = "INSERT INTO XX_IRIS_CANCEL_IRN_LOG_T (TRX_NUMBER, TRX_DATE, UPLOAD_TIME, CREATED_BY, CREATION_DATE, REQUEST_ID) VALUES ('{}', TO_DATE('{}', 'DD-MM-YYYY'), TO_DATE('{}', 'DD-MM-YYYY'), '{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}')"
+        format_insert_query = Insert_Query.format(invoice_id, invoice_date, date.today().strftime('%d-%m-%Y'), created_by, date.today().strftime('%d-%m-%Y'), request_id)
+        # print("Insert Query: \n",format_insert_query)
+        cur.execute(format_insert_query)
+        connection.commit()
+        print(" Cancel IRN Record inserted successfully")
+        cur.close()
+
+    def persistUpdateCancelIrnResponseInDB(response, res_status_code, invoice_id):
+        cur = connection.cursor()
+        response_data = response.json()
+        # print("Inside updation of table")
+        if res_status_code == 200:
+            print("Inside status 200")
+            # Extract fields from the response and save them to another table
+            response_status = response_data.get('status')
+            message = response_data.get("message", '')
+            if response_status == "SUCCESS" :
+                irn_no = response_data.get('response').get('irn', None)
+                cancel_date = response_data.get('response').get('cancelDate', None)
+              
+                Update_Query = "UPDATE XX_IRIS_CANCEL_IRN_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c, IRIS_IRN = :x, CANCEL_DATE = :y where TRX_NUMBER = :e"
+                cur.execute(Update_Query, {'a': response_status, 'b': message,'c': 'null' ,'e': invoice_id, 'x': irn_no, 'y': cancel_date})
+                connection.commit()
+                # attachment procedure
+
+                print("Cancel Invoice Updated - success")
+                cur.close()
+            
+            else:
+                Update_Query = "UPDATE XX_IRIS_CANCEL_IRN_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e"
+                cur.execute(Update_Query, {'a': response_status, 'b': message,'c': 'null' ,'e': invoice_id})
+                connection.commit()
+                print("Invoice detail Updated - Structural Error")
+                cur.close()
+    
+        elif res_status_code == 403:
+            # print("Inside status 403")
+            message = response_data.get("message", '')
+            failure_status = "FAILURE"
+            Update_Query = "UPDATE XX_IRIS_CANCEL_IRN_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c, RESPONSE_PAYLOAD = :d where TRX_NUMBER = :e"
+            cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' , 'd': response_data,'e': invoice_id})
+            connection.commit()
+            print("Cancel Invoice Updated - fail(403)")
+            cur.close()
+        
+        else:
+            message = response_data.get("message", '')
+            failure_status = "FAILURE"
+            Update_Query = "UPDATE XX_IRIS_CANCEL_IRN_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c, RESPONSE_PAYLOAD = :d where TRX_NUMBER = :e"
+            cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' , 'd': response_data,'e': invoice_id})
+            connection.commit()
+            print("Cancel Invoice Updated - fail")
+            cur.close()
