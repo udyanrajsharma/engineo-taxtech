@@ -75,7 +75,7 @@ def api_eInvoicing():
         return jsonify({'result': 'error', 'message': str(e)})
     
 @app.route('/ilfs/cancelirn/', methods=['POST'])
-def api_eInvoicing():
+def api_cancelIrn():
     try:
         data = request.get_json()
         # print("Cancel Reason, Cancel Remark, Invoice Id")

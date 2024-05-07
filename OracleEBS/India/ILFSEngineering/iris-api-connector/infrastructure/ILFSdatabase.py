@@ -143,7 +143,7 @@ class database:
             # Extract fields from the response and save them to another table
             status = response_data.get('status')
             response = response_data.get("response", [])
-            if status != 400:
+            if status == 'SUCCESS':
                 success_status = "SUCCESS"
                 for res in response:
                     inv_no = res.get('inv_no')
@@ -255,7 +255,7 @@ class database:
         print(" E-invoive Record inserted successfully")
         cur.close()
     
-    def persistUpdateEinvResponseInDB(response,res_status_code,invoice_id,gstin, token,companyid):
+    def persistUpdateEinvResponseInDB(response,res_status_code,invoice_id,gstin, token,companyid, request_id):
         cur = connection.cursor()
         response_data = response.json()
         # print("Inside updation of table")
@@ -279,12 +279,17 @@ class database:
                 EwbValidTill = response_data.get('response').get('EwbValidTill', None)
 
                 response_pdf = apiDetails.getPDFfromEInvIO(iris_id,companyid,token)
-                Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c, IRIS_QRCODE = :f, IRIS_NO = :g, IRIS_ID = :h,IRIS_STATUS = :i , IRIS_ACK_NO = :j , IRIS_ACK_DATE = :k , IRIS_SIGNED_INVOICE = :l , IRIS_SIGNED_QR_CODE = :m , IRIS_EWB_NO = :n , IRIS_EWB_DATE = :o , IRIS_EWB_VALID_TILL = :p, IRIS_IRN_NO = :q, INVOICE_PDF = :r   where TRX_NUMBER = :e"
-                cur.execute(Update_Query, {'a': response_status, 'b': message,'c': 'null' ,'e': invoice_id, 'f': qr_code, 'g': iris_no, 'h': iris_id, 'i': status, 'j': ackNo, 'k': ackDt, 'l': signedInvoice, 'm': signedQrCode, 'n': EwbNo, 'o': EwbDt, 'p': EwbValidTill, 'q': irn, 'r': response_pdf.content})
+                Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c, IRIS_QRCODE = :f, IRIS_NO = :g, IRIS_ID = :h,IRIS_STATUS = :i , IRIS_ACK_NO = :j , IRIS_ACK_DATE = :k , IRIS_SIGNED_INVOICE = :l , IRIS_SIGNED_QR_CODE = :m , IRIS_EWB_NO = :n , IRIS_EWB_DATE = :o , IRIS_EWB_VALID_TILL = :p, IRIS_IRN_NO = :q, INVOICE_PDF = :r, USERGSTIN = :s where TRX_NUMBER = :e"
+                cur.execute(Update_Query, {'a': response_status, 'b': message,'c': 'null' ,'e': invoice_id, 'f': qr_code, 'g': iris_no, 'h': iris_id, 'i': status, 'j': ackNo, 'k': ackDt, 'l': signedInvoice, 'm': signedQrCode, 'n': EwbNo, 'o': EwbDt, 'p': EwbValidTill, 'q': irn, 'r': response_pdf.content, 's': gstin})
                 connection.commit()
                 # attachment procedure
+                attach_entity = "RA_CUSTOMER_TRX"
+                attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format(attach_entity, request_id, iris_no)
 
-                print("Invoice detail Updated - success")
+                cur.execute(attachment_block)
+                connection.commit()
+
+                print("Invoice detail Updated and attachment - success")
                 cur.close()
             
             else:
@@ -320,11 +325,12 @@ class database:
 
     # Cancel IRN
     def CancelInvoiceQuery(invoice_id):
+        print("Inside Cancel IRN Query")
         cur = connection.cursor()
-        irn_query = "SELECT DISTINCT IRIS_IRN_NO, USERGSTIN, TRX_DATE FROM XX_IRIS_EINV_LOG_T WHERE TRX_NUMBER = {}".format(invoice_id)
+        irn_query = "SELECT DISTINCT IRIS_IRN_NO, USERGSTIN, TO_CHAR(TRX_DATE, 'DD-MM-YYYY')  FROM XX_IRIS_EINV_LOG_T WHERE TRX_NUMBER = '{}'".format(invoice_id)
         cur.execute(irn_query)
         rows = cur.fetchall()
-        print("Header Query Executed")
+        # print("Header Query Executed: ",rows)
         cur.close()
         return rows
     
@@ -339,9 +345,8 @@ class database:
         print(" Cancel IRN Record inserted successfully")
         cur.close()
 
-    def persistUpdateCancelIrnResponseInDB(response, res_status_code, invoice_id):
+    def persistUpdateCancelIrnResponseInDB(response_data, res_status_code, invoice_id):
         cur = connection.cursor()
-        response_data = response.json()
         # print("Inside updation of table")
         if res_status_code == 200:
             print("Inside status 200")
@@ -361,8 +366,10 @@ class database:
                 cur.close()
             
             else:
+                fail_message = response_data['errors'][0]['msg']
+                print(fail_message)
                 Update_Query = "UPDATE XX_IRIS_CANCEL_IRN_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e"
-                cur.execute(Update_Query, {'a': response_status, 'b': message,'c': 'null' ,'e': invoice_id})
+                cur.execute(Update_Query, {'a': response_status, 'b': fail_message,'c': 'null' ,'e': invoice_id})
                 connection.commit()
                 print("Invoice detail Updated - Structural Error")
                 cur.close()
@@ -379,6 +386,7 @@ class database:
         
         else:
             message = response_data.get("message", '')
+            # print("Message in 400: ",message)
             failure_status = "FAILURE"
             Update_Query = "UPDATE XX_IRIS_CANCEL_IRN_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c, RESPONSE_PAYLOAD = :d where TRX_NUMBER = :e"
             cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' , 'd': response_data,'e': invoice_id})

@@ -147,12 +147,12 @@ class apiDetails:
             "product": "ONYX",
             "Content-Type": "application/json"
         }
-        response = requests.post(
+        response = requests.put(
             url=IRIS_cancelIRN_api_url, 
             headers=request_header_cancelIRN, 
             json=json.loads(json.dumps(payload, default=decimal_default))
             )
         res_status_code = response.status_code
         # print("Response from IRIS API for Cancel IRN =\n",response.json())
-        return response,res_status_code
+        return response.json(),res_status_code
        
