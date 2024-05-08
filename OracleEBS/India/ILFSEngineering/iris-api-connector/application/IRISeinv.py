@@ -3,11 +3,13 @@ from domain.einvDataModel import einvDataModel
 class IRISeinv:
 
     # IRIS E-Inv
-    def einvoice_v(from_date, to_date, created_by, request_id):
+    def einvoice_v(from_date, to_date, trx_no, created_by, request_id):
         print("Inside E-Invoicing Class\n")
-        Header_Eibv_data = einvDataModel.getEinvHeaderData(from_date, to_date)
+        Header_Eibv_data = einvDataModel.getEinvHeaderData(from_date, to_date, trx_no)
+        # print("Header data: ",Header_Eibv_data)
         response_login = einvDataModel.executeIRISLoginAPI()
         for row in Header_Eibv_data:
+            print("Inside Loop for a single invoice")
             response_payload = einvDataModel.createEinvoicePayload(row)
             einvDataModel.initiateEinvoicingProcess(response_payload[0],response_payload[1],response_payload[3], created_by, request_id)
             response_einv = einvDataModel.performEinvoicing(response_payload[0],response_payload[2],response_login[0],response_login[1])

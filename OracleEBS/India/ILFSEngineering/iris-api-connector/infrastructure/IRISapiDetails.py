@@ -58,6 +58,7 @@ class apiDetails:
         companyid = response.get('response',{}).get('companyid','')
         # print("Company_ID: ", companyid)
         token = response.get('response',{}).get('token','')
+        print("Auth Token generated")
         return token,companyid
       
     # IRIS GSTR1 API

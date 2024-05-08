@@ -7,8 +7,8 @@ class einvDataModel:
         return apiDetails.InvokeIRISEinvLoginAPI()
 
     # E-INVOICE
-    def getEinvHeaderData(from_date, to_date):
-        return database.executeEinvHeaderQuery(from_date, to_date)
+    def getEinvHeaderData(from_date, to_date, trx_no):
+        return database.executeEinvHeaderQuery(from_date, to_date, trx_no)
     
     def getEinvLineItem1Data(document_No):
         return database.executeEinvLine1Query(document_No)
