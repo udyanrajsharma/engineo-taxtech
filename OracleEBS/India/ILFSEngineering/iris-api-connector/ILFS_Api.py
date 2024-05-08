@@ -9,14 +9,15 @@ import time
 
 app = Flask(__name__)
 
-@app.route('/ilfs/gstr1/', methods=['POST'])
+
+@app.route("/ilfs/gstr1/", methods=["POST"])
 def api_gstr1():
     try:
         data = request.get_json()
-        from_date = data.get('From_date','')
-        to_date = data.get('To_Date','')
-        created_by = data.get('Created_By','')
-        request_id = data.get('Request_Id','')
+        from_date = data.get("From_date", "")
+        to_date = data.get("To_Date", "")
+        created_by = data.get("Created_By", "")
+        request_id = data.get("Request_Id", "")
 
         def long_running_task():
             IRISgst.gstr1_v(from_date, to_date, created_by, request_id)
@@ -25,21 +26,26 @@ def api_gstr1():
         thread1.start()
 
         # IRISgst.gstr1_v(from_date, to_date, created_by, request_id)
-        message = "GSTR1 API called successfully AND From date : {} AND To date : {}".format(from_date,to_date)
+        message = (
+            "GSTR1 API called successfully AND From date : {} AND To date : {}".format(
+                from_date, to_date
+            )
+        )
         return jsonify(message), 200
-    
+
     except Exception as e:
-        return jsonify({'result': 'error', 'message': str(e)})
-    
-@app.route('/ilfs/gstr2/', methods=['POST'])
+        return jsonify({"result": "error", "message": str(e)})
+
+
+@app.route("/ilfs/gstr2/", methods=["POST"])
 def api_gstr2():
     try:
         data = request.get_json()
         # print("API Called")
-        from_date = data.get('From_date','')
-        to_date = data.get('To_Date','')
-        created_by = data.get('Created_By','')
-        request_id = data.get('Request_Id','')
+        from_date = data.get("From_date", "")
+        to_date = data.get("To_Date", "")
+        created_by = data.get("Created_By", "")
+        request_id = data.get("Request_Id", "")
 
         def long_running_task():
             IRISgst.gstr2_v(from_date, to_date, created_by, request_id)
@@ -47,13 +53,18 @@ def api_gstr2():
         thread1 = threading.Thread(target=long_running_task)
         thread1.start()
 
-        message = "GSTR2 API called successfully AND From date : {} AND To date : {}".format(from_date,to_date)
+        message = (
+            "GSTR2 API called successfully AND From date : {} AND To date : {}".format(
+                from_date, to_date
+            )
+        )
         return jsonify(message), 200
-    
+
     except Exception as e:
-        return jsonify({'result': 'error', 'message': str(e)})
-    
-@app.route('/ilfs/einvoice/', methods=['POST'])
+        return jsonify({"result": "error", "message": str(e)})
+
+
+@app.route("/ilfs/einvoice/", methods=["POST"])
 def api_eInvoicing():
     try:
         data = request.get_json()
@@ -70,37 +81,40 @@ def api_eInvoicing():
         thread1 = threading.Thread(target=long_running_task)
         thread1.start()
 
-        message = "E-Invoice API called successfully AND From date : {} AND To date : {}".format(from_date,to_date)
-        return jsonify(message), 200    
+        message = "E-Invoice API called successfully AND From date : {} AND To date : {}".format(
+            from_date, to_date
+        )
+        return jsonify(message), 200
     except Exception as e:
-        return jsonify({'result': 'error', 'message': str(e)})
-    
-@app.route('/ilfs/cancelirn/', methods=['POST'])
+        return jsonify({"result": "error", "message": str(e)})
+
+
+@app.route("/ilfs/cancelirn/", methods=["POST"])
 def api_cancelIrn():
     try:
         data = request.get_json()
         # print("Cancel Reason, Cancel Remark, Invoice Id")
-        cancel_reason = data.get('CANCEL_REASON','')
-        cancel_remark = data.get('CANCEL_REMARK','')
-        invoice_id = data.get('INVOICE_ID','')
-        created_by = data.get('Created_By','')
-        request_id = data.get('Request_Id','')
+        cancel_reason = data.get("CANCEL_REASON", "")
+        cancel_remark = data.get("CANCEL_REMARK", "")
+        invoice_id = data.get("INVOICE_ID", "")
+        created_by = data.get("Created_By", "")
+        request_id = data.get("Request_Id", "")
 
         def long_running_task():
-            IRISeinv.cancelIRN(cancel_reason, cancel_remark, invoice_id, created_by, request_id)
+            IRISeinv.cancelIRN(
+                cancel_reason, cancel_remark, invoice_id, created_by, request_id
+            )
 
         thread1 = threading.Thread(target=long_running_task)
         thread1.start()
 
-        message = "Cancel IRN API called successfully for Invoice ID {}".format(invoice_id)
-        return jsonify(message), 200    
+        message = "Cancel IRN API called successfully for Invoice ID {}".format(
+            invoice_id
+        )
+        return jsonify(message), 200
     except Exception as e:
-        return jsonify({'result': 'error', 'message': str(e)})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0',port=5500, debug=True)
+        return jsonify({"result": "error", "message": str(e)})
 
 
-
-
-
+# if __name__ == '__main__':
+#    app.run(host='0.0.0.0',port=5500, debug=True)
