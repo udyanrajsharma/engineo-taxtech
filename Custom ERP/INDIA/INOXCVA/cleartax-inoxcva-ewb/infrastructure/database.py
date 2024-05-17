@@ -1,13 +1,45 @@
 import pymssql
 import json
 import pymssql._mssql
+from dotenv import load_dotenv
+import os
+import configparser
+import base64
+import sys
+import logging
 
-# MSSQL connection parameters
-DB_NAME = "INOX"
-DB_NAME_TEST = "INOX_Testing"
-DB_USER = "ENGINEOLAPTOP00\\animesha_engineosol"
-DB_PASSWORD = 'Ani@8931094967'
-DB_SERVER = "ENGINEOLAPTOP00"
+config = configparser.ConfigParser()
+extDataDir = os.getcwd()
+config_path = extDataDir+'/property2.ini'
+config.read(config_path)
+
+def decode_value(encoded_str):
+    decoded_bytes = base64.b64decode(encoded_str.encode('utf-8'))
+    decoded_str = decoded_bytes.decode('utf-8')
+    return decoded_str
+
+DB_NAME = decode_value(config.get('DB_CONNECTION', 'DB_NAME'))
+DB_NAME_TEST = decode_value(config.get('DB_CONNECTION', 'DB_NAME_TEST'))
+DB_USER = decode_value(config.get('DB_CONNECTION', 'DB_USER'))
+DB_PASSWORD = decode_value(config.get('DB_CONNECTION', 'DB_PASSWORD'))
+DB_SERVER = decode_value(config.get('DB_CONNECTION', 'DB_SERVER'))
+
+# DB_NAME = config.get('DB_CONNECTION', 'DB_NAME')
+# DB_NAME_TEST = config.get('DB_CONNECTION', 'DB_NAME_TEST')
+# DB_USER = config.get('DB_CONNECTION', 'DB_USER')
+# DB_PASSWORD = config.get('DB_CONNECTION', 'DB_PASSWORD')
+# DB_SERVER = config.get('DB_CONNECTION', 'DB_SERVER')
+
+extDataDir = os.getcwd()
+if getattr(sys, "frozen", False):
+    extDataDir = sys._MEIPASS
+load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
+
+# DB_NAME = os.getenv("DB_NAME")
+# DB_NAME_TEST = os.getenv("DB_NAME_TEST")
+# DB_USER = os.getenv("DB_USER")
+# DB_PASSWORD = os.getenv("DB_PASSWORD")
+# DB_SERVER = os.getenv("DB_SERVER")
 
 # Connect to MSSQL
 connection = pymssql.connect(
@@ -23,11 +55,16 @@ connection_2 = pymssql.connect(
     database= DB_NAME_TEST
 )
 
+info_logger = logging.getLogger('info_logger')
+error_logger = logging.getLogger('error_logger')
+
 class database:
 
     def executeHeaderDBQuery():
+        print("Inside Header Query")
+        info_logger.info("Inside Header Query")
         cur = connection.cursor()
-        Header_query = "select distinct [Document Number], CONVERT(varchar(10), [Document Date],101) [Document Date],  case when [Document Type] = 'Invoice' then 'INV' when [Document Type] = 'Delivery Challan' then 'CHL' when [Document Type] = 'Other' then 'Oth' else [Document Type] end [Document Type], [Transaction Type], case when [Sub Type] = 'jobwork' then 'JOB_WORK' when [Sub Type] = 'supply' then 'Supply' when [Sub Type] = 'Own use' then 'OWN_USE' when [Sub Type] = 'Export' then 'Export' when [Sub Type] = 'SKD' then 'SKD_CKD_LOTS' when [Sub Type] = 'Others' then 'OTH' when [Sub Type] = 'Other' then 'OTH' else [Sub Type] end [Sub Type], [Sub Type Description], case when [Eway Bill Transaction Type] = 'R' then 'Regular' else [Eway Bill Transaction Type] end [Eway Bill Transaction Type], [Customer Billing GSTIN], [Customer Billing Name], [Customer Billing Address], [Customer Billing Address 2], [Customer Billing City], CONVERT(INT, [Customer Billing Pincode]) [Customer Billing Pincode], [Customer Billing State], [Supplier GSTIN], [Supplier Name], [Supplier Address1], [Supplier Address2], [Supplier Place], CONVERT(INT, [Supplier Pincode]) [Supplier Pincode], [Supplier State], [Customer Shipping Name], [Customer Shipping Address], [Customer Shipping Address 2], [Customer Shipping City], CONVERT(INT, [Customer Shipping Pincode]) [Customer Shipping Pincode], [Customer shipping State], [Transporter ID], [Transporter Name], [Transportation Mode (Road/Rail/Air/Ship)], [Distance Level (Km)], [Transporter Doc No], REPLACE([Transportation Date], '-', '/'), [Vehicle Number], [Vehicle Type] from [dbo].[EWAY_BILL_FORMAT_FIDR1376_FOR_EWAY_PURPOSE] where [SUB TYPE] = 'Supply'AND [DOCUMENT DATE] = '04/22/2024' AND [ACTIVE] = '0'"
+        Header_query = "select distinct [Document Number], CONVERT(varchar(10), [Document Date],103) [Document Date],  case when [Document Type] = 'Invoice' then 'INV' when [Document Type] = 'Delivery Challan' then 'CHL' when [Document Type] = 'Other' then 'Oth' else [Document Type] end [Document Type], [Transaction Type], case when [Sub Type] = 'jobwork' then 'JOB_WORK' when [Sub Type] = 'supply' then 'Supply' when [Sub Type] = 'Own use' then 'OWN_USE' when [Sub Type] = 'Export' then 'Export' when [Sub Type] = 'SKD' then 'SKD_CKD_LOTS' when [Sub Type] = 'Others' then 'OTH' when [Sub Type] = 'Other' then 'OTH' else [Sub Type] end [Sub Type], [Sub Type Description], case when [Eway Bill Transaction Type] = 'R' then 'Regular' else [Eway Bill Transaction Type] end [Eway Bill Transaction Type], [Customer Billing GSTIN], [Customer Billing Name], [Customer Billing Address], [Customer Billing Address 2], [Customer Billing City], CONVERT(INT, [Customer Billing Pincode]) [Customer Billing Pincode], [Customer Billing State], [Supplier GSTIN], [Supplier Name], [Supplier Address1], [Supplier Address2], [Supplier Place], CONVERT(INT, [Supplier Pincode]) [Supplier Pincode], [Supplier State], [Customer Shipping Name], [Customer Shipping Address], [Customer Shipping Address 2], [Customer Shipping City], CONVERT(INT, [Customer Shipping Pincode]) [Customer Shipping Pincode], [Customer shipping State], [Transporter ID], [Transporter Name], [Transportation Mode (Road/Rail/Air/Ship)], [Distance Level (Km)], [Transporter Doc No], REPLACE([Transportation Date], '-', '/'), [Vehicle Number], [Vehicle Type] from [dbo].[EWAY_BILL_FORMAT_FIDR1376_FOR_EWAY_PURPOSE] where [Document Number] = '11012426500061' AND [ACTIVE] = '0'"
         cur.execute(Header_query)
         rows = cur.fetchall()
         cur.close()
@@ -41,24 +78,34 @@ class database:
         cur.close()
         return rows
 
-    def persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill):
+    def persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber):
         cur = connection_2.cursor()
+        cur_2 = connection.cursor()
         print("Inside Success Resonse for EWB and connection with database")
+        info_logger.info("Inside Success Resonse for EWB and connection with database")
         # Insert the response data into another MSSQL table
         insert_query = "INSERT INTO [dbo].[RESPONSE_DATA] ([STATUS], [EWB No], [EWB DATE], [EWB Valid Till], [TRANSACTION TYPE], [SUB TYPE], [DOCUMENT TYPE], [DOCUMENT NUMBER]) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-        cur.execute(insert_query, (Status, EwbNo, EwbDt, EwbValidTill, "DUMMY", "DUMMY", "DUMMY", "DUMMY"))
+        cur.execute(insert_query, (Status, EwbNo, EwbDt, EwbValidTill, "DUMMY", "DUMMY", "DUMMY", DocumentNumber))
         connection_2.commit()
         print("Insert Query completed for success response")
+        info_logger.info("Insert Query completed for success response")
+        # update_query = "update [dbo].[EWAY_BILL_FORMAT_FIDR1376_FOR_EWAY_PURPOSE] set [ACTIVE] = '1' WHERE [Document Number] = %s"
+        # cur_2.execute(update_query, (DocumentNumber))
+        # connection.commit()
+        print("Active field updated")
         cur.close() 
+        cur_2.close()
 
     def persistFailureResponseInDB(fail_status,error_message):
         cur = connection_2.cursor()
         print("Inside Failure Resonse for EWB")
+        error_logger.error("Inside Failure Resonse for EWB")
         # Insert the response data into another MSSQL table
         insert_query = "INSERT INTO [dbo].[RESPONSE_DATA] ([STATUS], [ERROR MESSAGE], [TRANSACTION TYPE], [SUB TYPE], [DOCUMENT TYPE], [DOCUMENT NUMBER]) VALUES (%s, %s, %s, %s, %s, %s)"
         cur.execute(insert_query, (fail_status, error_message, "DUMMY", "DUMMY", "DUMMY", "DUMMY"))
         connection_2.commit()
         print("Insert Query completed for failure response")
+        error_logger.error(error_message)
         cur.close() 
 
     # Cancel E-way Bill

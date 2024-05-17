@@ -1,10 +1,19 @@
 from domain.ewbDatamodel import ewbDatamodel
+import configparser
+import os
+import logging
+
+config = configparser.ConfigParser()
+config_path = '../property.ini'
+info_logger = logging.getLogger('info_logger')
+error_logger = logging.getLogger('error_logger')
 
 class ClearTaxEWBwithoutIRN:
 
     # Generate EWB
     def EWBwithoutIRN():
         print("Inside Service Class\n")
+        info_logger.info("Inside Service Class")
         Header_data = ewbDatamodel.getHeaderData()
         # print("Header Data: ",Header_data)
         for row in Header_data:
@@ -23,8 +32,7 @@ class ClearTaxEWBwithoutIRN:
             payload = {
             "DocumentNumber": row[0],
             "DocumentType": row[2],
-            # "DocumentDate": row[1],
-            "DocumentDate": "22/04/2024",
+            "DocumentDate": row[1],
             "SupplyType": row[3],
             "SubSupplyType": row[4],
             "SubSupplyTypeDesc": row[5],
@@ -59,12 +67,6 @@ class ClearTaxEWBwithoutIRN:
                 "Stcd": ""
             },
             "DispDtls": {
-                # "Nm": row[21],
-                # "Addr1": row[22],
-                # "Addr2": row[23],
-                # "Loc": row[24],
-                # "Pin": row[25],
-                # "Stcd": row[26]
                 "Nm": "",
                 "Addr1": "",
                 "Addr2": "",
@@ -128,9 +130,13 @@ class ClearTaxEWBwithoutIRN:
             payload["TotalAssessableAmount"] = total_assessable_Amount
 
             print("Clear Tax API Called \n")
-            response = ewbDatamodel.executeClearTaxEWBapi(payload, gstIn) # Calling Clear Tax EWB API
-            print("Response From Clear Tax API: ",response)
-            ewbDatamodel.saveResponse(response[0], response[1])
+            try:
+                info_logger.info("Clear Tax EWB API Called")
+                response = ewbDatamodel.executeClearTaxEWBapi(payload, gstIn) # Calling Clear Tax EWB API
+                print("Response From Clear Tax API: ",response)
+                ewbDatamodel.saveResponse(response[0], response[1])
+            except Exception as e:
+                error_logger.error("Error Occured in Clear Tax API: ", e, exc_info=True)
 
     # Cancel E-Way Bill
     def cancelEWB():

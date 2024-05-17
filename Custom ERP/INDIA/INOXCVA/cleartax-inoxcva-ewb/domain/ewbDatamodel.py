@@ -29,7 +29,7 @@ class ewbDatamodel:
                 EwbValidTill = response_data.get('govt_response', {}).get("EwbValidTill", '')
                 Alert = response_data.get('govt_response', {}).get("Alert", '')
                 print(Status,EwbNo,EwbDt,EwbValidTill)
-                database.persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill)
+                database.persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber)
 
             elif Success == "N" :
                 print("Inside Success: ",Success)

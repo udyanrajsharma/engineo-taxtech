@@ -13,8 +13,35 @@ import time
 import logging
 import logging.handlers
 
+from dotenv import load_dotenv
+import os
+import configparser
+import base64
+import sys
+
+config = configparser.ConfigParser()
+extDataDir = os.getcwd()
+config_path = extDataDir+'/property2.ini'
+config.read(config_path)
+
+def decode_value(encoded_str):
+    decoded_bytes = base64.b64decode(encoded_str.encode('utf-8'))
+    decoded_str = decoded_bytes.decode('utf-8')
+    return decoded_str
+
+logFilePath = decode_value(config.get('WINDOWS_SERVICE', 'log_filepath'))
+service_name = decode_value(config.get('WINDOWS_SERVICE', 'servicename'))
+
+extDataDir = os.getcwd()
+if getattr(sys, "frozen", False):
+    extDataDir = sys._MEIPASS
+load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
+
+# logFilePath = os.getenv("log_filePath")
+# service_name = os.getenv("serviceName")
+
 # Sets log file path.
-log_file = "d:\\output.log"
+log_file = logFilePath
 
 # Return a logger with the specified name.
 servicelogger = logging.getLogger("ClearTaxEWBServiceLogger")
@@ -37,8 +64,8 @@ servicelogger.addHandler(handler)
 
 
 class WindowsServiceScheduler(win32serviceutil.ServiceFramework):
-    _svc_name_ = "INOX ClearTax EWB Without IRN"
-    _svc_display_name_ = "INOX ClearTax EWB Without IRN"
+    _svc_name_ = service_name
+    _svc_display_name_ = service_name
 
     def __init__(self, *args):
         super().__init__(*args)
