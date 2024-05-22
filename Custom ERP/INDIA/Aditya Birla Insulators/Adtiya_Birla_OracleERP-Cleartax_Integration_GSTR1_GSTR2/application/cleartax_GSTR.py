@@ -1,17 +1,21 @@
-# # application/main.py
+# application/main.py
 
-from infrastructure.file_oprations import file_operations
+# from infrastructure.file_oprations import file_operations
 from infrastructure.api_operations import api_operations
 # -------------------------------------------------------------------------------------------------
 from infrastructure.database_operations import database_operations as db_ops
 # from infrastructure.database_connection import database_connection as db_conn
+import datetime
+# Get the current date
+current_datetime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-
-FILE_PATH = "GSTRpurchase.xlsx"
 
 class cleartax_GSTR:
 
-    def main():
+    def fileGSTR1():
+        FILE_PATH = f"D:/CODE/EngiNeo/engineo-taxtech/Custom ERP/INDIA/Aditya Birla Insulators/Adtiya_Birla_OracleERP-Cleartax_Integration_GSTR1_GSTR2/GSTR1_files/GSTR{current_datetime}.xlsx"
+
+
         try:
             # Connect to the database
             conn = db_ops.connect_to_database()
@@ -27,8 +31,11 @@ class cleartax_GSTR:
             print("Data from the database:")
             print(df)  # This line prints both field names and entire data
 
-            # Define the file path to save the Excel file
-            excel_file_path = "GSTRpurchase.xlsx"
+            
+            
+
+            # Define the file path with current date and template type to save the Excel file
+            excel_file_path = f"D:/CODE/EngiNeo/engineo-taxtech/Custom ERP/INDIA/Aditya Birla Insulators/Adtiya_Birla_OracleERP-Cleartax_Integration_GSTR1_GSTR2/GSTR1_files/GSTR{current_datetime}.xlsx"
 
             # Export DataFrame to Excel file
             if db_ops.export_to_excel(df, excel_file_path):
@@ -41,35 +48,104 @@ class cleartax_GSTR:
 
         except Exception as e:
             print("An error occurred:", e)
-        # ------------------------------------------------------------------------------------------------
-        filename_extension, filename = file_operations.get_filename_extension(FILE_PATH)
-        if not filename_extension or not filename:
-            return
 
-        file_content_type = file_operations.get_file_content_type(filename_extension)
-        if not file_content_type:
-            return
-
-        template_type = file_operations.determine_template_type(filename_extension)
         
-        pre_signed_url = api_operations.get_pre_signed_url(filename, file_content_type, template_type)
+        pre_signed_url = api_operations.get_pre_signed_url(f"GSTR{current_datetime}","XLSX","sales")
         if not pre_signed_url:
             return
 
-        upload_successful = api_operations.upload_file_to_storage(FILE_PATH, pre_signed_url, file_content_type)
+        upload_successful = api_operations.upload_file_to_storage(FILE_PATH, pre_signed_url, "XLSX")
         if not upload_successful:
             return
 
-        activity_id = api_operations.trigger_file_ingestion(pre_signed_url, filename_extension, template_type)
+        activity_id = api_operations.trigger_file_ingestion(pre_signed_url, f"GSTR{current_datetime}.xlsx", "sales")
         if not activity_id:
             return
 
-        api_operations.get_file_ingestion_status(activity_id, template_type)
+        api_operations.get_file_ingestion_status(activity_id, "sales")
+
+        print("GSTR1 successfull")
 
 # ----------------------------------------------------------------------------------------------------------------
-    # import database_operations as db_ops
+    def fileGSTR2():
+        FILE_PATH = f"D:/CODE/EngiNeo/engineo-taxtech/Custom ERP/INDIA/Aditya Birla Insulators/Adtiya_Birla_OracleERP-Cleartax_Integration_GSTR1_GSTR2/GSTR2_file/GSTR{current_datetime}.xlsx"
+
+
+        try:
+            # Connect to the database
+            conn = db_ops.connect_to_database()
+            if conn is None:
+                exit(1)
+
+            # Fetch data from the database
+            df = db_ops.fetch_data_from_database(conn)
+            if df is None:
+                exit(1)
+
+            # Print the DataFrame to the console
+            print("Data from the database:")
+            print(df)  # This line prints both field names and entire data
+
+            
+
+            # Get the current date
+            # current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+            # Define the file path with current date and template type to save the Excel file
+            excel_file_path = f"D:/CODE/EngiNeo/engineo-taxtech/Custom ERP/INDIA/Aditya Birla Insulators/Adtiya_Birla_OracleERP-Cleartax_Integration_GSTR1_GSTR2/GSTR2_file/GSTR{current_datetime}.xlsx"
+
+            # Export DataFrame to Excel file
+            if db_ops.export_to_excel(df, excel_file_path):
+                print("Excel file created successfully!")
+            else:
+                print("Failed to create Excel file.")
+
+            # Close Oracle connection
+            conn.close()
+
+        except Exception as e:
+            print("An error occurred:", e)
 
         
+        
+        pre_signed_url = api_operations.get_pre_signed_url(f"GSTR{current_datetime}", "XLSX", "purchase")
+        if not pre_signed_url:
+            return
+
+        upload_successful = api_operations.upload_file_to_storage(FILE_PATH, pre_signed_url,"XLSX")
+        if not upload_successful:
+            return
+
+        activity_id = api_operations.trigger_file_ingestion(pre_signed_url, f"GSTR{current_datetime}.xlsx","purchase")
+        if not activity_id:
+            return
+
+        api_operations.get_file_ingestion_status(activity_id, "purchase")
+
+        print("GSTR2 sucessfull")
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

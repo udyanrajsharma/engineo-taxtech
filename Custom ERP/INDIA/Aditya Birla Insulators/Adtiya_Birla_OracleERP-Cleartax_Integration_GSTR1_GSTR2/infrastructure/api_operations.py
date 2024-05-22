@@ -1,11 +1,16 @@
 #api_oprations.py
 
 import requests
+import os
+from dotenv import load_dotenv
+# Load variables from .env file
+load_dotenv()
 
 
-X_CLEARTAX_AUTH_TOKEN = "1.fd61b497-ac19-4f48-9abe-c7c2e13e5597_1d69ab398bb9c00977ceb73bfc9d022785a83c1976b654bdd1cae6bd513baf94"
-BASE_URL = 'https://api-sandbox.clear.in'
-
+# X_CLEARTAX_AUTH_TOKEN = "1.fd61b497-ac19-4f48-9abe-c7c2e13e5597_1d69ab398bb9c00977ceb73bfc9d022785a83c1976b654bdd1cae6bd513baf94"
+# BASE_URL = 'https://api-sandbox.clear.in'
+X_CLEARTAX_AUTH_TOKEN =os.getenv("CLEARTAX_AUTH_TOKEN")
+BASE_URL = os.getenv("BASE_URL")
 class api_operations:
 
     def get_pre_signed_url(filename, file_content_type, template_type):
