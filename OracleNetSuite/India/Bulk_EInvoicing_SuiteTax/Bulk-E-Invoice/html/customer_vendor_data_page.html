@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item List Report</title>
+	<!-- Bootstrap CSS -->
+  <link href="https://7640589.app.netsuite.com/core/media/media.nl?id=324670&c=7640589&h=rkdYdTxA5q7SMKXZPn5fOqFmJNvts3ZY-v4nFZ_UXZDmyXrr&_xt=.css" rel="stylesheet">
+  <!-- Bootstrap Table CSS -->
+  <link href="https://7640589.app.netsuite.com/core/media/media.nl?id=324671&c=7640589&h=Rw3RkOscusmh3ZzVfaeiWmh3hV_7eXxm_D-ptQcixFSUblO9&_xt=.css" rel="stylesheet">
+  
+
+  <style>
+	body {
+    font-family: Open Sans,Helvetica,sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: rgb(96, 119, 153);
+    text-align: center;
+    padding: 12px 0;
+	font-size: 14px;
+    color: rgb(255, 255, 255);;
+	font-weight: 700 !important;
+
+	
+}
+
+.filters {
+    text-align: center;
+    margin: 20px 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+
+
+footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+.select_values {
+    width: 250px;
+    height: 30px;
+}
+
+
+
+ .dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.search-input {
+  padding: 5px;
+  width: 200px;
+}
+
+.search-input-data{
+  padding: 5px;
+  width: 250px;
+}
+
+.dropdown-list {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 200px;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1;
+}
+
+.dropdown-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #ddd;
+}
+
+
+.search-button {
+  padding: 6px 18px;
+  background-color: rgb(96, 119, 153);
+  color: #fff;
+  border: none;
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.search-button:hover {
+  background-color: #0056b3;
+}
+
+
+ #loader_val {
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+        }
+        #loader_val img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+
+.disabled {
+    pointer-events: none; /* Disable pointer events */
+    opacity: 0.5; /* Reduce opacity to indicate disabled state */
+    /* Optionally, you can add other styles to visually indicate the disabled state */
+    /* For example: */
+    background-color: #f0f0f0; /* Light gray background color */
+    color: #888; /* Dimmed text color */
+    /* You can add other styles as needed */
+}
+
+.scrolling-div {
+            height: 600px; /* Set the height as per your requirement */
+            overflow-y: scroll; /* Enable vertical scrolling */
+            border: 1px solid #ccc; /* Optional: Add a border for visual clarity */
+            padding: 10px; /* Optional: Add padding for content */
+        }
+		
+		
+.rptcolheaderdiv {
+    position: relative;
+    background-color: #E0E6EF !important;
+    color: #262626 !important;
+	font-size: 11px !important;
+	font-weight: 400 !important;
+}
+
+.smalltextnolink {
+    font-size: 12px !important;
+    font-weight: normal !important;
+    color: #6f6f6f !important;
+    text-transform: uppercase;
+}
+
+
+ .container_filter {
+    display: flex; /* Use flexbox to arrange rows */
+    flex-wrap: wrap; /* Allow wrapping of rows */
+  
+}
+
+.column_filter {
+    flex: 1; /* Each column takes up equal space */
+    background-color: #f2f2f2; /* Background color for columns */
+    padding: 10px; /* Padding for columns */
+    margin: 5px; /* Margin for spacing between columns */
+    text-align: left; /* Center-align content */
+    box-sizing: border-box; /* Include padding and border in the column's total width */
+}
+
+.column_btn_filter {
+    flex: 1; /* Each column takes up equal space */
+    padding: 10px; /* Padding for columns */
+    margin: 5px; /* Margin for spacing between columns */
+    text-align: left; /* Center-align content */
+    box-sizing: border-box; /* Include padding and border in the column's total width */
+}
+
+.row_filter {
+    display: flex; /* Use flexbox to arrange columns horizontally */
+    width: 100%; /* Ensure rows span the full width of the container */
+    justify-content: space-between; /* Space columns evenly within rows */
+}
+  
+.rptdata {
+    vertical-align: top !important;
+    font-weight: normal !important;
+    font-size: 8pt !important;
+    padding: 2px !important;
+    border-style: none !important;
+    min-height: 17px !important;
+}
+
+  </style>
+	<script src="https://7640589.app.netsuite.com/core/media/media.nl?id=324673&c=7640589&h=_SATqa_A1o8pLnDBXo7LcgcoN9cGKQV2lr4nw432pjTea-e9&_xt=.js"></script>
+	
+	<!-- Bootstrap JS -->
+<script src="https://7640589.app.netsuite.com/core/media/media.nl?id=324674&c=7640589&h=E0cA_NUyux5Kfa-v_uReBe1DoIVy_GKrv9FseUayzVRxMboN&_xt=.js"></script>
+<!-- Bootstrap Table JS -->
+<script src="https://7640589.app.netsuite.com/core/media/media.nl?id=324672&c=7640589&h=ApcbCG04Lv7za84McfXbX20YVaffXuE9bcYeJs-zWbQXi04N&_xt=.js"></script>
+
+
+</head>
+
+<body>
+    <header>
+        <p>InXpress Ledger Report</p>
+      <p>Date: February 22, 2024</p>
+		<div id="sub_data">
+		<p id="subsid"></p>
+		<p id="subsid1"></p>
+		<p id="subsid2"></p>
+		<p id="subsid3"></p>
+		<p id="subsid4"></p>
+		</div>
+    </header>
+	
+	 
+	
+	<form method="post" id="myForm" class="form-horizontal" action="https://7640589.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=3141&deploy=1&compid=7640589&h=6297382241695665126f">
+
+	<div class="filter-container smalltextnolink">
+	 <div class="filters">
+	 
+	 <div class="container_filter">
+  <div class="row_filter">
+     <div class="column_btn_filter">
+	<label><strong></strong></label>
+  <label>  </label> 
+  </div>
+  
+	 <div class="column_btn_filter">
+	<label><strong>Customer Category:</strong></label>
+  <label> 
+<select class="select_values" id="customer_category"  name="customer_category" >
+  <option value="">Select</option>
+  <option value="1">All Franchisees</option>
+  <option value="2">All Inter Group Entities</option>
+  <option value="3">Others</option>
+  <option value="4">XMS Customers</option>
+
+  </select>
+
+  </label> 
+  </div>
+  <div class="column_btn_filter">
+	 <button class="search-button" id="search_button">Search</button>
+   </div>
+    <div class="column_btn_filter">
+	<label><strong></strong></label>
+  <label>  </label> 
+  </div>
+	</div>
+	
+  
+  
+</div>
+</div>
+
+ 
+
+  
+  
+ 
+  
+  
+  
+</div>
+
+
+<div class="scrolling-div" >
+<div class="filters rptdata">
+<p id="vendor_data"></p>
+<p id="opening_balance"></p>
+<p id="closing_balance"></p>
+</div>
+    <main>
+	 
+	<div id="main_table"  >
+       <table id="myTable" data-toggle="table" data-sortable="true"  data-search="true" >
+            <thead>
+                <tr class="rptcolheaderdiv">
+                    <th data-sortable="true" >View</th>
+                    <th data-sortable="true" >INTERNAL ID</th>
+                    <th data-sortable="true" >Category</th>
+                    <th data-sortable="true" > Entity Code</th>
+                    <th data-sortable="true" >Address Count</th>
+                    <th data-sortable="true" > Address ID</th>
+                    <th data-sortable="true" > Address Label</th> 
+                    <th data-sortable="true" > Address</th>
+                    <th data-sortable="true" > State (Custom)</th>
+                    <th data-sortable="true" > State/Province</th>
+                    <th data-sortable="true" >ID</th>
+                    <th data-sortable="true" > Tax Address</th>
+                    <th data-sortable="true" > Default Tax Reg.</th>
+                    <th data-sortable="true" > GSTIN</th>
+                    <th data-sortable="true" >  IS Address and GSTIN Match</th>
+					<th data-sortable="true" >  PAN #</th>
+					<th data-sortable="true" >  Franchise #</th>
+					<th data-sortable="true" >  XMS #</th>
+					<th data-sortable="true" >  Tally Customer</th>
+					<th data-sortable="true" >  REGISTRATION TYPE</th>
+                </tr>
+            </thead>
+            <tbody id="tbody" class="rptdata">
+                
+            </tbody>
+			
+            
+        </table>
+		
+		</div>
+		</div>
+		
+		 </form>
+    </main>
+    <script>
+	document.addEventListener('DOMContentLoaded', function() {
+
+ var custID = 'default_data';
+ var subsidry_data;
+console.log('hieeee');
+$.ajax({
+			   type: "GET",
+			   url: "/app/site/hosting/scriptlet.nl?script=customscript_customer_address&deploy=customdeploy_customer_address&cust_ID="+custID,
+			   async: false,
+			   processData: true,
+			   cache: false,
+			   success: function(objRec) 
+			   { 
+				if(objRec)
+				{
+				console.log('objRec');
+				console.log(objRec);
+										for(var n=0;n<objRec.length;n++)
+					{
+			var dynamicRowHTML =  '<tr class="rowClass rptdata"> <td>'+objRec[n].internalid+'</td><td>'+objRec[n].internalid+'</td> <td>'+objRec[n].category+'</td><td>'+objRec[n].tax_address_val+'</td> <td>'+objRec[n].gstin+'</td><td>'+objRec[n].tax_id+'</td><td>'+objRec[n].entity+'</td><td>'+objRec[n].address_count+'</td><td>'+objRec[n].is_address_match+'</td><td>'+objRec[n].add_id+'</td><td>'+objRec[n].addresslabel+'</td><td>'+objRec[n].address+'</td><td>'+objRec[n].tst_state+'</td><td>'+objRec[n].state+'</td><td>'+objRec[n].defaulttaxreg+'</td><td>'+objRec[n].pan+'</td><td>'+objRec[n].franchise+'</td><td>'+objRec[n].xms+'</td><td>'+objRec[n].tly_cstmr+'</td><td>'+objRec[n].regist_type+'</td></tr>';
+            $('#tbody').append(dynamicRowHTML);
+					
+					}
+				}
+				
+				}
+			});
+
+  
+});
+    </script>
+</body>
+</html>
