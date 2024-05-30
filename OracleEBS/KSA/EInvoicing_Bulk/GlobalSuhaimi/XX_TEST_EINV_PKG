@@ -7,7 +7,7 @@ AS
     (  
 --        P_FROM_DATE     VARCHAR2 ,
 --        P_TO_DATE       VARCHAR2 
-            o_chr_errbuf OUT VARCHAR2,
+          o_chr_errbuf OUT VARCHAR2,
           o_chr_retcode OUT VARCHAR2,
           P_DAY IN NUMBER
           
