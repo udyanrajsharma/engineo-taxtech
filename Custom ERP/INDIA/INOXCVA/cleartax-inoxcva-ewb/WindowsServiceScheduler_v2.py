@@ -58,9 +58,9 @@ class WindowsServiceScheduler(win32serviceutil.ServiceFramework):
     # def __init__(self, *args):
     #     super().__init__(*args)
 
-    def __init__(self,args):
+    def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, *args)
-        self.log('Service Initialized.')
+        self.log("Service Initialized.")
         self.stop_event = win32event.CreateEvent(None, 0, 0, None)
 
     def log(self, msg):
@@ -69,24 +69,28 @@ class WindowsServiceScheduler(win32serviceutil.ServiceFramework):
     # stop command service
     def SvcStop(self):
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        self.stop()
-        self.log('Service has stopped.')
+        self.log("Service has stopped.")
         win32event.SetEvent(self.stop_event)
         self.ReportServiceStatus(win32service.SERVICE_STOPPED)
 
     # start command service
     def SvcDoRun(self):
         import servicemanager
+
         self.ReportServiceStatus(win32service.SERVICE_START_PENDING)
         try:
             self.ReportServiceStatus(win32service.SERVICE_RUNNING)
-            self.log('Service is starting.')
+            self.log("Service is starting.")
             self.main()
             win32event.WaitForSingleObject(self.stop_event, win32event.INFINITE)
-            servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, ''))
+            servicemanager.LogMsg(
+                servicemanager.EVENTLOG_INFORMATION_TYPE,
+                servicemanager.PYS_SERVICE_STARTED,
+                (self._svc_name_, ""),
+            )
         except Exception as e:
-            s = str(e);
-            self.log('Exception :'+s)
+            s = str(e)
+            self.log("Exception :" + s)
             self.SvcStop()
 
     # main process
@@ -105,7 +109,6 @@ class WindowsServiceScheduler(win32serviceutil.ServiceFramework):
                 time.sleep(1)
         except Exception as e:
             print("An error occurred:", e)
-
 
     def scheduler(self):
         servicelogger.info("... Scheduler active ...\n")
