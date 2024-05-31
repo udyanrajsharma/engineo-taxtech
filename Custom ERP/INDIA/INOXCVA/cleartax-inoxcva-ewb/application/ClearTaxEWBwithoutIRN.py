@@ -1,19 +1,15 @@
 from domain.ewbDatamodel import ewbDatamodel
-import configparser
-import os
-import logging
+# import logging
 
-config = configparser.ConfigParser()
-config_path = '../property.ini'
-info_logger = logging.getLogger('info_logger')
-error_logger = logging.getLogger('error_logger')
+# info_logger = logging.getLogger('info_logger')
+# error_logger = logging.getLogger('error_logger')
 
 class ClearTaxEWBwithoutIRN:
-
+  
     # Generate EWB
     def EWBwithoutIRN():
         print("Inside Service Class\n")
-        info_logger.info("Inside Service Class")
+        # info_logger.info("Inside Service Class")
         Header_data = ewbDatamodel.getHeaderData()
         # print("Header Data: ",Header_data)
         for row in Header_data:
@@ -131,12 +127,13 @@ class ClearTaxEWBwithoutIRN:
 
             print("Clear Tax API Called \n")
             try:
-                info_logger.info("Clear Tax EWB API Called")
+                # info_logger.info("Clear Tax EWB API Called")
                 response = ewbDatamodel.executeClearTaxEWBapi(payload, gstIn) # Calling Clear Tax EWB API
                 print("Response From Clear Tax API: ",response)
                 ewbDatamodel.saveResponse(response[0], response[1])
             except Exception as e:
-                error_logger.error("Error Occured in Clear Tax API: ", e, exc_info=True)
+                # error_logger.error("Error Occured in Clear Tax API: ", e, exc_info=True)
+                print("Error Occured in Clear Tax API: ", e)
 
     # Cancel E-Way Bill
     def cancelEWB():

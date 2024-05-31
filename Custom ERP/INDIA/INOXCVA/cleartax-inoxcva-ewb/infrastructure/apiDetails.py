@@ -1,22 +1,24 @@
 import requests
 import json
-import decimal
 from decimal import Decimal
-from dotenv import load_dotenv
 import os
 import configparser
 import base64
-import sys
-import logging
+# import logging
 
 config = configparser.ConfigParser()
 extDataDir = os.getcwd()
-config_path = extDataDir+'/property2.ini'
+# if getattr(sys, "frozen", False):
+#     extDataDir = sys._MEIPASS
+config_path = extDataDir+'/CLEARTAX_EWB_NONIRN_PROPERTIES.ini'
 config.read(config_path)
+
+# print("API Config Path: ",config_path)
 
 def decode_value(encoded_str):
     decoded_bytes = base64.b64decode(encoded_str.encode('utf-8'))
     decoded_str = decoded_bytes.decode('utf-8')
+    # print("Decoded String: ",decoded_str)
     return decoded_str
 
 generateEwbToken = decode_value(config.get('API_DETAILS', 'generateEwbAuthToken'))
@@ -29,12 +31,12 @@ updEwbApiUrl = decode_value(config.get('API_DETAILS', 'updateEwbApiUrl'))
 def decimal_default(obj):
     if isinstance(obj, Decimal):
         return float(obj)  # Convert Decimal to float
-    raise TypeError
+    # raise TypeError
 
-extDataDir = os.getcwd()
-if getattr(sys, "frozen", False):
-    extDataDir = sys._MEIPASS
-load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
+# extDataDir = os.getcwd()
+# if getattr(sys, "frozen", False):
+#     extDataDir = sys._MEIPASS
+# load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
 
 # generateEwbToken = os.getenv('generateEwbAuthToken')
 # cancelEwbToken = os.getenv('cancelEwbAuthToken')
@@ -43,15 +45,15 @@ load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
 # canEwbApiUrl = os.getenv("cancelEwbApiUrl")
 # updEwbApiUrl = os.getenv("updateEwbApiUrl")
 
-info_logger = logging.getLogger('info_logger')
-error_logger = logging.getLogger('error_logger')
+# info_logger = logging.getLogger('info_logger')
+# error_logger = logging.getLogger('error_logger')
 
 class apiDetails:
 
     # Generate EWB Clear Tax API endpoint
     def InvokeClearTaxGenerateEWBAPI(payload,gstIn) :
         print("Inside  Clear Tax Generate EWB API")
-        info_logger.info("Inside  Clear Tax Generate EWB API")
+        # info_logger.info("Inside  Clear Tax Generate EWB API")
         # ClearTax Generate EWB API endpoint
         clear_tax_generateEWBapi_url = genEwbApiUrl
         request_headers = {

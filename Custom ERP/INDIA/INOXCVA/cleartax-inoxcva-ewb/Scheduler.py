@@ -34,7 +34,7 @@ error_logger = setup_logger('error_logger', error_log_file, level=logging.ERROR)
 
 def scheuleTime():
     info_logger.info("Starting the Scheduler")
-    schedule.every(1).minutes.do(ClearTaxEWBwithoutIRN.EWBwithoutIRN)
+    schedule.every(10).seconds.do(ClearTaxEWBwithoutIRN.EWBwithoutIRN)
     # schedule.every(5).minutes.do(ClearTaxEWBwithoutIRN.updateEWB)
     # schedule.every(5).minutes.do(ClearTaxEWBwithoutIRN.cancelEWB)
     print("\nScheduler Called")
