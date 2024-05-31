@@ -19,8 +19,8 @@ class gstDataModel:
     def fileGSTR1Data(payload,gstIn,token,companyid):
         return apiDetails.InvokeIRIS_GSTR1_API(payload,gstIn,token,companyid)
     
-    def finishGstr1FilingForInvoice(response,res_status_code,invoice_id):
-        return database.persistUpdateGstr1ResponseInDB(response,res_status_code,invoice_id)
+    def finishGstr1FilingForInvoice(response,res_status_code,invoice_id, request_id):
+        return database.persistUpdateGstr1ResponseInDB(response,res_status_code,invoice_id, request_id)
     
     def createGstr1Paylod(row):
         print("Inside Create Payload for GSTR1")
@@ -130,8 +130,8 @@ class gstDataModel:
     def fileGSTR2Data(payload,gstIn,token,companyid):
         return apiDetails.InvokeIRIS_GSTR2_API(payload,gstIn,token,companyid)
     
-    def finishGstr2FilingForInvoice(response,res_status_code,invoice_id):
-        return database.persistUpdateGstr2ResponseInDB(response,res_status_code,invoice_id)
+    def finishGstr2FilingForInvoice(response,res_status_code,invoice_id, request_id):
+        return database.persistUpdateGstr2ResponseInDB(response,res_status_code,invoice_id, request_id)
     
     def createGstr2Paylod(row):
         print("Inside Create Payload for GSTR2")

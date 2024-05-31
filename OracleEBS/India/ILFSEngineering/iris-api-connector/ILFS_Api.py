@@ -68,7 +68,7 @@ def api_gstr2():
 def api_eInvoicing():
     try:
         data = request.get_json()
-        # print("API Called")
+        print("API Called")
         from_date = data.get('From_date','')
         to_date = data.get('To_Date','')
         trx_no = data.get('P_TRX_NUMBER','')
@@ -77,6 +77,7 @@ def api_eInvoicing():
 
         def long_running_task():
             IRISeinv.einvoice_v(from_date, to_date, trx_no, created_by, request_id)
+            # IRISeinv.Test_einvoice_v(from_date, to_date, trx_no, created_by, request_id)
 
         thread1 = threading.Thread(target=long_running_task)
         thread1.start()
@@ -100,14 +101,9 @@ def api_cancelIrn():
         created_by = data.get("Created_By", "")
         request_id = data.get("Request_Id", "")
 
-        def long_running_task():
-            IRISeinv.cancelIRN(
-                cancel_reason, cancel_remark, invoice_id, created_by, request_id
-            )
-
-        thread1 = threading.Thread(target=long_running_task)
-        thread1.start()
-
+        IRISeinv.cancelIRN(
+            cancel_reason, cancel_remark, invoice_id, created_by, request_id
+        )
         message = "Cancel IRN API called successfully for Invoice ID {}".format(
             invoice_id
         )
@@ -116,5 +112,29 @@ def api_cancelIrn():
         return jsonify({"result": "error", "message": str(e)})
 
 
-# if __name__ == '__main__':
-#    app.run(host='0.0.0.0',port=5500, debug=True)
+@app.route("/ilfs/ewb/nonirn/", methods=["POST"])
+def api_ewbNonIrn():
+    try:
+        data = request.get_json()
+        doc_number = data.get("P_DOC_NUMBER", "")
+        created_by = data.get("Created_By", "")
+        request_id = data.get("Request_Id", "")
+
+        def long_running_task():
+            IRISeinv.generateEwbNonIrn(
+                doc_number, created_by, request_id
+            )
+
+        thread1 = threading.Thread(target=long_running_task)
+        thread1.start()
+
+        message = "EWB for Non-IRN API called successfully for Documnet No {}".format(
+            doc_number
+        )
+        return jsonify(message), 200
+    except Exception as e:
+        return jsonify({"result": "error", "message": str(e)})
+
+
+if __name__ == '__main__':
+   app.run(host='0.0.0.0',port=5500, debug=True)

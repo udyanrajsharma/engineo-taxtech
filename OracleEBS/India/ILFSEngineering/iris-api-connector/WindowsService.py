@@ -7,14 +7,24 @@ import win32serviceutil
 import win32service
 import win32event
 import servicemanager
-
+from datetime import datetime
+from dotenv import load_dotenv
+import os
 from ILFS_Api import app
 import time
 import logging
 import logging.handlers
 
+extDataDir = os.getcwd()
+if getattr(sys, "frozen", False):
+    extDataDir = sys._MEIPASS
+load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
+
+serviceName = os.getenv("service_name")
+# logFilePath = os.getenv("log_filepath")
 # Sets log file path.
-log_file = "d:\\output.log"
+current_date = datetime.now().strftime("%d%m%Y")
+log_file = f"C:\\IRIS\\Output_{current_date}.log"
 
 # Return a logger with the specified name.
 servicelogger = logging.getLogger("IRISConnectorServiceLogger")
@@ -37,8 +47,8 @@ servicelogger.addHandler(handler)
 
 
 class WindowsService(win32serviceutil.ServiceFramework):
-    _svc_name_ = "ILFS IRIS GST Connector"
-    _svc_display_name_ = "ILFS IRIS GST Connector"
+    _svc_name_ = serviceName
+    _svc_display_name_ = serviceName
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -51,7 +61,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
 
     # start command service
     def SvcDoRun(self):
-        servicelogger.info("*** STARTING SERVICE ***\n")
+        servicelogger.info("*** STARTING WINDOWS SERVICE ***\n")
         try:  # try main
             self.main()
         except:
@@ -63,16 +73,9 @@ class WindowsService(win32serviceutil.ServiceFramework):
     # main process
     def main(self):
 
-        servicelogger.info("... STARTING SCHEDULE PROCESS ...\n")
-        schedule.every(10).seconds.do(self.scheduler)
-        app.run(host="0.0.0.0", port=5500, debug=True)
-        while True:
-            # execute task on schedule
-            schedule.run_pending()
-            time.sleep(1)
-
-    def scheduler(self):
-        servicelogger.info("... Scheduler active ...\n")
+        servicelogger.info("... STARTING PROCESS ...\n")
+        from flask import Flask
+        app.run(host="0.0.0.0", port=5500)
 
 
 if __name__ == "__main__":
