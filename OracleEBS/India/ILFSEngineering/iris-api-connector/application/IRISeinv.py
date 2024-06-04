@@ -3,11 +3,11 @@ from domain.einvDataModel import einvDataModel
 class IRISeinv:
 
     # IRIS E-Inv
-    def einvoice_v(from_date, to_date, trx_no, created_by, request_id):
+    def einvoice_v(from_date, to_date, trx_no, gstin_state, created_by, request_id):
         print("Inside E-Invoicing Class\n")
         try:
-            Header_Einv_Prj_data = einvDataModel.getEinvHeaderData(from_date, to_date, trx_no)
-            Header_Einv_ST_data = einvDataModel.getEinvStockTransferHeaderData(from_date, to_date, trx_no)
+            Header_Einv_Prj_data = einvDataModel.getEinvHeaderData(from_date, to_date, trx_no, gstin_state)
+            Header_Einv_ST_data = einvDataModel.getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state)
             # print("Header data of EINV: ",Header_Einv_Prj_data)
             response_login = einvDataModel.executeIRISLoginAPI()
 
@@ -42,39 +42,44 @@ class IRISeinv:
                     einvDataModel.initiateGeneratedEinvoiceProcess(row[0],row[9], created_by, request_id)
 
         except Exception as e:
-            print("Error Occured : ",e)
+            print("Error Occured in E-Invoice Generation: ",e)
 
     def cancelIRN(cancel_reason, cancel_remark, invoice_id, created_by, request_id):
-        print("Inside Cancel IRN method")
-        irn_request = einvDataModel.getCancelirnQuery(invoice_id)
-        response_login = einvDataModel.executeIRISLoginAPI()
-        print(irn_request)
-        # usergstIn = "24AAACI9260R002"
-        for irn_data in irn_request:
-            print("IRIS_ID = ", irn_data[4])
-            if irn_data[3] != None:
-                # Cancel EWB Payload
-                print("EWB Cancellation")
-                ewb_payload = einvDataModel.cancelEWBpayload(irn_data[3],irn_data[1])
-                einvDataModel.performCancelEwb(response_login[1],response_login[0],ewb_payload)
-            #  Cancel IRN Payload
-            response = einvDataModel.cancelIRNpayload(irn_data[0], irn_data[1], cancel_reason, cancel_remark)          
-            einvDataModel.iniateCancelIrnProcess(response, invoice_id, irn_data[2], created_by, request_id)
-            # Invoke Cancel IRN API 
-            response_cancelIrn = einvDataModel.performCancelIrn(response_login[1],response_login[0],response)
-            einvDataModel.finishCancelIrnProcess(response_cancelIrn[0], response_cancelIrn[1], invoice_id, request_id, irn_data[4], response_login[1],response_login[0])
+        try:
+            print("Inside Cancel IRN method")
+            irn_request = einvDataModel.getCancelirnQuery(invoice_id)
+            response_login = einvDataModel.executeIRISLoginAPI()
+            print(irn_request)
+            # usergstIn = "24AAACI9260R002"
+            for irn_data in irn_request:
+                print("IRIS_ID = ", irn_data[4])
+                if irn_data[3] != None:
+                    # Cancel EWB Payload
+                    print("EWB Cancellation")
+                    ewb_payload = einvDataModel.cancelEWBpayload(irn_data[3],irn_data[1])
+                    einvDataModel.performCancelEwb(response_login[1],response_login[0],ewb_payload)
+                #  Cancel IRN Payload
+                response = einvDataModel.cancelIRNpayload(irn_data[0], irn_data[1], cancel_reason, cancel_remark)          
+                einvDataModel.iniateCancelIrnProcess(response, invoice_id, irn_data[2], created_by, request_id)
+                # Invoke Cancel IRN API 
+                response_cancelIrn = einvDataModel.performCancelIrn(response_login[1],response_login[0],response)
+                einvDataModel.finishCancelIrnProcess(response_cancelIrn[0], response_cancelIrn[1], invoice_id, request_id, irn_data[4], response_login[1],response_login[0])
+        except Exception as e:
+            print("Error Occured in E-Invoice Cancellation: ",e)
 
     def generateEwbNonIrn(doc_number, created_by, request_id):
-        print("Inside Non-IRN EWB")
-        print("CreatedBy :",created_by,"\nRequestId:",request_id)
-        Header_ewb_data = einvDataModel.getEwbHeaderData(doc_number)
-        response_login = einvDataModel.executeIRISTopazLoginAPI()
-        # print("Header Data: ",Header_ewb_data)
-        for rows in Header_ewb_data:
-            print("Inside Loop for a single EWB")
-            res_payload = einvDataModel.ewbNonIRNpayload(rows)
-            print("EWB Payload: ",res_payload)
-            einvDataModel.initiateEwbProcess(res_payload, doc_number, created_by, request_id)
-            response_Ewb = einvDataModel.performEwbnonIrn(response_login[1], response_login[0], res_payload)
-            einvDataModel.finishEwbNonIrnProcess(response_Ewb[0], response_Ewb[1], doc_number, response_login[1], response_login[0], request_id)
-            
+        try:
+            print("Inside Non-IRN EWB")
+            print("CreatedBy :",created_by,"\nRequestId:",request_id)
+            Header_ewb_data = einvDataModel.getEwbHeaderData(doc_number)
+            response_login = einvDataModel.executeIRISTopazLoginAPI()
+            # print("Header Data: ",Header_ewb_data)
+            for rows in Header_ewb_data:
+                print("Inside Loop for a single EWB")
+                res_payload = einvDataModel.ewbNonIRNpayload(rows)
+                print("EWB Payload: ",res_payload)
+                einvDataModel.initiateEwbProcess(res_payload, doc_number, created_by, request_id)
+                response_Ewb = einvDataModel.performEwbnonIrn(response_login[1], response_login[0], res_payload)
+                einvDataModel.finishEwbNonIrnProcess(response_Ewb[0], response_Ewb[1], doc_number, response_login[1], response_login[0], request_id)
+        except Exception as e:
+            print("Error Occured in E-Way Bill Generation: ",e)      

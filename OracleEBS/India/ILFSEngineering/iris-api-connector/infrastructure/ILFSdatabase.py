@@ -36,175 +36,195 @@ class database:
 
     # GSTR1
     def executeGSTR1HeaderQuery(from_date, to_date):
-        cur = connection.cursor()
-        # Header_gstr1_Query = "SELECT distinct INUM,INVTYP,SPLYTY,DST,REFNUM,IDT,CTPY,CTIN,CNAME,NTNUM,NTDT,VAL,POS,RCHRG,FY,DTY,RSN,P_GST,GEN2,GEN7,GEN8,GEN10,GEN11,GEN12,GEN13,GSTIN,FP FROM xx_iris_gstr1_v"
-        Header_gstr1_Query = "SELECT distinct INUM,INVTYP,SPLYTY,DST,REFNUM,IDT,CTPY,CTIN,CNAME,NTNUM,NTDT,VAL,POS,RCHRG,FY,DTY,RSN,P_GST,GEN2,GEN7,GEN8,GEN10,GEN11,GEN12,GEN13,GSTIN,FP FROM xx_iris_gstr1_v WHERE TO_DATE(idt,'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY')".format(from_date, to_date)
-        cur.execute(Header_gstr1_Query)
-        rows = cur.fetchall()
-        cur.close()
-        return rows
+        try:
+            cur = connection.cursor()
+            # Header_gstr1_Query = "SELECT distinct INUM,INVTYP,SPLYTY,DST,REFNUM,IDT,CTPY,CTIN,CNAME,NTNUM,NTDT,VAL,POS,RCHRG,FY,DTY,RSN,P_GST,GEN2,GEN7,GEN8,GEN10,GEN11,GEN12,GEN13,GSTIN,FP FROM xx_iris_gstr1_v"
+            Header_gstr1_Query = "SELECT distinct INUM,INVTYP,SPLYTY,DST,REFNUM,IDT,CTPY,CTIN,CNAME,NTNUM,NTDT,VAL,POS,RCHRG,FY,DTY,RSN,P_GST,GEN2,GEN7,GEN8,GEN10,GEN11,GEN12,GEN13,GSTIN,FP FROM xx_iris_gstr1_v WHERE TO_DATE(idt,'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY')".format(from_date, to_date)
+            cur.execute(Header_gstr1_Query)
+            rows = cur.fetchall()
+            cur.close()
+            return rows
+        except Exception as e:
+            print("Error while exwcuting GSTR1 Header Query from database", e)
     
     def executeGSTR1LineQuery(document_No):
-        cur = connection.cursor()
-        Line_gstr1_Query = "SELECT NVL(SVAL,0),TY,HSN_SC,DESCRIPTION,UQC,QTY,NVL(TXVAL,0),IRT,NVL(IAMT,0),CRT,NVL(CAMT,0),SRT,NVL(SAMT,0),CSRT,NVL(CSAMT,0),TXP,DISC,NVL(ADVAL,0),RT FROM xx_iris_gstr1_v WHERE inum = \'{}\'".format(document_No)
-        cur.execute(Line_gstr1_Query)
-        rows = cur.fetchall()
-        cur.close()
-        return rows
+        try:
+            cur = connection.cursor()
+            Line_gstr1_Query = "SELECT NVL(SVAL,0),TY,HSN_SC,DESCRIPTION,UQC,QTY,NVL(TXVAL,0),IRT,NVL(IAMT,0),CRT,NVL(CAMT,0),SRT,NVL(SAMT,0),CSRT,NVL(CSAMT,0),TXP,DISC,NVL(ADVAL,0),RT FROM xx_iris_gstr1_v WHERE inum = \'{}\'".format(document_No)
+            cur.execute(Line_gstr1_Query)
+            rows = cur.fetchall()
+            cur.close()
+            return rows
+        except Exception as e:
+            print("Error while exwcuting GSTR1 Line Query from database", e)
     
     def persistInsertGstr1RequestInDB(payload,invoice_id,invoice_date,return_period, created_by, request_id):
-        cur = connection.cursor()
-        json_payload = json.dumps(payload)
-        Insert_Query = "INSERT INTO XX_IRIS_GSTR1_LOG_T (TRX_NUMBER, TRX_DATE, RETURN_PERIOD, UPLOAD_TIME, CREATED_BY, CREATION_DATE, REQUEST_PAYLOAD, REQUEST_ID) VALUES ('{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', '{}')"
-        foramat_insert_query = Insert_Query.format(invoice_id, invoice_date, return_period, date.today().strftime('%d-%m-%Y'), created_by, date.today().strftime('%d-%m-%Y'), json_payload, request_id)
-        cur.execute(foramat_insert_query)
-        connection.commit()
-        cur.close()
-    
-    def persistUpdateGstr1ResponseInDB(response,res_status_code,invoice_id, request_id):
-        cur = connection.cursor()
-        response_data = response.json()
-        if res_status_code == 200:
-            # Extract fields from the response and save them to another table
-            status = response_data.get('status')
-            response = response_data.get("response", [])
-            if status == 'SUCCESS':
-                for res in response:
-                    message = res.get('message')
-                Update_Query = "UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-                cur.execute(Update_Query, {'a': status, 'b': message,'c': 'null' ,'e': invoice_id, 'z': request_id})
-                connection.commit()
-                cur.close()
-            else :
-                fieldError = response_data.get("fieldErrors", [])
-                failure_status = "FAILURE"
-                for res in fieldError:
-                    message = res.get('defaultMessage')
-                Update_Query = "UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-                cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' ,'e': invoice_id, 'z': request_id})
-                connection.commit()
-                cur.close()
+        try:
+            cur = connection.cursor()
+            json_payload = json.dumps(payload)
+            Insert_Query = "INSERT INTO XX_IRIS_GSTR1_LOG_T (TRX_NUMBER, TRX_DATE, RETURN_PERIOD, UPLOAD_TIME, CREATED_BY, CREATION_DATE, REQUEST_PAYLOAD, REQUEST_ID) VALUES (:1, TO_DATE(:2, 'DD-MM-YYYY'), :3, TO_DATE(:4, 'DD-MM-YYYY'), :5, TO_DATE(:6, 'DD-MM-YYYY'), :7, :8)"
+            bind_var = [invoice_id, invoice_date, return_period, date.today().strftime('%d-%m-%Y'), created_by, date.today().strftime('%d-%m-%Y'), json_payload, request_id]
+            # foramat_insert_query = Insert_Query.format(invoice_id, invoice_date, return_period, date.today().strftime('%d-%m-%Y'), created_by, date.today().strftime('%d-%m-%Y'), json_payload, request_id)
+            cur.execute(Insert_Query, bind_var)
+            connection.commit()
+            cur.close()
+        except Exception as e:
+            print("Error while inserting data into database for GSTR1", e)
         
-        elif res_status_code == 403:
-            # print("Inside status 403")
-            failure_status = "FAILURE"
-            timestamp = response_data.get('timestamp')
-            # date_string = timestamp.rsplit(' ',2)[0]
-            status_line = response_data.get('status')
-            error = response_data.get('error')
-            message = response_data.get('message')
-            Update_Query = "UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-            cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' ,'e': invoice_id, 'z': request_id})
-            connection.commit()
-            cur.close()
+    def persistUpdateGstr1ResponseInDB(response,res_status_code,invoice_id, request_id):
+        try:
+            cur = connection.cursor()
+            response_data = response.json()
+            json_payload = json.dumps(response_data)
+            if res_status_code == 200:
+                # Extract fields from the response and save them to another table
+                status = response_data.get('status')
+                response = response_data.get("response", [])
+                if status == 'SUCCESS':
+                    for res in response:
+                        message = res.get('message')
+                    Update_Query = "UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , RESPONSE_PAYLOAD = :3 where TRX_NUMBER = :4 AND REQUEST_ID = :5"
+                    bind_var = [status, message, json_payload, invoice_id, request_id]
+                    cur.execute(Update_Query, bind_var)
+                    connection.commit()
+                    cur.close()
+                else :
+                    fieldError = response_data.get("fieldErrors", [])
+                    failure_status = "FAILURE"
+                    for res in fieldError:
+                        message = res.get('defaultMessage')
+                    Update_Query = "UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , RESPONSE_PAYLOAD = :3 where TRX_NUMBER = :4 AND REQUEST_ID = :5"
+                    bind_var = [status, message, json_payload, invoice_id, request_id]
+                    cur.execute(Update_Query, bind_var)
+                    connection.commit()
+                    cur.close()
+            
+            elif res_status_code == 403:
+                # print("Inside status 403")
+                failure_status = "FAILURE"
+                message = response_data.get('message')
+                Update_Query = "UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , RESPONSE_PAYLOAD = :3 where TRX_NUMBER = :4 AND REQUEST_ID = :5"
+                bind_var = [failure_status, message, json_payload, invoice_id, request_id]
+                cur.execute(Update_Query, bind_var)
+                connection.commit()
+                cur.close()
 
-        else:
-            failure_status = "FAILURE"
-            message = response_data.get('message')
-            Update_Query = "UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-            cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' ,'e': invoice_id, 'z': request_id})
-            connection.commit()
-            cur.close()
+            else:
+                failure_status = "FAILURE"
+                message = response_data.get('message')
+                Update_Query = "UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , RESPONSE_PAYLOAD = :3 where TRX_NUMBER = :4 AND REQUEST_ID = :5"
+                bind_var = [failure_status, message, json_payload, invoice_id, request_id]
+                cur.execute(Update_Query, bind_var)
+                connection.commit()
+                cur.close()
+        except Exception as e:
+            print("Error while update data into database for GSTR1", e)
 
     # GSTR2
     def executeGSTR2HeaderQuery(from_date, to_date):
-        cur = connection.cursor()
-        # Header_gstr1_Query = "SELECT distinct INUM, GSTIN, DTY, INVTYP, DST, SPLYTY, CTPY, RTPY, CTIN, CNAME, IDT, VAL, POS, RCHRG, FY, REFNUM, PDT, CPTYCDE ,FP,GEN1,GEN2,GEN3,GEN4,GEN5,GEN6,GEN7,GEN8,GEN9,GEN10,GEN11 FROM xx_iris_gstr2_v"
-        Header_gstr1_Query = "SELECT distinct INUM, GSTIN, DTY, INVTYP, DST, SPLYTY, CTPY, RTPY, CTIN, CNAME, IDT, VAL, POS, RCHRG, FY, REFNUM, PDT, CPTYCDE ,FP,GEN1,GEN2,GEN3,GEN4,GEN5,GEN6,GEN7,GEN8,GEN9,GEN10,GEN11 FROM xx_iris_gstr2_v WHERE TO_DATE(idt,'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY')".format(from_date, to_date)
-        cur.execute(Header_gstr1_Query)
-        rows = cur.fetchall()
-        cur.close()
-        return rows
+        try:
+            cur = connection.cursor()
+            # Header_gstr1_Query = "SELECT distinct INUM, GSTIN, DTY, INVTYP, DST, SPLYTY, CTPY, RTPY, CTIN, CNAME, IDT, VAL, POS, RCHRG, FY, REFNUM, PDT, CPTYCDE ,FP,GEN1,GEN2,GEN3,GEN4,GEN5,GEN6,GEN7,GEN8,GEN9,GEN10,GEN11 FROM xx_iris_gstr2_v"
+            Header_gstr2_Query = "SELECT distinct INUM, GSTIN, DTY, INVTYP, DST, SPLYTY, CTPY, RTPY, CTIN, CNAME, IDT, VAL, POS, RCHRG, FY, REFNUM, PDT, CPTYCDE ,FP,GEN1,GEN2,GEN3,GEN4,GEN5,GEN6,GEN7,GEN8,GEN9,GEN10,GEN11 FROM xx_iris_gstr2_v WHERE TO_DATE(idt,'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY')".format(from_date, to_date)
+            cur.execute(Header_gstr2_Query)
+            rows = cur.fetchall()
+            cur.close()
+            return rows
+        except Exception as e:
+            print("Error while exwcuting GSTR2 Header Query from database", e)
     
     def executeGSTR2LineQuery(document_No):
-        cur = connection.cursor()
-        Line_gstr1_Query = "SELECT NUM, NVL(SVAL,0), TY, HSN_SC, DESCRIPTION, UQC, QTY, NVL(TXVAL,0), RT, IRT, NVL(IAMT,0), CRT, NVL(CAMT,0), SRT, NVL(SAMT,0), CSRT, NVL(CSAMT,0), ELG, TX_I, TXP FROM xx_iris_gstr2_v  WHERE inum = \'{}\'".format(document_No)
-        cur.execute(Line_gstr1_Query)
-        rows = cur.fetchall()
-        cur.close()
-        return rows
+        try:
+            cur = connection.cursor()
+            Line_gstr1_Query = "SELECT NUM, NVL(SVAL,0), TY, HSN_SC, DESCRIPTION, UQC, QTY, NVL(TXVAL,0), RT, IRT, NVL(IAMT,0), CRT, NVL(CAMT,0), SRT, NVL(SAMT,0), CSRT, NVL(CSAMT,0), ELG, TX_I, TXP FROM xx_iris_gstr2_v  WHERE inum = \'{}\'".format(document_No)
+            cur.execute(Line_gstr1_Query)
+            rows = cur.fetchall()
+            cur.close()
+            return rows
+        except Exception as e:
+            print("Error while exwcuting GSTR2 Line Query from database", e)
     
     def persistInsertGstr2RequestInDB(payload,invoice_id,invoice_date,return_period, created_by, request_id):
-        cur = connection.cursor()
-        json_payload = json.dumps(payload)
-        # print("Inside  insert request into DB")
-        # print("\nPayload: ",json_payload,"\nInvoice ID:",invoice_id,"\nInvoice Date: ",invoice_date,"\nReturn Period: ",return_period)
-        # Insert_Query = "INSERT INTO XX_IRIS_GSTR2_LOG_T (TRX_NUMBER, TRX_DATE, RETURN_PERIOD, UPLOAD_TIME, CREATED_BY, CREATION_DATE,REQUEST_PAYLOAD, REQUEST_ID) VALUES ('{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', '{}')"
-        # foramat_insert_query = Insert_Query.format(invoice_id, invoice_date, return_period, date.today().strftime('%d-%m-%Y'), created_by, date.today().strftime('%d-%m-%Y'), json_payload, request_id)
-        Insert_Query = "INSERT INTO XX_IRIS_GSTR2_LOG_T (TRX_NUMBER, TRX_DATE, RETURN_PERIOD, UPLOAD_TIME, CREATED_BY, CREATION_DATE, REQUEST_ID) VALUES ('{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}', TO_DATE('{}', 'DD-MM-YYYY'), '{}')"
-        foramat_insert_query = Insert_Query.format(invoice_id, invoice_date, return_period, date.today().strftime('%d-%m-%Y'), created_by, date.today().strftime('%d-%m-%Y'), request_id)
-        
-        # print("Insert Query:",foramat_insert_query)
-        cur.execute(foramat_insert_query)
-        connection.commit()
-        # print("GSTR2 Insert Query Done")
-        cur.close()
+        try:
+            cur = connection.cursor()
+            json_payload = json.dumps(payload)
+            Insert_Query = "INSERT INTO XX_IRIS_GSTR2_LOG_T (TRX_NUMBER, TRX_DATE, RETURN_PERIOD, UPLOAD_TIME, CREATED_BY, CREATION_DATE, REQUEST_ID, REQUEST_PAYLOAD) VALUES (:1, TO_DATE(:2, 'DD-MM-YYYY'), :3, TO_DATE(:4, 'DD-MM-YYYY'), :5, TO_DATE(:6, 'DD-MM-YYYY'), :7, :8)"
+            bind_var = [invoice_id, invoice_date, return_period, date.today().strftime('%d-%m-%Y'), created_by, date.today().strftime('%d-%m-%Y'), request_id, json_payload]
+            
+            cur.execute(Insert_Query, bind_var)
+            connection.commit()
+            cur.close()
+        except Exception as e:
+            print("Error while inserting data into database for GSTR2", e)
     
     def persistUpdateGstr2ResponseInDB(response,res_status_code,invoice_id, request_id):
-        cur = connection.cursor()
-        response_data = response.json()
-        if res_status_code == 200:
-            # print("Inside status 200")
-            # Extract fields from the response and save them to another table
-            status = response_data.get('status')
-            response = response_data.get("response", [])
-            if status == 'SUCCESS':
-                success_status = "SUCCESS"
-                for res in response:
-                    inv_no = res.get('inv_no')
-                    status_line = res.get('status')
-                    timeStamp = res.get('timeStamp')
-                    # date_string = timeStamp.rsplit(' ',2)[0]
-                    message = res.get('message')
-                Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-                cur.execute(Update_Query, {'a': success_status, 'b': message,'c': 'null' ,'e': invoice_id, 'z': request_id})
+        try:
+            cur = connection.cursor()
+            response_data = response.json()
+            json_payload = json.dumps(response_data)
+            if res_status_code == 200:
+                # print("Inside status 200")
+                # Extract fields from the response and save them to another table
+                status = response_data.get('status')
+                response = response_data.get("response", [])
+                if status == 'SUCCESS':
+                    success_status = "SUCCESS"
+                    for res in response:
+                        inv_no = res.get('inv_no')
+                        status_line = res.get('status')
+                        timeStamp = res.get('timeStamp')
+                        # date_string = timeStamp.rsplit(' ',2)[0]
+                        message = res.get('message')
+                    Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , RESPONSE_PAYLOAD = :3 where TRX_NUMBER = :4 AND REQUEST_ID = :5"
+                    bind_var = [success_status, message, json_payload, invoice_id, request_id]
+                    cur.execute(Update_Query, bind_var)
+                    connection.commit()
+                    cur.close()
+                
+                else:
+                    failure_status = "FAILURE"
+                    fieldError = response_data.get("fieldErrors", [])
+                    for res in fieldError:
+                        message = res.get('defaultMessage')
+                    Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , RESPONSE_PAYLOAD = :3 where TRX_NUMBER = :4 AND REQUEST_ID = :5"
+                    bind_var = [failure_status, message, json_payload, invoice_id, request_id]
+                    cur.execute(Update_Query, bind_var)
+                    connection.commit()
+                    cur.close()
+            
+            elif res_status_code == 403:
+                # print("Inside status 403")
+                failure_status = "FAILURE"
+                message = response_data.get('message')
+                Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , RESPONSE_PAYLOAD = :3 where TRX_NUMBER = :4 AND REQUEST_ID = :5"
+                bind_var = [failure_status, message, json_payload, invoice_id, request_id]
+                cur.execute(Update_Query, bind_var)
                 connection.commit()
                 cur.close()
-            
+
             else:
+                # print("Inside status other than 200 and 403")
                 failure_status = "FAILURE"
+                status = response_data.get('status')
                 fieldError = response_data.get("fieldErrors", [])
                 for res in fieldError:
                     message = res.get('defaultMessage')
-                    
-                Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-                cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' ,'e': invoice_id, 'z': request_id})
+
+                Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , RESPONSE_PAYLOAD = :3 where TRX_NUMBER = :4 AND REQUEST_ID = :5"
+                bind_var = [failure_status, message, json_payload, invoice_id, request_id]
+                cur.execute(Update_Query, bind_var)
                 connection.commit()
                 cur.close()
-        
-        elif res_status_code == 403:
-            # print("Inside status 403")
-            failure_status = "FAILURE"
-            timestamp = response_data.get('timestamp')
-            # date_string = timestamp.rsplit(' ',2)[0]
-            status_line = response_data.get('status')
-            error = response_data.get('error')
-            message = response_data.get('message')
-            Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-            cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' ,'e': invoice_id, 'z': request_id})
-            connection.commit()
-            cur.close()
-
-        else:
-            # print("Inside status other than 200 and 403")
-            failure_status = "FAILURE"
-            status = response_data.get('status')
-            fieldError = response_data.get("fieldErrors", [])
-            for res in fieldError:
-                message = res.get('defaultMessage')
-
-            Update_Query = "UPDATE XX_IRIS_GSTR2_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-            cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' ,'e': invoice_id, 'z': request_id})
-            connection.commit()
-            cur.close()
+        except Exception as e:
+            print("Error while update data into database for GSTR2", e)
 
     # E-INVOICE
-    def executeEinvHeaderQuery(from_date, to_date, txn_no):
+    def executeEinvHeaderQuery(from_date, to_date, txn_no, gstin_state):
         try:
             cur = connection.cursor()
             trx_no = txn_no.replace("'", "''")
 
-            Header_einv_Query = "Select distinct NO doc_num, CASE WHEN userGstin = '10AABCM3722F1Z7' THEN '10AAACI9260R002' WHEN userGstin = '24AABCM3722F1ZY' THEN '24AAACI9260R002' WHEN userGstin = '29AABCM3722F1ZO' THEN '29AAACI9260R002' WHEN userGstin = '29AABCM3722F1Z0' THEN '29AAACI9260R002' WHEN userGstin = '09AABCM3722F1ZQ' THEN '09AAACI9260R002' WHEN userGstin = '36AABCM3722F1ZT' THEN '36AAACI9260R002' WHEN userGstin = '37AABCM3722F1ZR' THEN '37AAACI9260R002' ELSE userGstin END userGstin, POBCODE, SUPPLYTYPE, NTR, DOCTYPE, CATG, DST, TRNTYP, DT, POS, DIFFPRCNT, ETIN, RCHRG, CASE WHEN SGSTIN = '10AABCM3722F1Z7' THEN '10AAACI9260R002' WHEN SGSTIN = '29AABCM3722F1ZO' THEN '29AAACI9260R002' WHEN SGSTIN = '29AABCM3722F1Z0' THEN '29AAACI9260R002' WHEN SGSTIN = '09AABCM3722F1ZQ' THEN '09AAACI9260R002' WHEN SGSTIN = '36AABCM3722F1ZT' THEN '36AAACI9260R002' WHEN SGSTIN = '37AABCM3722F1ZR' THEN '37AAACI9260R002' ELSE SGSTIN END SGSTIN, STRDNM, SLGLNM, SSTCD, ILFSTXNMETHOD, APICATG, BGSTIN, BTRDNM, BLGLNM, BBNM, BFLNO, BLOC, BDST, BSTCD, bpin, BPH, BEM, DGSTIN, DTRDNM, DLGLNM, DBNM, DFLNO, DLOC, DDST, DSTCD, DPIN, DPH, DEM, TOGSTIN, TOTRDNM, TOLGLNM, TOBNM, TOFLNO, TOLOC, TODST, TOSTCD, TOPIN, TOPH, TOEM, SBNUM, SBDT, PORT, EXPDUTY, CNTCD, FORCUR, INVFORCUR, TAXSCH, TOTINVVAL, TOTDISC, TOTFRT, TOTINS, TOTPKG, TOTOTHCHRG, TOTTXVAL, TOTIAMT, TOTCAMT, TOTSAMT, TOTCSAMT, TOTSTCSAMT, RNDOFFAMT, SEC7ACT, INVSTDT, INVENDDT, INVRMK, OMON, ODTY, OINVTYP, OCTIN, USERIRN, PAYNM, ACCTDET, PA, IFSC, PAYTERM, PAYINSTR, CRTRN, DIRDR, CRDAY, BALAMT, PAIDAMT, PAYDUEDT, TRANSID, SUBSPLYTYP, SUBSPLYDES, KDREFINUM, KDREFIDT, TRANSMODE, VEHTYP, TRANSDIST, TRANSNAME, TRANSDOCNO, TRANSDOCDATE, VEHNO,  SELLER_ORG_ID, RFNDELG, BOEF, FY, REFNUM, PDT, IVST, CPTYCDE, GEN1, GEN2, GEN3, GEN4, GEN5, GEN6, GEN7, GEN8, GEN9, GEN10, GEN11, GEN12, GEN13, GEN14, GEN15, GEN16, GEN17, GEN18, GEN19, GEN20, GEN21, GEN22, GEN23, GEN24, GEN25, GEN26, GEN27, GEN28, GEN29, GEN30, POBEWB, POBRET, TCSRT, TCSAMT, PRETCS, GENIRN, GENEWB, SPIN, refinum, sbnm, sflno, sloc, sdst from XX_ILFS_EINV_PRJ_DATA_V WHERE (( ( TO_DATE(dt,'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY') ) AND '{}' IS NULL )  OR ( NO = '{}' AND '{}' IS NOT NULL ))".format(from_date, to_date,trx_no,trx_no,trx_no)        
+            Header_einv_Query = "Select distinct NO doc_num, CASE WHEN userGstin = '10AABCM3722F1Z7' THEN '10AAACI9260R002' WHEN userGstin = '24AABCM3722F1ZY' THEN '24AAACI9260R002' WHEN userGstin = '29AABCM3722F1ZO' THEN '29AAACI9260R002' WHEN userGstin = '29AABCM3722F1Z0' THEN '29AAACI9260R002' WHEN userGstin = '09AABCM3722F1ZQ' THEN '09AAACI9260R002' WHEN userGstin = '36AABCM3722F1ZT' THEN '36AAACI9260R002' WHEN userGstin = '37AABCM3722F1ZR' THEN '37AAACI9260R002' ELSE userGstin END userGstin, POBCODE, SUPPLYTYPE, NTR, DOCTYPE, CATG, DST, TRNTYP, DT, POS, DIFFPRCNT, ETIN, RCHRG, CASE WHEN SGSTIN = '10AABCM3722F1Z7' THEN '10AAACI9260R002' WHEN SGSTIN = '29AABCM3722F1ZO' THEN '29AAACI9260R002' WHEN SGSTIN = '29AABCM3722F1Z0' THEN '29AAACI9260R002' WHEN SGSTIN = '09AABCM3722F1ZQ' THEN '09AAACI9260R002' WHEN SGSTIN = '36AABCM3722F1ZT' THEN '36AAACI9260R002' WHEN SGSTIN = '37AABCM3722F1ZR' THEN '37AAACI9260R002' ELSE SGSTIN END SGSTIN, STRDNM, SLGLNM, SSTCD, ILFSTXNMETHOD, APICATG, BGSTIN, BTRDNM, BLGLNM, BBNM, BFLNO, BLOC, BDST, BSTCD, bpin, BPH, BEM, DGSTIN, DTRDNM, DLGLNM, DBNM, DFLNO, DLOC, DDST, DSTCD, DPIN, DPH, DEM, TOGSTIN, TOTRDNM, TOLGLNM, TOBNM, TOFLNO, TOLOC, TODST, TOSTCD, TOPIN, TOPH, TOEM, SBNUM, SBDT, PORT, EXPDUTY, CNTCD, FORCUR, INVFORCUR, TAXSCH, TOTINVVAL, TOTDISC, TOTFRT, TOTINS, TOTPKG, TOTOTHCHRG, TOTTXVAL, TOTIAMT, TOTCAMT, TOTSAMT, TOTCSAMT, TOTSTCSAMT, RNDOFFAMT, SEC7ACT, INVSTDT, INVENDDT, INVRMK, OMON, ODTY, OINVTYP, OCTIN, USERIRN, PAYNM, ACCTDET, PA, IFSC, PAYTERM, PAYINSTR, CRTRN, DIRDR, CRDAY, BALAMT, PAIDAMT, PAYDUEDT, TRANSID, SUBSPLYTYP, SUBSPLYDES, KDREFINUM, KDREFIDT, TRANSMODE, VEHTYP, TRANSDIST, TRANSNAME, TRANSDOCNO, TRANSDOCDATE, VEHNO,  SELLER_ORG_ID, RFNDELG, BOEF, FY, REFNUM, PDT, IVST, CPTYCDE, GEN1, GEN2, GEN3, GEN4, GEN5, GEN6, GEN7, GEN8, GEN9, GEN10, GEN11, GEN12, GEN13, GEN14, GEN15, GEN16, GEN17, GEN18, GEN19, GEN20, GEN21, GEN22, GEN23, GEN24, GEN25, GEN26, GEN27, GEN28, GEN29, GEN30, POBEWB, POBRET, TCSRT, TCSAMT, PRETCS, GENIRN, GENEWB, SPIN, refinum, sbnm, sflno, sloc, sdst from XX_ILFS_EINV_PRJ_DATA_V WHERE ( ( ( TO_DATE(dt, 'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY') ) AND '{}' IS NULL ) OR ( no = '{}' AND '{}' IS NOT NULL ) ) AND SUBSTR(usergstin,0,2) = NVL('{}',SUBSTR(usergstin,0,2))".format(from_date, to_date, trx_no, trx_no, trx_no, gstin_state)        
             cur.execute(Header_einv_Query)
             rows = cur.fetchall()
             # print("Einvoice Header data: ",rows)
@@ -292,11 +312,11 @@ class database:
         except Exception as e:
             print("Error in E-Invoice Line Query 4:",e)
     
-    def executeEinvStockTransferHeaderQuery(from_date, to_date, txn_no):
+    def executeEinvStockTransferHeaderQuery(from_date, to_date, txn_no, gstin_state):
         try:
             cur = connection.cursor()
             trx_no = txn_no.replace("'", "''")
-            stockTransfer_einv_Query = "Select distinct NO doc_num, CASE WHEN USERGSTIN = '19AABCM3722F1ZP' THEN '19AAACI9260R002' ELSE USERGSTIN END USERGSTIN, POBCODE, SUPPLYTYPE, NTR, DOCTYPE, CATG, DST, TRNTYP, DT, POS, DIFFPRCNT, ETIN, RCHRG, CASE WHEN SGSTIN = '19AABCM3722F1ZP' THEN '19AAACI9260R002' ELSE SGSTIN END SGSTIN, STRDNM, SLGLNM, SSTCD, ILFSTXNMETHOD, APICATG, BGSTIN, BTRDNM, BLGLNM, BBNM, BFLNO, BLOC, BDST, BSTCD, bpin, BPH, BEM, DGSTIN, DTRDNM, DLGLNM, DBNM, DFLNO, DLOC, DDST, DSTCD, DPIN, DPH, DEM, TOGSTIN, TOTRDNM, TOLGLNM, TOBNM, TOFLNO, TOLOC, TODST, TOSTCD, TOPIN, TOPH, TOEM, SBNUM, SBDT, PORT, EXPDUTY, CNTCD, FORCUR, INVFORCUR, TAXSCH, TOTINVVAL, TOTDISC, TOTFRT, TOTINS, TOTPKG, TOTOTHCHRG, TOTTXVAL, TOTIAMT, TOTCAMT, TOTSAMT, TOTCSAMT, TOTSTCSAMT, RNDOFFAMT, SEC7ACT, INVSTDT, INVENDDT, INVRMK, OMON, ODTY, OINVTYP, OCTIN, USERIRN, PAYNM, ACCTDET, PA, IFSC, PAYTERM, PAYINSTR, CRTRN, DIRDR, CRDAY, BALAMT, PAIDAMT, PAYDUEDT, TRANSID, SUBSPLYTYP, SUBSPLYDES, KDREFINUM, KDREFIDT, TRANSMODE, VEHTYP, TRANSDIST, TRANSNAME, TRANSDOCNO, TRANSDOCDATE, VEHNO,  SELLER_ORG_ID, RFNDELG, BOEF, FY, REFNUM, PDT, IVST, CPTYCDE, GEN1, GEN2, GEN3, GEN4, GEN5, GEN6, GEN7, GEN8, GEN9, GEN10, GEN11, GEN12, GEN13, GEN14, GEN15, GEN16, GEN17, GEN18, GEN19, GEN20, GEN21, GEN22, GEN23, GEN24, GEN25, GEN26, GEN27, GEN28, GEN29, GEN30, POBEWB, POBRET, TCSRT, TCSAMT, PRETCS, GENIRN, GENEWB, SPIN, refinum, sbnm, sflno, sloc, sdst from XX_ILFS_EINV_INTORG_DATA_V WHERE (( ( TO_DATE(dt,'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY') ) AND '{}' IS NULL )  OR ( NO = '{}' AND '{}' IS NOT NULL ))".format(from_date, to_date,trx_no,trx_no,trx_no)
+            stockTransfer_einv_Query = "Select distinct NO doc_num, CASE WHEN USERGSTIN = '19AABCM3722F1ZP' THEN '19AAACI9260R002' ELSE USERGSTIN END USERGSTIN, POBCODE, SUPPLYTYPE, NTR, DOCTYPE, CATG, DST, TRNTYP, DT, POS, DIFFPRCNT, ETIN, RCHRG, CASE WHEN SGSTIN = '19AABCM3722F1ZP' THEN '19AAACI9260R002' ELSE SGSTIN END SGSTIN, STRDNM, SLGLNM, SSTCD, ILFSTXNMETHOD, APICATG, BGSTIN, BTRDNM, BLGLNM, BBNM, BFLNO, BLOC, BDST, BSTCD, bpin, BPH, BEM, DGSTIN, DTRDNM, DLGLNM, DBNM, DFLNO, DLOC, DDST, DSTCD, DPIN, DPH, DEM, TOGSTIN, TOTRDNM, TOLGLNM, TOBNM, TOFLNO, TOLOC, TODST, TOSTCD, TOPIN, TOPH, TOEM, SBNUM, SBDT, PORT, EXPDUTY, CNTCD, FORCUR, INVFORCUR, TAXSCH, TOTINVVAL, TOTDISC, TOTFRT, TOTINS, TOTPKG, TOTOTHCHRG, TOTTXVAL, TOTIAMT, TOTCAMT, TOTSAMT, TOTCSAMT, TOTSTCSAMT, RNDOFFAMT, SEC7ACT, INVSTDT, INVENDDT, INVRMK, OMON, ODTY, OINVTYP, OCTIN, USERIRN, PAYNM, ACCTDET, PA, IFSC, PAYTERM, PAYINSTR, CRTRN, DIRDR, CRDAY, BALAMT, PAIDAMT, PAYDUEDT, TRANSID, SUBSPLYTYP, SUBSPLYDES, KDREFINUM, KDREFIDT, TRANSMODE, VEHTYP, TRANSDIST, TRANSNAME, TRANSDOCNO, TRANSDOCDATE, VEHNO,  SELLER_ORG_ID, RFNDELG, BOEF, FY, REFNUM, PDT, IVST, CPTYCDE, GEN1, GEN2, GEN3, GEN4, GEN5, GEN6, GEN7, GEN8, GEN9, GEN10, GEN11, GEN12, GEN13, GEN14, GEN15, GEN16, GEN17, GEN18, GEN19, GEN20, GEN21, GEN22, GEN23, GEN24, GEN25, GEN26, GEN27, GEN28, GEN29, GEN30, POBEWB, POBRET, TCSRT, TCSAMT, PRETCS, GENIRN, GENEWB, SPIN, refinum, sbnm, sflno, sloc, sdst from XX_ILFS_EINV_INTORG_DATA_V WHERE ( ( ( TO_DATE(dt, 'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY') ) AND '{}' IS NULL ) OR ( no = '{}' AND '{}' IS NOT NULL ) ) AND SUBSTR(usergstin,0,2) = NVL('{}',SUBSTR(usergstin,0,2))".format(from_date, to_date, trx_no, trx_no, trx_no, gstin_state)
             cur.execute(stockTransfer_einv_Query)
             rows = cur.fetchall()
             # print("Header Query for Stock Transfer Executed: ",rows)
@@ -420,7 +440,7 @@ class database:
                     # attachment procedure
                     attach_entity = "RA_CUSTOMER_TRX"
                     doc_type = "GENERATE E-INVOICE"
-                    attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200), P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format(attach_entity, request_id, iris_no, doc_type)
+                    attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, iris_no, doc_type)
                     cur.execute(attachment_block)
                     connection.commit()
                     print("Invoice detail Updated and attachment - success")
@@ -578,6 +598,7 @@ class database:
     def persistUpdateCancelIrnResponseInDB(response_data, res_status_code, invoice_id, request_id, iris_id, companyId, token):
         cur = connection.cursor()
         json_payload = json.dumps(response_data)
+        print("Response : ",json_payload)
         if res_status_code == 200:
             print("Inside status 200")
             # Extract fields from the response and save them to another table
@@ -597,7 +618,7 @@ class database:
                     # attachment procedure
                     attach_entity = "RA_CUSTOMER_TRX"
                     doc_type = "CANCEL E-INVOICE"
-                    attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200), P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format(attach_entity, request_id, iris_no, doc_type)
+                    attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, invoice_id, doc_type)
                     cur.execute(attachment_block)
                     connection.commit()
                     print("Invoice detail Updated and attachment ")
@@ -640,8 +661,9 @@ class database:
                 message = response_data.get("message", '')
                 # print("Message in 400: ",message)
                 failure_status = "FAILURE"
-                Update_Query = "UPDATE XX_IRIS_CANCEL_IRN_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-                cur.execute(Update_Query, {'a': failure_status, 'b': message,'c': 'null' , 'e': invoice_id, 'z': request_id})
+                Update_Query = "UPDATE XX_IRIS_CANCEL_IRN_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , RESPONSE_PAYLOAD = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
+                bind_var = [failure_status, message, json_payload, invoice_id, request_id]
+                cur.execute(Update_Query, bind_var)
                 connection.commit()
                 print("Cancel Invoice Updated - fail")
                 cur.close()

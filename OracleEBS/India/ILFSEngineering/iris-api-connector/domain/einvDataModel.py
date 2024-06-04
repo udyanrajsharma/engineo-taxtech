@@ -8,8 +8,8 @@ class einvDataModel:
 
     # E-INVOICE
     # E-Inv Only Prj
-    def getEinvHeaderData(from_date, to_date, trx_no):
-        return database.executeEinvHeaderQuery(from_date, to_date, trx_no)
+    def getEinvHeaderData(from_date, to_date, trx_no, gstin_state):
+        return database.executeEinvHeaderQuery(from_date, to_date, trx_no, gstin_state)
     
     def testgetEinvHeaderData(from_date, to_date, trx_no):
         return database.testexecuteEinvHeaderQuery(from_date, to_date, trx_no)
@@ -30,8 +30,8 @@ class einvDataModel:
         return database.executeEinvLine4Query(document_No)
     
     # Stock Transfer E-Inv 
-    def getEinvStockTransferHeaderData(from_date, to_date, trx_no):
-        return database.executeEinvStockTransferHeaderQuery(from_date, to_date, trx_no)
+    def getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state):
+        return database.executeEinvStockTransferHeaderQuery(from_date, to_date, trx_no, gstin_state)
     
     def getEinvStockTransferLineItem1Data(document_No):
         return database.executeEinvStockTransferLine1Query(document_No)

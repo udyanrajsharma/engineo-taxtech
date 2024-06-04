@@ -69,14 +69,15 @@ def api_eInvoicing():
     try:
         data = request.get_json()
         print("API Called")
-        from_date = data.get('From_date','')
+        from_date = data.get('From_Date','')
         to_date = data.get('To_Date','')
-        trx_no = data.get('P_TRX_NUMBER','')
+        trx_no = data.get('TRX_NUMBER','')
+        gstin_State = data.get('GSTIN_STATE','')
         created_by = data.get('Created_By','')
         request_id = data.get('Request_Id','')
 
         def long_running_task():
-            IRISeinv.einvoice_v(from_date, to_date, trx_no, created_by, request_id)
+            IRISeinv.einvoice_v(from_date, to_date, trx_no, gstin_State, created_by, request_id)
             # IRISeinv.Test_einvoice_v(from_date, to_date, trx_no, created_by, request_id)
 
         thread1 = threading.Thread(target=long_running_task)
