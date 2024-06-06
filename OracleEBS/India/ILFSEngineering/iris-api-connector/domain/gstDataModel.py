@@ -34,8 +34,8 @@ class gstDataModel:
         adval = 0.00
         invoice_id = row[0]
         line_Gstr1_data = gstDataModel.getGstr1LineItemData(invoice_id)
-        # gstIn = row[25]
-        gstIn = "24ABCDE9876A1ZE"
+        gstIn = row[25]
+        # gstIn = "24ABCDE9876A1ZE"
         invoice_date = row[5]
         return_period = row[26]
         payload = {
@@ -70,8 +70,8 @@ class gstDataModel:
                 "gen12": row[23],
                 "gen13": row[24],
                 "itemDetails": [],
-                # "gstin": row[25],
-                "gstin": "24ABCDE9876A1ZE",
+                "gstin": row[25],
+                # "gstin": "24ABCDE9876A1ZE",
                 "fp": row[26],
                 "ft": "GSTR1"
                 }
@@ -143,8 +143,8 @@ class gstDataModel:
         csamt = 0.00
         invoice_id = row[0]
         line_Gstr2_data = gstDataModel.getGstr2LineItemData(invoice_id)
-        # gstIn = row[1]
-        gstIn = "24ABCDE9876A1ZE"
+        gstIn = row[1]
+        # gstIn = "24ABCDE9876A1ZE"
         invoice_date = row[10]
         return_period = row[18]
         payload = {
@@ -152,8 +152,8 @@ class gstDataModel:
                 {
                 "fp": row[18],
                 "ft": "GSTR2",
-                # "gstin": row[1],
-                "gstin": "24ABCDE9876A1ZE",
+                "gstin": row[1],
+                # "gstin": "24ABCDE9876A1ZE",
                 "dty": row[2],
                 "invTyp": row[3],
                 "dst": row[4],

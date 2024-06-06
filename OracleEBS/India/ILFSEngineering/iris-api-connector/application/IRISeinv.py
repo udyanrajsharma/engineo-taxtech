@@ -1,5 +1,6 @@
 from domain.einvDataModel import einvDataModel
 
+
 class IRISeinv:
 
     # IRIS E-Inv

@@ -7,6 +7,7 @@ class IRISgst:
         try:
             print("Inside GSTR1 Model Class\n")
             Header_Gstr1_data = gstDataModel.getGstr1HeaderData(from_date, to_date)
+            print("Header data: ",Header_Gstr1_data)
             response_login = gstDataModel.executeIRISLoginAPI()
             for row in Header_Gstr1_data:
                 response_payload = gstDataModel.createGstr1Paylod(row)

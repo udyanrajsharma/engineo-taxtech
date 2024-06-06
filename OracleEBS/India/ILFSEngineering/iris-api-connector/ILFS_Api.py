@@ -7,6 +7,7 @@ from application.IRISeinv import IRISeinv
 import threading
 import time
 
+
 app = Flask(__name__)
 
 
@@ -25,7 +26,6 @@ def api_gstr1():
         thread1 = threading.Thread(target=long_running_task)
         thread1.start()
 
-        # IRISgst.gstr1_v(from_date, to_date, created_by, request_id)
         message = (
             "GSTR1 API called successfully AND From date : {} AND To date : {}".format(
                 from_date, to_date
@@ -83,8 +83,8 @@ def api_eInvoicing():
         thread1 = threading.Thread(target=long_running_task)
         thread1.start()
 
-        message = "E-Invoice API called successfully AND From date : {} AND To date : {}".format(
-            from_date, to_date
+        message = "E-invoice API called successfully AND From date : {} AND To date : {} AND Transaction No: {} AND GSTIN State: {} AND Created BY: {} AND Request ID: {}".format(
+            from_date, to_date, trx_no, gstin_State, created_by, request_id
         )
         return jsonify(message), 200
     except Exception as e:
@@ -105,6 +105,7 @@ def api_cancelIrn():
         IRISeinv.cancelIRN(
             cancel_reason, cancel_remark, invoice_id, created_by, request_id
         )
+        
         message = "Cancel IRN API called successfully for Invoice ID {}".format(
             invoice_id
         )
