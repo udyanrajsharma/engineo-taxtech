@@ -33,8 +33,7 @@
 			}
 			
 			var rs = searchObj.run();			
-				//searchColumns.push(rs.columns);
-			//allColumns = rs.columns;
+			
 		
 			while (count == 1000) 
 			{
