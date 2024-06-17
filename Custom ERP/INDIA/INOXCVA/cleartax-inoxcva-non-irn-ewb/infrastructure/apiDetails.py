@@ -18,36 +18,36 @@ def decimal_default(obj):
     raise TypeError
 
 # ENV File
-extDataDir = os.getcwd()
-if getattr(sys, "frozen", False):
-    extDataDir = sys._MEIPASS
-load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
+# extDataDir = os.getcwd()
+# if getattr(sys, "frozen", False):
+#     extDataDir = sys._MEIPASS
+# load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
 
-generateEwbToken = os.getenv('generateEwbAuthToken')
-cancelEwbToken = os.getenv('cancelEwbAuthToken')
-updateEwbToken = os.getenv('updateEwbAuthToken')
-genEwbApiUrl = os.getenv("generateEwbApiUrl")
-canEwbApiUrl = os.getenv("cancelEwbApiUrl")
-updEwbApiUrl = os.getenv("updateEwbApiUrl")
+# generateEwbToken = os.getenv('generateEwbAuthToken')
+# cancelEwbToken = os.getenv('cancelEwbAuthToken')
+# updateEwbToken = os.getenv('updateEwbAuthToken')
+# genEwbApiUrl = os.getenv("generateEwbApiUrl")
+# canEwbApiUrl = os.getenv("cancelEwbApiUrl")
+# updEwbApiUrl = os.getenv("updateEwbApiUrl")
 
 # INI File
-# config = configparser.ConfigParser()
-# extDataDir = os.getcwd()
+config = configparser.ConfigParser()
+extDataDir = os.path.dirname(sys.executable)
 
-# config_path = extDataDir+'/CLEARTAX_EWB_NONIRN_PROPERTIES.ini'
-# config.read(config_path)
+config_path = extDataDir+'/CLEARTAX_EWB_NONIRN_PROPERTIES.ini'
+config.read(config_path)
 
-# def decode_value(encoded_str):
-#     decoded_bytes = base64.b64decode(encoded_str.encode('utf-8'))
-#     decoded_str = decoded_bytes.decode('utf-8')
-#     return decoded_str
+def decode_value(encoded_str):
+    decoded_bytes = base64.b64decode(encoded_str.encode('utf-8'))
+    decoded_str = decoded_bytes.decode('utf-8')
+    return decoded_str
 
-# generateEwbToken = decode_value(config.get('API_DETAILS', 'generateEwbAuthToken'))
-# cancelEwbToken = decode_value(config.get('API_DETAILS', 'cancelEwbAuthToken'))
-# updateEwbToken = decode_value(config.get('API_DETAILS', 'updateEwbAuthToken'))
-# genEwbApiUrl = decode_value(config.get('API_DETAILS', 'generateEwbApiUrl'))
-# canEwbApiUrl = decode_value(config.get('API_DETAILS', 'cancelEwbApiUrl'))
-# updEwbApiUrl = decode_value(config.get('API_DETAILS', 'updateEwbApiUrl'))
+generateEwbToken = decode_value(config.get('API_DETAILS', 'generateEwbAuthToken'))
+cancelEwbToken = decode_value(config.get('API_DETAILS', 'cancelEwbAuthToken'))
+updateEwbToken = decode_value(config.get('API_DETAILS', 'updateEwbAuthToken'))
+genEwbApiUrl = decode_value(config.get('API_DETAILS', 'generateEwbApiUrl'))
+canEwbApiUrl = decode_value(config.get('API_DETAILS', 'cancelEwbApiUrl'))
+updEwbApiUrl = decode_value(config.get('API_DETAILS', 'updateEwbApiUrl'))
 
 class apiDetails:
 
