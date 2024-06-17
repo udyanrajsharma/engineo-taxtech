@@ -1,8 +1,0 @@
-*.pyc
-*.spec
-/build
-/dist
-/_pycache_
-/domain/_pycache_
-/application/_pycache_
-/infrastructure/_pycache_
