@@ -438,9 +438,11 @@ class database:
                     cur.execute(Update_Query, bind_var)
                     connection.commit()
                     # attachment procedure
-                    attach_entity = "RA_CUSTOMER_TRX"
+                    # attach_entity = "RA_CUSTOMER_TRX"
                     doc_type = "GENERATE E-INVOICE"
-                    attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, iris_no, doc_type)
+                    # attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, iris_no, doc_type)
+                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN \ P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format( request_id, iris_no, doc_type)
+                    
                     cur.execute(attachment_block)
                     connection.commit()
                     print("Invoice detail Updated and attachment - success")
@@ -616,9 +618,11 @@ class database:
                     connection.commit()
                     print("Cancel Invoice Updated - success")
                     # attachment procedure
-                    attach_entity = "RA_CUSTOMER_TRX"
+                    # attach_entity = "RA_CUSTOMER_TRX" commented by himanshu on 06/06/2024
                     doc_type = "CANCEL E-INVOICE"
-                    attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, invoice_id, doc_type)
+                    # attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, invoice_id, doc_type) -- Changes done by himanshu on 06/06/2024
+                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(request_id, invoice_id, doc_type)
+                    
                     cur.execute(attachment_block)
                     connection.commit()
                     print("Invoice detail Updated and attachment ")
