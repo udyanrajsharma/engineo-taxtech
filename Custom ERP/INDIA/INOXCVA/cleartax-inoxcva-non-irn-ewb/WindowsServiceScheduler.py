@@ -7,19 +7,30 @@ import win32serviceutil
 import win32service
 import win32event
 import servicemanager
+# from pathlib import Path
 
 from application.ClearTaxEWBwithoutIRN import ClearTaxEWBwithoutIRN
 import time
 import logging
 import logging.handlers
 from datetime import datetime
+import os
 
 current_date = datetime.now().strftime("%d%m%Y")
-serviceName = "INOX ClearTax EWB Without IRN V1"
+serviceName = "INOX-ClearTax E-Way Bill Without IRN"
+
+log_dir = os.path.dirname(sys.executable)
+
+print("Log Directory : ",log_dir)
+# if not os.path.exists(log_dir):
+#     os.makedirs(log_dir)
 
 # Sets log file path.
-log_file_info = f"D:\\output_info_-{current_date}.log"
-log_file_error = f"D:\\output_error_-{current_date}.log"
+# log_file_info = f"D:\\output_info_-{current_date}.log"
+# log_file_error = f"D:\\output_error_-{current_date}.log"
+
+log_file_info = os.path.join(log_dir, f"Output_Info_{current_date}.log")
+log_file_error = os.path.join(log_dir, f"Output_Error_{current_date}.log")
 
 # Return a logger with the specified name.
 servicelogger_info = logging.getLogger("ClearTaxEWBServiceLogger")
@@ -81,7 +92,7 @@ class WindowsServiceScheduler(win32serviceutil.ServiceFramework):
         try:
             servicelogger_info.info("... STARTING SCHEDULE PROCESS ...\n")
             
-            schedule.every(10).seconds.do(self.scheduler)
+            schedule.every(1).minutes.do(self.scheduler)
             # schedule.every(15).seconds.do(ClearTaxEWBwithoutIRN.testTableModel)
             schedule.every(2).minutes.do(ClearTaxEWBwithoutIRN.EWBwithoutIRN)
             schedule.every(2).minutes.do(ClearTaxEWBwithoutIRN.updateEWB)

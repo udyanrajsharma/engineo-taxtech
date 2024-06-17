@@ -5,6 +5,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 from decimal import Decimal
 import os
+import configparser
+import base64
 import sys
 import logging
 
@@ -16,6 +18,7 @@ def decimal_default(obj):
         return float(obj)  # Convert Decimal to float
     raise TypeError
 
+# ENV File
 extDataDir = os.getcwd()
 if getattr(sys, "frozen", False):
     extDataDir = sys._MEIPASS
@@ -26,6 +29,23 @@ DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_SERVER = os.getenv("DB_SERVER")
 
+# INI File
+# config = configparser.ConfigParser()
+# extDataDir = os.getcwd()
+# config_path = os.path.join(extDataDir,'CLEARTAX_EWB_NONIRN_PROPERTIES.ini')
+# print("Database Config path: ", config_path)
+# config.read(config_path)
+
+# def decode_value(encoded_str):
+#     decoded_bytes = base64.b64decode(encoded_str.encode('utf-8'))
+#     decoded_str = decoded_bytes.decode('utf-8')
+#     return decoded_str
+
+# DB_NAME = decode_value(config.get('DB_CONNECTION', 'DB_NAME'))
+# DB_USER = decode_value(config.get('DB_CONNECTION', 'DB_USER'))
+# DB_PASSWORD = decode_value(config.get('DB_CONNECTION', 'DB_PASSWORD'))
+# DB_SERVER = decode_value(config.get('DB_CONNECTION', 'DB_SERVER'))
+
 # Connect to MSSQL
 connection = pymssql.connect(
     server = DB_SERVER,
@@ -33,6 +53,7 @@ connection = pymssql.connect(
     password= DB_PASSWORD,
     database= DB_NAME
 )
+print("database Connected")
 
 class database:
 
