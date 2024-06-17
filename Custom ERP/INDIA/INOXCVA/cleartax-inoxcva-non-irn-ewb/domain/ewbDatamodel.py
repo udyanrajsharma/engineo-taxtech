@@ -1,5 +1,9 @@
 from infrastructure.database import database
 from infrastructure.apiDetails import apiDetails
+import logging
+
+servicelogger_info = logging.getLogger("ClearTaxEWBServiceLogger")
+servicelogger_error = logging.getLogger("ClearTaxEWBErrorLogger")
 
 class ewbDatamodel:
 
@@ -31,6 +35,7 @@ class ewbDatamodel:
                     EwbValidTill = response_data.get('govt_response', {}).get("EwbValidTill", '')
                     Alert = response_data.get('govt_response', {}).get("Alert", '')
                     print(Status,EwbNo,EwbDt,EwbValidTill)
+                    servicelogger_info.info("... Success Response from ClearTax EWB generation...\n")
                     database.persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber, payload, response_data)
 
                 elif Success == "N" :
@@ -42,6 +47,7 @@ class ewbDatamodel:
                         error_message = error.get("error_message")
                         error_source = error.get("error_source")
                     print(fail_status,error_message)
+                    servicelogger_info.info("... Failure Response from ClearTax EWB generation...\n")
                     database.persistFailureResponseInDB(fail_status,error_message, error_code, error_source, DocumentNumber, payload, response_data)
 
                 # print("Data from response saved successfully.",response_data)
@@ -52,11 +58,13 @@ class ewbDatamodel:
                 errorSource = response_data.get("error_source", '')
                 errorCode = response_data.get("error_code", '')
                 errorMessage = response_data.get("error_message", '')
+                servicelogger_info.info("... Failure Response from ClearTax EWB generation...\n")
                 database.persistFailureResponseInDB(fail_status, errorMessage, errorCode, errorSource, DocumentNumber, payload, response_data)
                 print("Response from Clear Tax API on failure: {} \nError: Failed to make API call to ClearTax API.".format(response_data))
 
         except Exception as e:
             print("Error in data model for EWB generation: ",e)
+            servicelogger_error.exception("Exception Occured in saving the response for generate EWB :\n ")
 
     # Cancel E-Way Bill
     def getCancelEWBHeaderData():
@@ -75,6 +83,7 @@ class ewbDatamodel:
                 ewbNumber = response_data.get("ewbNumber", '')
                 ewbStatus = response_data.get("ewbStatus", '')
                 errorDetails = response_data.get("errorDetails", '')
+                servicelogger_info.info("... Success Response from ClearTax EWB cancellation...\n")
                 if errorDetails == None:
                     print("Inside Success: ")
                     database.persistCancelEWBSuccessResponseInDB(gstin,irn,ewbNumber,ewbStatus, cancelEWBpayload, response_data)
@@ -83,6 +92,7 @@ class ewbDatamodel:
                     error_message = response_data.get("errorDetails", {}).get("error_message", '')
                     fail_status = "FAILURE"
                     print(fail_status,error_message)
+                    servicelogger_info.info("... Failure Response from ClearTax EWB cancellation...\n")
                     database.persistCancelEWBFailureResponseInDB(fail_status,error_message, cancelEWBpayload, response_data )
                 # print("Data from response saved successfully.",response_data)
                 print(f"Response from API on 200 status: \n Success")
@@ -90,11 +100,13 @@ class ewbDatamodel:
             else:
                 fail_status = "FAILURE"
                 error_message = response_data.get("error_message", '')
+                servicelogger_info.info("... Failure Response from ClearTax EWB cancellation...\n")
                 database.persistCancelEWBFailureResponseInDB(fail_status,error_message, cancelEWBpayload, response_data )
                 print("Response from Clear Tax API on failure: \nError: Failed to make API call to ClearTax API.".format(response_data))
         
         except Exception as e:
             print("Error Occured in Save Response of Cancel EWB: ",e)
+            servicelogger_error.exception("Exception Occured in saving the response for cancel EWB :\n ")
 
     # Update E-Way Bill
     def getUpdateEWBHeaderData():
@@ -115,11 +127,13 @@ class ewbDatamodel:
                     UpdatedDate = response_data.get("UpdatedDate", '')
                     ValidUpto = response_data.get("ValidUpto", '')
                     print("Success response Update EWB called")
+                    servicelogger_info.info("... Success Response from ClearTax EWB update...\n")
                     database.persistUpdateEWBSuccessResponseInDB(EwbNo, UpdatedDate, ValidUpto, updateEWBpayload, response_data)
 
                 else:
                     print("Inside failure for 200")
                     error_details = response_data.get("errors", [])
+                    
                     for error in error_details:
                         error_code = error.get("error_code")
                         error_message = error.get("error_message")
@@ -128,6 +142,7 @@ class ewbDatamodel:
                     fail_status = "FAILURE"
                     print(fail_status,error_message)
                     print("Fail response Update EWB called")
+                    servicelogger_info.info("... Failure Response from ClearTax EWB update...\n")
                     database.persistUpdateEWBFailureResponseInDB(error_message, updateEWBpayload, response_data)
 
                 # print("Data from response saved successfully.",response_data)
@@ -138,11 +153,14 @@ class ewbDatamodel:
                 msg_values = [error["error_message"] for error in response_data["errors"]]
                 all_msg_values = ", ".join(msg_values)
                 print("All Messages: ",all_msg_values)
+                servicelogger_info.info("... Failure Response from ClearTax EWB update...\n")
                 database.persistUpdateEWBFailureResponseInDB(all_msg_values, updateEWBpayload, response_data)
                 print("Response from Clear Tax API on failure: {} \nError: Failed to make API call to ClearTax API.".format(response_data))
         except Exception as e:
             print("Error Occured in Save Response of Upadte EWB: ",e)
+            servicelogger_error.exception("Exception Occured in saving the response for update EWB :\n ")
 
     # Test Tabel
-    def testtableupdate():
-        return database.test_tabel()
+    # def testtableupdate():
+    #     servicelogger_info.info("... Inside ewb Data Model ...\n")
+    #     return database.test_tabel()
