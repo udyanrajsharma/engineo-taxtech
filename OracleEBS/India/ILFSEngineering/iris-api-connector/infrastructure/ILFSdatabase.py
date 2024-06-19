@@ -40,7 +40,7 @@ class database:
         try:
             cur = connection.cursor()
             # Header_gstr1_Query = "SELECT distinct INUM,INVTYP,SPLYTY,DST,REFNUM,IDT,CTPY,CTIN,CNAME,NTNUM,NTDT,VAL,POS,RCHRG,FY,DTY,RSN,P_GST,GEN2,GEN7,GEN8,GEN10,GEN11,GEN12,GEN13,GSTIN,FP FROM xx_iris_gstr1_v"
-            Header_gstr1_Query = "SELECT distinct INUM,INVTYP,SPLYTY,DST,REFNUM,IDT,CTPY,CTIN,CNAME,NTNUM,NTDT,VAL,POS,RCHRG,FY,DTY,RSN,P_GST,GEN2,GEN7,GEN8,GEN10,GEN11,GEN12,GEN13,GSTIN,FP FROM xx_iris_gstr1_v WHERE TO_DATE(idt,'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY')".format(from_date, to_date)
+            Header_gstr1_Query = "SELECT distinct INUM,INVTYP,SPLYTY,DST,REFNUM,IDT,CTPY,CTIN,CNAME,NTNUM,NTDT,VAL,POS,RCHRG,FY,DTY,RSN,P_GST,GEN2,GEN7,GEN8,GEN10,GEN11,GEN12,GEN13,GSTIN,FP FROM xx_iris_gstr1_v WHERE TRX_DATE BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY')".format(from_date, to_date)
             cur.execute(Header_gstr1_Query)
             rows = cur.fetchall()
             cur.close()
@@ -126,7 +126,7 @@ class database:
         try:
             cur = connection.cursor()
             # Header_gstr1_Query = "SELECT distinct INUM, GSTIN, DTY, INVTYP, DST, SPLYTY, CTPY, RTPY, CTIN, CNAME, IDT, VAL, POS, RCHRG, FY, REFNUM, PDT, CPTYCDE ,FP,GEN1,GEN2,GEN3,GEN4,GEN5,GEN6,GEN7,GEN8,GEN9,GEN10,GEN11 FROM xx_iris_gstr2_v"
-            Header_gstr2_Query = "SELECT distinct INUM, GSTIN, DTY, INVTYP, DST, SPLYTY, CTPY, RTPY, CTIN, CNAME, IDT, VAL, POS, RCHRG, FY, REFNUM, PDT, CPTYCDE ,FP,GEN1,GEN2,GEN3,GEN4,GEN5,GEN6,GEN7,GEN8,GEN9,GEN10,GEN11 FROM xx_iris_gstr2_v WHERE TO_DATE(idt,'DD-MM-YYYY') BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY')".format(from_date, to_date)
+            Header_gstr2_Query = "SELECT distinct INUM, GSTIN, DTY, INVTYP, DST, SPLYTY, CTPY, RTPY, CTIN, CNAME, IDT, VAL, POS, RCHRG, FY, REFNUM, PDT, CPTYCDE ,FP,GEN1,GEN2,GEN3,GEN4,GEN5,GEN6,GEN7,GEN8,GEN9,GEN10,GEN11 FROM xx_iris_gstr2_v WHERE TRX_DATE BETWEEN TO_DATE('{}', 'DD-MON-YYYY') AND TO_DATE('{}', 'DD-MON-YYYY')".format(from_date, to_date)
             cur.execute(Header_gstr2_Query)
             rows = cur.fetchall()
             cur.close()
@@ -439,9 +439,10 @@ class database:
                     connection.commit()
                     # attachment procedure
                     # attach_entity = "RA_CUSTOMER_TRX"
-                    doc_type = "GENERATE E-INVOICE"
+                    # doc_type = "GENERATE E-INVOICE"
                     # attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, iris_no, doc_type)
-                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN \ P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format( request_id, iris_no, doc_type)
+                    
+                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format(request_id, iris_no)
                     
                     cur.execute(attachment_block)
                     connection.commit()
@@ -522,6 +523,13 @@ class database:
                     bind_var = [response_status, message, qr_code, iris_no, iris_id, status, ackNo, ackDt, signedInvoice, signedQrCode, EwbNo, EwbDt, EwbValidTill, irn, response_pdf.content, gstin, json_response, invoice_id, request_id]
                     cur.execute(Update_Query, bind_var)
                     connection.commit()
+                    
+                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format(request_id, iris_no)
+                    
+                    cur.execute(attachment_block)
+                    connection.commit()
+                    print("Invoice detail Updated and attachment - success")
+                    cur.close()
                 except Exception as e:
                     print("Errpr Occured : ",e)
                 print("Invoice detail Updated and attachment - success")
@@ -618,10 +626,11 @@ class database:
                     connection.commit()
                     print("Cancel Invoice Updated - success")
                     # attachment procedure
-                    # attach_entity = "RA_CUSTOMER_TRX" commented by himanshu on 06/06/2024
-                    doc_type = "CANCEL E-INVOICE"
-                    # attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, invoice_id, doc_type) -- Changes done by himanshu on 06/06/2024
-                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(request_id, invoice_id, doc_type)
+                    # attach_entity = "RA_CUSTOMER_TRX"
+                    # doc_type = "CANCEL E-INVOICE"
+                    # attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, invoice_id, doc_type)
+                    
+                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200);  BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format( request_id, invoice_id)
                     
                     cur.execute(attachment_block)
                     connection.commit()
@@ -744,6 +753,11 @@ class database:
                     connection.commit()
 
                     print("Cancel Invoice Updated - success")
+                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200);  BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format( request_id, invoice_id)
+                    
+                    cur.execute(attachment_block)
+                    connection.commit()
+                    print("Invoice detail Updated and attachment ")
                     cur.close()
                 except Exception as e:
                     print("Error :",e)
