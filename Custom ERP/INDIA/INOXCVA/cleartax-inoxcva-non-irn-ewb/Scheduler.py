@@ -8,7 +8,7 @@ def scheuleTime():
     # schedule.every(2).minutes.do(ClearTaxEWBwithoutIRN.cancelEWB)
 
     # schedule.every(15).seconds.do(ClearTaxEWBwithoutIRN.testTableModel)
-    schedule.every(20).seconds.do(ClearTaxEWBwithoutIRN.EWBwithoutIRN)
+    schedule.every(40).seconds.do(ClearTaxEWBwithoutIRN.EWBwithoutIRN)
     # schedule.every(20).seconds.do(ClearTaxEWBwithoutIRN.updateEWB)
     # schedule.every(20).seconds.do(ClearTaxEWBwithoutIRN.cancelEWB)
     print("\nScheduler Called")

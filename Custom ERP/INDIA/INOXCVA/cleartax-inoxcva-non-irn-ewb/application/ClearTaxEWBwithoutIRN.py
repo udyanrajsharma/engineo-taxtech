@@ -190,6 +190,6 @@ class ClearTaxEWBwithoutIRN:
             print("Error Occured in Payload Creation of Update EWB: ",e)
             servicelogger_error.exception("Exception Occured in Payload Creation for update EWB :\n ")
 
-    # def testTableModel():
-    #     servicelogger.info("... Inside ClearTaxWithoutIRN ...\n")
-    #     return ewbDatamodel.testtableupdate()
+    def testTableModel():
+        servicelogger_info.info("... Inside ClearTaxWithoutIRN ...\n")
+        return ewbDatamodel.testtableupdate()

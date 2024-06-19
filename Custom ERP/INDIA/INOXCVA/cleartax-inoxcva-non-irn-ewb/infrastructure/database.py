@@ -87,7 +87,7 @@ class database:
             json_Reqpayload = json.dumps(payload, default=decimal_default)
             json_ResponsePayload = json.dumps(response_data, default=decimal_default)
             cur_2 = connection.cursor()
-            print("Inside Success Resonse for EWB and connection with database")
+            print("Inside Success Resonse for EWB and connection with database and current Time: ", datetime.now().strftime("%m-%d-%Y %H:%M:%S"))
             # Insert the response data into another MSSQL table
             insert_query = "INSERT INTO [dbo].[EWB_NON_IRN_RESPONSE] ([Ewb_status], [Ewb_Number], [Ewb_Generated_Date], [Ewb_Due_Date], [DOCUMENT_NUMBER], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME]) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             bind_var = [Status, EwbNo, EwbDt, EwbValidTill, DocumentNumber, json_Reqpayload, json_ResponsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
@@ -229,17 +229,17 @@ class database:
             print("Error in failure update for EWB Update: ",e)
             servicelogger_error.exception("Exception Occured for Failure response in database for update EWB :\n ")
 
-    # def test_tabel():
-    #     try:
-    #         print("Inside Method 1 in class 1")
-    #         servicelogger_info.info("... Inside Database Class ...\n")
-    #         cur = connection.cursor()
-    #         insert_query = "INSERT INTO [dbo].[TEST_TABLE] ([COL_1], [COL_2], [COL_3], [COL_4], [COL_6]) VALUES ('8c1', '8c2', '8c3', '8c4', '8c5')"
-    #         cur.execute(insert_query)
-    #         connection.commit()
-    #         print("Inser Query Executed for method 1")
-    #         servicelogger_info.info("... Insert Query Executed for Test_Table ...\n")
-    #     except Exception as e:
-    #         print("Error in executing method 1 in class 1: ",e)
-    #         servicelogger_error.exception("Error in inserting data into test table...\n ")
+    def test_tabel():
+        try:
+            print("Inside Method 1 in class 1")
+            servicelogger_info.info("... Inside Database Class ...\n")
+            cur = connection.cursor()
+            insert_query = "INSERT INTO [dbo].[TEST_TABLE] ([COL_1], [COL_2], [COL_3], [COL_4]) VALUES ('8c1', '8c2', '8c3', '8c4')"
+            cur.execute(insert_query)
+            connection.commit()
+            print("Inser Query Executed for method 1")
+            servicelogger_info.info("... Insert Query Executed for Test_Table ...\n")
+        except Exception as e:
+            print("Error in executing method 1 in class 1: ",e)
+            servicelogger_error.exception("Error in inserting data into test table...\n ")
    

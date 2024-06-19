@@ -161,6 +161,6 @@ class ewbDatamodel:
             servicelogger_error.exception("Exception Occured in saving the response for update EWB :\n ")
 
     # Test Tabel
-    # def testtableupdate():
-    #     servicelogger_info.info("... Inside ewb Data Model ...\n")
-    #     return database.test_tabel()
+    def testtableupdate():
+        servicelogger_info.info("... Inside ewb Data Model ...\n")
+        return database.test_tabel()

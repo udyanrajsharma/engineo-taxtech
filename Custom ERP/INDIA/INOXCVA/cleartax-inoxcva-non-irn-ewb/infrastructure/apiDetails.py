@@ -1,3 +1,4 @@
+# import pip_system_certs.wrapt_requests
 import requests
 import json
 import decimal
@@ -8,6 +9,8 @@ import sys
 import configparser
 import base64
 import logging
+# import ssl
+# import certifi
 
 servicelogger_info = logging.getLogger("ClearTaxEWBServiceLogger")
 servicelogger_error = logging.getLogger("ClearTaxEWBErrorLogger")
@@ -34,6 +37,10 @@ def decimal_default(obj):
 config = configparser.ConfigParser()
 extDataDir = os.path.dirname(sys.executable)
 
+# clearTaxSSLpath = extDataDir+'/clear-in-chain.pem'
+# clearTaxSSLpath = os.path.join(extDataDir,"clear-in-chain.crt")
+# print("SSL Cert path: ", clearTaxSSLpath)
+
 config_path = extDataDir+'/CLEARTAX_EWB_NONIRN_PROPERTIES.ini'
 config.read(config_path)
 
@@ -48,6 +55,8 @@ updateEwbToken = decode_value(config.get('API_DETAILS', 'updateEwbAuthToken'))
 genEwbApiUrl = decode_value(config.get('API_DETAILS', 'generateEwbApiUrl'))
 canEwbApiUrl = decode_value(config.get('API_DETAILS', 'cancelEwbApiUrl'))
 updEwbApiUrl = decode_value(config.get('API_DETAILS', 'updateEwbApiUrl'))
+
+# print(" Certificate = ",certifi.where())
 
 class apiDetails:
 
@@ -64,8 +73,16 @@ class apiDetails:
             response = requests.put(url=clear_tax_generateEWBapi_url, headers=request_headers, json=json.loads(json.dumps(payload, default=decimal_default)))
             # print("\nPayload: ",json.loads(json.dumps(payload, default=decimal_default)))
             response_statusCode = response.status_code
-            print("\nResponse Status Code:",response_statusCode)
-            servicelogger_info.info("...ClearTax API for generate EWB called")
+            servicelogger_info.debug(f"Response Status Code: {response.status_code}")
+            servicelogger_info.debug(f"Response Headers: {response.headers}")
+            servicelogger_info.debug(f"Response Content: {response.text}")
+            
+            try:
+                data = response.json()
+            except ValueError:
+                servicelogger_error.error("Response content is not valid JSON")
+                servicelogger_error.debug(f"Response content: {response.text}")            
+            
             return response.json(), response_statusCode
         except Exception as e:
             print("Error Occured in Calling Generate EWB Non IRN API :",e)
@@ -83,9 +100,10 @@ class apiDetails:
             }
             response = requests.post(url=clearTax_cancelEWB_api_url, headers=request_header_cancelEWB, json=json.loads(json.dumps(cancelEWBpayload, default=decimal_default)))
             response_statusCode = response.status_code
+            response_data = response.json()
             print("Response from Cancel E-Way Bill: ",response.json())
             servicelogger_info.info("...ClearTax API for cancel EWB called")
-            return response.json(), response_statusCode
+            return response_data, response_statusCode
         except Exception as e:
             print("Error Occured in Calling Cancel EWB Non IRN API :",e)
             servicelogger_error.exception("...Exception Occured in Calling the ClearTax Cancel EWB API... \n ")
@@ -101,9 +119,10 @@ class apiDetails:
             }
             response = requests.post(url=clearTax_updateEWB_api_url, headers=request_header_updateEWB, json=json.loads(json.dumps(updateEWBpayload, default=decimal_default)))
             response_statusCode = response.status_code
+            response_data = response.json()
             print("Response from Update E-Way Bill: ",response.json())
             servicelogger_info.info("...ClearTax API for update EWB called")
-            return response.json(), response_statusCode
+            return response_data, response_statusCode
         except Exception as e:
             print("Error Occured in Calling Generate EWB Non IRN API :",e)
             servicelogger_error.exception("...Exception Occured in Calling the ClearTax Update EWB API... \n ")
