@@ -1,0 +1,328 @@
+create or replace PACKAGE BODY  xx_bvc_test_gstr_one 
+AS
+    g_cleartax_auth_token VARCHAR(200)  := '1.626a6b16-8a8d-4185-9e93-cf06d94b5e74_604f203a1eea4f509fb14bd1d13b8b09b91216fa78b22f8efd39990cffef28c3';
+    
+    
+    PROCEDURE  get_bip_report_from_fusion
+    IS
+        v_fusion_url     VARCHAR2(200) := 'https://ekeo.fa.em2.oraclecloud.com/:443';
+        v_wallet_path    VARCHAR2(50) := 'file:/rdsdbdata/userdirs/01';
+        v_wallet_pwd     VARCHAR2(20) := 'bvc@1234';
+        v_user_name      VARCHAR2(50) := 'pritam.vartak@bvcventures.com';
+        v_pwd            VARCHAR2(50) := 'test@1234';
+        v_directory      VARCHAR2(150) := 'BVCWALLET';
+        v_result         CLOB;
+        v_http_request   utl_http.req;
+        v_http_response  utl_http.resp;
+        v_counter        PLS_INTEGER;
+        v_length         PLS_INTEGER;
+        v_envelope       VARCHAR2(32767);
+        v_response       CLOB;
+        v_from_date      VARCHAR2(50);
+        v_to_date        VARCHAR2(50);
+        v_first_day      DATE;
+        v_buffer         VARCHAR2(32767);
+        v_offset         PLS_INTEGER := 1;
+        v_tan_buffer     PLS_INTEGER := 2000;
+        v_url            VARCHAR2(2000) := 'https://ekeo-test.fa.em2.oraclecloud.com:443/xmlpserver/services/ExternalReportWSSService';
+        v_req_xml        VARCHAR2(32767) := '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:pub="http://xmlns.oracle.com/oxp/service/PublicReportService">
+                                               <soap:Header/>
+                                               <soap:Body>
+                                                  <pub:runReport>
+                                                     <pub:reportRequest>
+                                                        <pub:attributeFormat></pub:attributeFormat>
+                                                        <pub:parameterNameValues>
+                                                           <pub:item>
+                                                              <pub:name>FROM_DATE</pub:name>
+                                                              <pub:values>
+                                                                 <pub:item>{from_date}</pub:item>
+                                                              </pub:values>
+                                                           </pub:item>
+                                                           <pub:item>
+                                                              <pub:name>TO_DATE</pub:name>
+                                                              <pub:values>
+                                                                 <pub:item>{to_date}</pub:item>
+                                                              </pub:values>
+                                                           </pub:item>
+                                                        </pub:parameterNameValues>
+                                                        <pub:reportAbsolutePath>/Custom/Financials/ClearTax/GSTR1_RPT.xdo</pub:reportAbsolutePath>
+                                                        <pub:sizeOfDataChunkDownload>-1</pub:sizeOfDataChunkDownload>
+                                                     </pub:reportRequest>
+                                                  </pub:runReport>
+                                               </soap:Body>
+                                            </soap:Envelope>';
+        
+    
+        BEGIN
+            BEGIN
+                v_first_day := TRUNC(ADD_MONTHS(SYSDATE, -1),'MONTH');
+                v_from_date := TO_CHAR(v_first_day, 'DD/MM/YYYY');
+            END;
+            
+            BEGIN
+                SELECT TO_CHAR(last_day(add_months(sysdate,-1)),'DD/MM/YYYY')
+                INTO v_to_date
+                FROM dual;
+            END;
+            v_req_xml := replace(v_req_xml, '{from_date}', v_from_date);
+            v_req_xml := replace(v_req_xml, '{to_date}', v_to_date);
+            
+            v_url := utl_url.escape(v_url, FALSE, 'UTF-8');
+            dbms_output.put_line('v_url: ' || v_url);
+            utl_http.set_wallet(
+                v_wallet_path,
+                v_wallet_pwd
+            );
+            dbms_output.put_line('v_wallet_path' || v_wallet_path);
+            dbms_output.put_line('v_wallet_pwd' || v_wallet_pwd);
+            v_http_request := utl_http.begin_request(
+                v_url,
+                'POST',
+                'HTTP/1.1'
+            );
+            utl_http.set_authentication(
+                v_http_request,
+                v_user_name,
+                v_pwd
+            );
+            utl_http.set_header(
+                v_http_request,
+                'Content-Type',
+                'application/soap+xml;charset=UTF-8');
+            utl_http.set_header(
+                v_http_request,
+                'Content-Length',
+                length(v_req_xml)
+            );
+            utl_http.write_text(
+                v_http_request,
+                v_req_xml
+            );
+            v_http_response   := utl_http.get_response(v_http_request);
+            dbms_output.put_line('Response code'||v_http_response.status_code);
+            dbms_lob.createtemporary(
+                v_result,
+                false
+            );
+            dbms_lob.open(
+                v_result,
+                dbms_lob.lob_readwrite
+            );
+            BEGIN
+                LOOP
+                    utl_http.read_text(
+                        v_http_response,
+                        v_buffer
+                    );
+                    dbms_lob.writeappend(
+                        v_result,
+                        length(v_buffer),
+                        v_buffer
+                    );
+                END LOOP;
+            EXCEPTION
+                WHEN utl_http.end_of_body then
+                    utl_http.end_response(v_http_response);
+                WHEN OTHERS THEN
+                        dbms_output.put_line('Error ' || sqlerrm);
+            END;
+    
+   
+    dbms_lob.freetemporary(v_result);
+        
+    END get_bip_report_from_fusion;    
+    
+    PROCEDURE get_presigned_url (PERIOD IN VARCHAR2)
+    IS
+        v_clear_tax_base_url  VARCHAR2(100) := 'https://api-sandbox.clear.in/integration/v1/generatePreSign/sales?fileName={file_name}';
+        v_url                 VARCHAR2(150);
+        v_file_content_type   VARCHAR2(3)  := 'CSV';
+        v_template_type       VARCHAR2(5) := 'sales';
+        v_file_name           VARCHAR2(20) ;
+        req                   utl_http.req;
+        Res                   utl_http.resp;
+        v_buffer              VARCHAR2(32767);
+        v_presigned_url       CLOB;
+        BEGIN
+            v_url := REPLACE(v_clear_tax_base_url, '{file_name}', v_file_name);
+            v_url := utl_url.escape(v_url, FALSE, 'UTF-8');
+            req := utl_http.begin_request(v_url,'GET');
+            utl_http.set_header(req, 'X-cleartax-auth-token', g_cleartax_auth_token);
+            utl_http.set_header(req, 'fileContentType', v_file_content_type);
+            res := utl_http.get_response(req);
+            dbms_lob.createtemporary(v_presigned_url, FALSE);
+			dbms_lob.OPEN(
+            v_presigned_url,
+            dbms_lob.lob_readwrite
+            );
+            BEGIN 
+                LOOP
+                    utl_http.read_text(res, v_buffer);
+                    dbms_lob.writeappend(v_presigned_url, LENGTH(v_buffer), v_buffer);
+                END LOOP;
+            EXCEPTION
+                WHEN utl_http.end_of_body THEN
+                        utl_http.end_response(res);
+                WHEN OTHERS THEN
+                        dbms_output.put_line('Error under upload_file_to_storage :: '||sqlerrm);
+            END;
+       
+        upload_file_to_storage(v_presigned_url, v_file_name);
+        dbms_lob.freetemporary(v_presigned_url);
+    END get_presigned_url;
+    
+    PROCEDURE upload_file_to_storage(presigned_url IN CLOB, file_name IN VARCHAR2)
+    IS
+        v_presigned_url CLOB := presigned_url;
+        v_file          CLOB;
+        v_file_name     VARCHAR2(100);
+        req             utl_http.req;
+        res             utl_http.resp;
+        v_buffer        VARCHAR2(32767);
+        v_result        CLOB;
+        v_error_message VARCHAR2(4000);
+        v_length        BINARY_INTEGER;
+        v_offset        PLS_INTEGER := 1;
+        v_tan_buffer    PLS_INTEGER := 2000;
+        v_status_code   VARCHAR2(10);
+        
+        BEGIN
+            v_presigned_url := utl_url.escape(v_presigned_url, FALSE, 'UTF-8');
+            v_length := dbms_lob.getlength(v_file);
+            req := utl_http.begin_request(v_presigned_url,'PUT');
+            utl_http.set_header(req, 'Content-Type', 'application/vnd.ms-excel;charset:UTF-8');
+            utl_http.set_header(req, 'Content-Length', v_length);
+            utl_http.set_header(req, 'Transfer-Encoding', 'chunked');
+            utl_http.set_body_charset('UTF-8');
+            WHILE ( v_offset < v_length ) LOOP
+                dbms_lob.read(v_file, v_tan_buffer, v_offset, v_buffer);
+                utl_http.write_text(req, v_buffer);
+                v_offset := v_offset + v_tan_buffer;
+            END LOOP;
+            res := utl_http.get_response(req);
+            dbms_lob.createtemporary(v_result, FALSE);
+            dbms_lob.OPEN(
+            v_result,
+            dbms_lob.lob_readwrite
+            );
+            BEGIN
+                LOOP
+                    utl_http.read_text(res, v_buffer);
+                    dbms_lob.writeappend(v_result, LENGTH(v_buffer),v_buffer);   
+                END LOOP;
+            EXCEPTION
+                WHEN utl_http.end_of_body THEN
+                        utl_http.end_response(res);
+                WHEN OTHERS THEN
+                        dbms_output.put_line('Error under the loop for upload_file_to_storage'||sqlerrm);
+            END;
+        
+        v_status_code  := res.status_code;         
+        IF (res.status_code = utl_http.http_ok) THEN
+            trigger_file_ingestion(v_presigned_url, v_file_name);
+        END IF;
+        dbms_lob.freetemporary(v_result); 
+    END upload_file_to_storage;
+    
+    
+    PROCEDURE trigger_file_ingestion(presigned_url IN VARCHAR2, userfilename IN VARCHAR2)
+    IS  
+        v_s3_File_Url     VARCHAR2(4000) := presigned_url;
+        v_user_File_Name  VARCHAR2(200)  := userfilename;
+        v_clear_tax_url   VARCHAR2(500)  := 'https://api-sandbox.clear.in/integration/v1/ingest/file/sales';
+        v_url             VARCHAR2(500);
+        v_json_payload    VARCHAR2(32767);
+        req               utl_http.req;
+        res               utl_http.resp;
+        v_buffer          VARCHAR2(32767);
+        v_result          CLOB;
+        v_error_message   VARCHAR2(4000);
+        v_length          BINARY_INTEGER;
+        v_offset          PLS_INTEGER := 1;
+        v_tan_buffer      PLS_INTEGER := 2000;
+        BEGIN 
+          v_clear_tax_url := utl_url.escape(v_clear_tax_url, FALSE, 'UTF-8');
+          v_json_payload := '{
+                            "userInputArgs": {
+                                "gstins": [],
+                                "templateId": "618a5623836651c01c1498ad" 
+                            },
+                            "fileInfo": {
+                                "s3FileUrl": "'
+                                                ||v_s3_File_Url||
+                                                '",
+                                "userFileName": "'
+                                                ||v_user_file_name||'"
+                            }
+                                  }';
+          v_length := dbms_lob.getlength(v_json_payload);
+          v_url := utl_url.ESCAPE(v_clear_tax_url, FALSE, 'UTF-8');
+          req := utl_http.begin_request(v_clear_tax_url,'POST');
+          utl_http.set_header(req, 'Transfer-Encoding', 'chunked');
+          utl_http.set_header(req, 'Content-Type', 'application/json;charset:UTF-8');
+          utl_http.set_body_charset('UTF-8');
+          utl_http.set_header(req, 'X-cleartax-auth-token', g_cleartax_auth_token);
+          utl_http.set_header(req, 'Content-Length', v_length);
+          WHILE ( v_offset < v_length ) LOOP
+            dbms_lob.read(v_json_payload, v_tan_buffer, v_offset, v_buffer);
+            utl_http.write_text(req, v_buffer);
+            v_offset := v_offset + v_tan_buffer;
+          END LOOP;
+          dbms_lob.createtemporary(v_result, FALSE);
+          dbms_lob.OPEN(
+          v_result,
+          dbms_lob.lob_readwrite
+          );
+          res := utl_http.get_response(req);
+          BEGIN
+            LOOP
+                utl_http.read_text(res, v_buffer, 32000);
+                dbms_lob.writeappend(v_result, length(v_buffer), v_buffer);
+            END LOOP;
+          EXCEPTION
+            WHEN utl_http.end_of_body THEN
+                    utl_http.end_response(res);
+            WHEN OTHERS THEN
+                    dbms_output.put_line('Error in the loop under procedure trigger_file_ingestion_status :: '||sqlerrm);
+          END;
+        
+        get_file_ingestion_status(v_result);
+        dbms_lob.freetemporary(v_result);        
+    END trigger_file_ingestion;
+    
+    PROCEDURE get_file_ingestion_status(response IN CLOB)
+    IS
+        v_trigger_file_ingestion_status_json_response CLOB := response;
+        req                                           utl_http.req;
+        res                                           utl_http.resp;
+        v_cleartax_base_url                           VARCHAR2(300) := 'https://api-sandbox.clear.in/integration/v1/ingest/file/sales/status/{activityID}?tenant=GSTSALES';
+        v_activity_id                                 VARCHAR2(100) := regexp_substr(v_trigger_file_ingestion_status_json_response, '"activityId"\s*:\s*"(.?)"', 1, 1, NULL, 1);
+        v_url                                         VARCHAR2(500);
+        v_buffer                                      VARCHAR2(32767);
+        v_result                                      CLOB;
+        BEGIN
+            v_url := REPLACE(v_cleartax_base_url, '{activityID}', v_activity_ID);
+            v_url := utl_url.ESCAPE(v_url, FALSE, 'UTF-8');
+            req := utl_http.begin_request(v_url,'GET');
+            utl_http.set_header(req, 'X-cleartax-auth-token', g_cleartax_auth_token);
+            dbms_lob.createtemporary(v_result, FALSE);
+            dbms_lob.OPEN(
+            v_result,
+            dbms_lob.lob_readwrite);
+            res := utl_http.get_response(req);  
+            BEGIN
+                LOOP
+                    utl_http.read_text(res, v_buffer, 32000);
+                    dbms_lob.writeappend(v_result, length(v_buffer), v_buffer);
+                END LOOP;
+            EXCEPTION
+                WHEN utl_http.end_of_body THEN
+                     utl_http.end_response(res);
+                WHEN OTHERS THEN
+                    dbms_output.put_line('Error in the loop of get_file_ingestion_status :: '||sqlerrm);
+            END;
+        
+        dbms_lob.freetemporary(v_result);
+    END get_file_ingestion_status;
+    
+END xx_bvc_test_gstr_one;
