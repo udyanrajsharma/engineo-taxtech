@@ -15,12 +15,25 @@ import win32serviceutil
 import win32service
 import win32event
 import servicemanager
-# from pathlib import Path
-
+import configparser
 from application.ClearTaxEWBwithoutIRN import ClearTaxEWBwithoutIRN
 import time
 import logging
 import logging.handlers
+
+config = configparser.ConfigParser()
+extDataDir = os.path.dirname(sys.executable)
+config_path = os.path.join(extDataDir,'CLEARTAX_EWB_NONIRN_PROPERTIES.ini')
+print("Database Config path: ", config_path)
+config.read(config_path)
+
+generateEwbTime = config.get('SCHEDULER_TIME', 'generate_ewb')
+cancelEwbTime = config.get('SCHEDULER_TIME', 'cancel_ewb')
+updateEwbTime = config.get('SCHEDULER_TIME', 'update_ewb')
+
+generateEwbScheduleTime = int(generateEwbTime)
+cancelEwbScheduleTime = int(cancelEwbTime)
+updateEwbScheduleTime = int(updateEwbTime)
 
 # current_date = datetime.now().strftime("%d%m%Y")
 serviceName = "INOX-ClearTax E-Way Bill Without IRN"
@@ -31,7 +44,6 @@ current_dir = os.path.dirname(sys.executable)
 log_dir = os.path.join(current_dir,"LOGS")
 if not os.path.exists(log_dir):
     os.makedirs(log_dir)
-
 
 log_file_info = os.path.join(log_dir,f"CLEARTAX_EWB_NONIRN_INFO.log")
 log_file_error = os.path.join(log_dir, f"CLEARTAX_EWB_NONIRN_ERROR.log")
@@ -69,8 +81,8 @@ servicelogger_info.addHandler(handler_info)
 servicelogger_error.addHandler(handler_error)
 
 class WindowsServiceScheduler_2(win32serviceutil.ServiceFramework):
-    _svc_name_ = "INOX-ClearTax E-Way Bill Without IRN"
-    _svc_display_name_ = "INOX-ClearTax E-Way Bill Without IRN"
+    _svc_name_ = serviceName
+    _svc_display_name_ = serviceName
 
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
@@ -90,15 +102,18 @@ class WindowsServiceScheduler_2(win32serviceutil.ServiceFramework):
         self.main()
 
     def main(self):
-        # Main service logic goes here
-        servicelogger_info.info("... STARTING SCHEDULE PROCESS ...\n") 
-        schedule.every(1).minutes.do(ClearTaxEWBwithoutIRN.EWBwithoutIRN)
-        schedule.every(1).minutes.do(ClearTaxEWBwithoutIRN.updateEWB)
-        schedule.every(1).minutes.do(ClearTaxEWBwithoutIRN.cancelEWB)
-        while self.is_alive:
-            # Perform your service tasks here
-            schedule.run_pending()
-            time.sleep(2)
+        try:
+            # Main service logic goes here
+            servicelogger_info.info("... STARTING SCHEDULE PROCESS ...\n") 
+            schedule.every(generateEwbScheduleTime).minutes.do(ClearTaxEWBwithoutIRN.EWBwithoutIRN)
+            schedule.every(cancelEwbScheduleTime).minutes.do(ClearTaxEWBwithoutIRN.updateEWB)
+            schedule.every(updateEwbScheduleTime).minutes.do(ClearTaxEWBwithoutIRN.cancelEWB)
+            while self.is_alive:
+                # Perform your service tasks here
+                schedule.run_pending()
+                time.sleep(2)
+        except Exception as e:
+            servicelogger_error.exception("Exception occured in main function")
 
 
 if __name__ == '__main__':

@@ -73,7 +73,7 @@ class ewbDatamodel:
     def executeCancelEWBClearTaxEWBapi(cancelEWBpayload,gstIn):
         return apiDetails.InvokeClearTaxCancelEWB(cancelEWBpayload, gstIn)
     
-    def cancelEWBsaveResponse(response_data, res_status_code, cancelEWBpayload):
+    def cancelEWBsaveResponse(response_data, res_status_code, cancelEWBpayload, ewbNo):
         try:
             print("Cancel Save Response")
             if res_status_code == 200:
@@ -93,7 +93,7 @@ class ewbDatamodel:
                     fail_status = "FAILURE"
                     print(fail_status,error_message)
                     servicelogger_info.info("... Failure Response from ClearTax EWB cancellation...\n")
-                    database.persistCancelEWBFailureResponseInDB(fail_status,error_message, cancelEWBpayload, response_data )
+                    database.persistCancelEWBFailureResponseInDB(fail_status,error_message, cancelEWBpayload, response_data, ewbNo)
                 # print("Data from response saved successfully.",response_data)
                 print(f"Response from API on 200 status: \n Success")
                 
@@ -101,7 +101,7 @@ class ewbDatamodel:
                 fail_status = "FAILURE"
                 error_message = response_data.get("error_message", '')
                 servicelogger_info.info("... Failure Response from ClearTax EWB cancellation...\n")
-                database.persistCancelEWBFailureResponseInDB(fail_status,error_message, cancelEWBpayload, response_data )
+                database.persistCancelEWBFailureResponseInDB(fail_status,error_message, cancelEWBpayload, response_data, ewbNo)
                 print("Response from Clear Tax API on failure: \nError: Failed to make API call to ClearTax API.".format(response_data))
         
         except Exception as e:
@@ -115,7 +115,7 @@ class ewbDatamodel:
     def executeUpdateEWBClearTaxEWBapi(updateEWBpayload,gstIn):
         return apiDetails.InvokeClearTaxUpdateEWB(updateEWBpayload,gstIn)
     
-    def saveResponseUpdateEWB(response_data, res_status_code, updateEWBpayload):
+    def saveResponseUpdateEWB(response_data, res_status_code, updateEWBpayload, ewbNo):
         try:
             print("Inside Save Response of EWB Update")
             if res_status_code == 200:
@@ -143,7 +143,7 @@ class ewbDatamodel:
                     print(fail_status,error_message)
                     print("Fail response Update EWB called")
                     servicelogger_info.info("... Failure Response from ClearTax EWB update...\n")
-                    database.persistUpdateEWBFailureResponseInDB(error_message, updateEWBpayload, response_data)
+                    database.persistUpdateEWBFailureResponseInDB(error_message, updateEWBpayload, response_data, ewbNo)
 
                 # print("Data from response saved successfully.",response_data)
                 print(f"Response from API on 200 status: \n Success")
@@ -154,7 +154,7 @@ class ewbDatamodel:
                 all_msg_values = ", ".join(msg_values)
                 print("All Messages: ",all_msg_values)
                 servicelogger_info.info("... Failure Response from ClearTax EWB update...\n")
-                database.persistUpdateEWBFailureResponseInDB(all_msg_values, updateEWBpayload, response_data)
+                database.persistUpdateEWBFailureResponseInDB(all_msg_values, updateEWBpayload, response_data, ewbNo)
                 print("Response from Clear Tax API on failure: {} \nError: Failed to make API call to ClearTax API.".format(response_data))
         except Exception as e:
             print("Error Occured in Save Response of Upadte EWB: ",e)
@@ -163,4 +163,5 @@ class ewbDatamodel:
     # Test Tabel
     def testtableupdate():
         servicelogger_info.info("... Inside ewb Data Model ...\n")
+        print("... Inside ewb Data Model ...\n")
         return database.test_tabel()

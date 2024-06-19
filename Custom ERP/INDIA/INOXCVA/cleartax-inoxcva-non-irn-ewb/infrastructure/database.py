@@ -93,13 +93,12 @@ class database:
             bind_var = [Status, EwbNo, EwbDt, EwbValidTill, DocumentNumber, json_Reqpayload, json_ResponsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
             cur_2.execute(insert_query, bind_var)
             connection.commit()
-            print("Insert Query completed for success response")
+
             update_query = "update [dbo].[EWAY_BILL_FORMAT_FIDR1376_FOR_EWAY_PURPOSE] set [ACTIVE] = '1' WHERE [Document Number] = %s"
             cur_2.execute(update_query, (DocumentNumber))
             connection.commit()
-            print("Active field updated")
-            cur_2.close()
 
+            cur_2.close()
             servicelogger_info.info("... Response Records from ClearTax API for generate EWB inserted into [EWB_NON_IRN_RESPONSE] table for Success status...\n")
         except Exception as e:
             print("Error in Insert Success EWB Generation in db : ",e)
@@ -116,7 +115,11 @@ class database:
             bind_var = [fail_status, error_code, error_message, error_source, DocumentNumber, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
             cur.execute(insert_query, bind_var)
             connection.commit()
-            print("Insert Query completed for failure response")
+
+            update_query = "update [dbo].[EWAY_BILL_FORMAT_FIDR1376_FOR_EWAY_PURPOSE] set [ACTIVE] = '2' WHERE [Document Number] = %s"
+            cur.execute(update_query, (DocumentNumber))
+            connection.commit()
+
             cur.close() 
             servicelogger_info.info("... Response Records from ClearTax API for generate EWB inserted into [EWB_NON_IRN_RESPONSE] table for Failure status...\n")
         except Exception as e:
@@ -148,18 +151,18 @@ class database:
             bind_var = [gstin, irn, ewbNumber, ewbStatus, active_status, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
             cur.execute(insert_query, bind_var)
             connection.commit()
-            print("Success Response inserted for Cancel EWB 1")
+
             update_query = "update [dbo].[ICUST_IIL096_C] set [ACTIVE] = '1' WHERE [EWAY_BILL_NO] = %s"            
             cur.execute(update_query, (ewbNumber))
             connection.commit()
-            print("Success Response inserted for Cancel EWB 2")
+
             servicelogger_info.info("... Response Records from ClearTax API for Cancel EWB inserted into [CANCEL_RESPONSE_DATA] table for Success status...\n")
             cur.close() 
         except Exception as e:
             print("Error : ",e)
             servicelogger_error.exception("Exception Occured for Success response in database for cancel EWB :\n ")
 
-    def persistCancelEWBFailureResponseInDB(ewbStatus,error_message, cancelEWBpayload, response_data):
+    def persistCancelEWBFailureResponseInDB(ewbStatus,error_message, cancelEWBpayload, response_data, ewbNo):
         try:
             cur = connection.cursor()
             json_requestPayload = json.dumps(cancelEWBpayload ,default=decimal_default)
@@ -171,6 +174,11 @@ class database:
             connection.commit()
             print("Failure Response inserted for Cancel EWB")
             servicelogger_info.info("... Response Records from ClearTax API for Cancel EWB inserted into [CANCEL_RESPONSE_DATA] table for Failure status...\n")
+
+            update_query = "update [dbo].[ICUST_IIL096_C] set [ACTIVE] = '2' WHERE [EWAY_BILL_NO] = %s"            
+            cur.execute(update_query, (ewbNo))
+            connection.commit()
+
             cur.close()
         except Exception as e:
             print("Error : ",e)
@@ -212,7 +220,7 @@ class database:
             print("Error in Success update for EWB Update : ",e)
             servicelogger_error.exception("Exception Occured for Success response in database for update EWB :\n ")
 
-    def persistUpdateEWBFailureResponseInDB(error_message, updateEWBpayload, response_data):
+    def persistUpdateEWBFailureResponseInDB(error_message, updateEWBpayload, response_data, ewbNo):
         try:
             json_requestPayload = json.dumps(updateEWBpayload ,default=decimal_default)
             json_responsePayload = json.dumps(response_data ,default=decimal_default)
@@ -224,6 +232,11 @@ class database:
             cur.execute(insert_query, bind_var)
             connection.commit()
             servicelogger_info.info("... Response Records from ClearTax API for Update EWB inserted into [UPDATE_RESPONSE_DATA] table for Failure status...\n")
+            
+            update_query = "update [dbo].[ICUST_IIL097_C] set [ACTIVE] = '2' WHERE [EWAY_BILL_NO] = %s"
+            cur.execute(update_query, (ewbNo))
+            connection.commit()
+            
             cur.close()
         except Exception as e:
             print("Error in failure update for EWB Update: ",e)

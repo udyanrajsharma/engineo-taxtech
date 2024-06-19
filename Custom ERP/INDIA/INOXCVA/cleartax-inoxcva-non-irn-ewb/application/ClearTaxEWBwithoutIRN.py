@@ -152,7 +152,7 @@ class ClearTaxEWBwithoutIRN:
                 # Clear Tax API Called
                 response = ewbDatamodel.executeCancelEWBClearTaxEWBapi(cancelEWBpayload,gstIn)
                 print("Response from ClearTax Cancel API: ",response)
-                ewbDatamodel.cancelEWBsaveResponse(response[0], response[1], cancelEWBpayload)
+                ewbDatamodel.cancelEWBsaveResponse(response[0], response[1], cancelEWBpayload, row[0])
         except Exception as e:
             print("Error Occured in Payload Creation of Cancellation of EWB: ",e)
             servicelogger_error.exception("Exception Occured in Payload Creation for Cancel EWB :\n ")
@@ -185,11 +185,12 @@ class ClearTaxEWBwithoutIRN:
                 # Clear Tax API Called
                 response = ewbDatamodel.executeUpdateEWBClearTaxEWBapi(updateEWBpayload,gstIn)
                 # Response save in Database
-                ewbDatamodel.saveResponseUpdateEWB(response[0], response[1], updateEWBpayload)
+                ewbDatamodel.saveResponseUpdateEWB(response[0], response[1], updateEWBpayload, row[0])
         except Exception as e:
             print("Error Occured in Payload Creation of Update EWB: ",e)
             servicelogger_error.exception("Exception Occured in Payload Creation for update EWB :\n ")
 
     def testTableModel():
         servicelogger_info.info("... Inside ClearTaxWithoutIRN ...\n")
+        print("... Inside ClearTaxWithoutIRN ...\n")
         return ewbDatamodel.testtableupdate()

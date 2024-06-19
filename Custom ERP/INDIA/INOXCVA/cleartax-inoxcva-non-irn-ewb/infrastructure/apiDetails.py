@@ -37,12 +37,10 @@ def decimal_default(obj):
 config = configparser.ConfigParser()
 extDataDir = os.path.dirname(sys.executable)
 
-# clearTaxSSLpath = extDataDir+'/clear-in-chain.pem'
-# clearTaxSSLpath = os.path.join(extDataDir,"clear-in-chain.crt")
-# print("SSL Cert path: ", clearTaxSSLpath)
 
 config_path = extDataDir+'/CLEARTAX_EWB_NONIRN_PROPERTIES.ini'
 config.read(config_path)
+print("Config Path: ",config_path)
 
 def decode_value(encoded_str):
     decoded_bytes = base64.b64decode(encoded_str.encode('utf-8'))
@@ -73,9 +71,9 @@ class apiDetails:
             response = requests.put(url=clear_tax_generateEWBapi_url, headers=request_headers, json=json.loads(json.dumps(payload, default=decimal_default)))
             # print("\nPayload: ",json.loads(json.dumps(payload, default=decimal_default)))
             response_statusCode = response.status_code
-            servicelogger_info.debug(f"Response Status Code: {response.status_code}")
-            servicelogger_info.debug(f"Response Headers: {response.headers}")
-            servicelogger_info.debug(f"Response Content: {response.text}")
+            # servicelogger_info.debug(f"Response Status Code: {response.status_code}")
+            # servicelogger_info.debug(f"Response Headers: {response.headers}")
+            # servicelogger_info.debug(f"Response Content: {response.text}")
             
             try:
                 data = response.json()
