@@ -8,8 +8,8 @@ class einvDataModel:
 
     # E-INVOICE
     # E-Inv Only Prj
-    def getEinvHeaderData(from_date, to_date, trx_no, gstin_state):
-        return database.executeEinvHeaderQuery(from_date, to_date, trx_no, gstin_state)
+    def getEinvHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin):
+        return database.executeEinvHeaderQuery(from_date, to_date, trx_no, gstin_state, customer_Gstin)
     
     def testgetEinvHeaderData(from_date, to_date, trx_no):
         return database.testexecuteEinvHeaderQuery(from_date, to_date, trx_no)
@@ -30,8 +30,8 @@ class einvDataModel:
         return database.executeEinvLine4Query(document_No)
     
     # Stock Transfer E-Inv 
-    def getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state):
-        return database.executeEinvStockTransferHeaderQuery(from_date, to_date, trx_no, gstin_state)
+    def getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin):
+        return database.executeEinvStockTransferHeaderQuery(from_date, to_date, trx_no, gstin_state, customer_Gstin)
     
     def getEinvStockTransferLineItem1Data(document_No):
         return database.executeEinvStockTransferLine1Query(document_No)
@@ -55,11 +55,11 @@ class einvDataModel:
     # def downloadEinvoicePdf(Id,companyId,token):
     #     return apiDetails.getPDFfromEInvIO(Id,companyId,token)
     
-    def finishEinvoicingProcess(response, res_status_code, invoice_id, gstin, token, companyid, request_id):
-        return database.persistUpdateEinvResponseInDB(response, res_status_code, invoice_id, gstin, token, companyid, request_id)
+    def finishEinvoicingProcess(response, res_status_code, invoice_id, gstin, token, companyid, request_id, einv_template):
+        return database.persistUpdateEinvResponseInDB(response, res_status_code, invoice_id, gstin, token, companyid, request_id, einv_template)
     
-    def finishEinvoicingStockTransferProcess(response, res_status_code, invoice_id, gstin, token, companyid, request_id):
-        return database.persistUpdateEinvStockTransforResponseInDB(response, res_status_code, invoice_id, gstin, token, companyid, request_id)
+    def finishEinvoicingStockTransferProcess(response, res_status_code, invoice_id, gstin, token, companyid, request_id, einv_template):
+        return database.persistUpdateEinvStockTransforResponseInDB(response, res_status_code, invoice_id, gstin, token, companyid, request_id, einv_template)
     
     def initiateGeneratedEinvoiceProcess(invoice_id, invoice_date, created_by, request_id):
         return database.persistInsertEinvGeneratedInDB(invoice_id, invoice_date, created_by, request_id)

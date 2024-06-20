@@ -75,9 +75,11 @@ def api_eInvoicing():
         gstin_State = data.get('GSTIN_STATE','')
         created_by = data.get('Created_By','')
         request_id = data.get('Request_Id','')
+        customer_Gstin = data.get('CUST_GSTIN','')
+        einv_template = data.get('P_EINV_TEMP','')
 
         def long_running_task():
-            IRISeinv.einvoice_v(from_date, to_date, trx_no, gstin_State, created_by, request_id)
+            IRISeinv.einvoice_v(from_date, to_date, trx_no, gstin_State, created_by, request_id, customer_Gstin, einv_template)
             # IRISeinv.Test_einvoice_v(from_date, to_date, trx_no, created_by, request_id)
 
         thread1 = threading.Thread(target=long_running_task)

@@ -176,8 +176,17 @@ class apiDetails:
             print("Error Occured during call of IRIS E-Invoice API",e)
 
     # IRIS E-INVOICE Print PDF
-    def  getPDFfromEInvIO(Id,companyId,token):
-        IRIS_getPDF_api_url = "https://stage-api.irisgst.com/irisgst/onyx/einvoice/print?template=STANDARD&id={}".format(Id)
+    def  getPDFfromEInvIO(Id, companyId, token, einv_template):
+        print("Template from Concurrent: ",einv_template)
+        if einv_template == "ILFS -Regular Invoice":
+            templateName = "ILFS- Regular Invoice"
+        elif einv_template == "ILFS - Credit/Debit Memo":
+            templateName = "ILFS - Debit memo"
+        else:
+            templateName = "ILFS- Regular Invoice"
+
+        IRIS_getPDF_api_url = "https://stage-api.irisgst.com/irisgst/onyx/einvoice/print?template={}&id={}".format(templateName,Id)
+        print("E-Invoice Template Name: ",templateName)
         request_headers_einv_Pdf = {
             'companyId':str(companyId),
             'X-Auth-Token':token,

@@ -220,7 +220,7 @@ class database:
             print("Error while update data into database for GSTR2", e)
 
     # E-INVOICE
-    def executeEinvHeaderQuery(from_date, to_date, txn_no, gstin_state):
+    def executeEinvHeaderQuery(from_date, to_date, txn_no, gstin_state, customer_Gstin):
         try:
             cur = connection.cursor()
             trx_no = txn_no.replace("'", "''")
@@ -312,7 +312,7 @@ class database:
         except Exception as e:
             print("Error in E-Invoice Line Query 4:",e)
     
-    def executeEinvStockTransferHeaderQuery(from_date, to_date, txn_no, gstin_state):
+    def executeEinvStockTransferHeaderQuery(from_date, to_date, txn_no, gstin_state, customer_Gstin):
         try:
             cur = connection.cursor()
             trx_no = txn_no.replace("'", "''")
@@ -408,7 +408,7 @@ class database:
         except Exception as e:
             print("Eroor in E-Invoice data insertion in db for already generated E-Invoice: ",e)
     
-    def persistUpdateEinvResponseInDB(response,res_status_code,invoice_id,gstin, token,companyid, request_id):
+    def persistUpdateEinvResponseInDB(response,res_status_code,invoice_id,gstin, token,companyid, request_id, einv_template):
         cur = connection.cursor()
         response_data = response.json()
         json_response = json.dumps(response_data)
@@ -432,7 +432,7 @@ class database:
                     EwbNo = response_data.get('response').get('EwbNo', None)
                     EwbDt = response_data.get('response').get('EwbDt', None)
                     EwbValidTill = response_data.get('response').get('EwbValidTill', None)
-                    response_pdf = apiDetails.getPDFfromEInvIO(iris_id,companyid,token)
+                    response_pdf = apiDetails.getPDFfromEInvIO(iris_id, companyid, token, einv_template)
                     Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , IRIS_QRCODE = :3, IRIS_NO = :4, IRIS_ID = :5, IRIS_STATUS = :6 , IRIS_ACK_NO = :7 , IRIS_ACK_DATE = :8 , IRIS_SIGNED_INVOICE = :9 , IRIS_SIGNED_QR_CODE = :10 , IRIS_EWB_NO = :11 , IRIS_EWB_DATE = :12 , IRIS_EWB_VALID_TILL = :13, IRIS_IRN_NO = :14, INVOICE_PDF = :15, USERGSTIN = :16,  RESPONSE_PAYLOAD = :17 where TRX_NUMBER = :18 AND REQUEST_ID = :19"
                     bind_var = [response_status, message, qr_code, iris_no, iris_id, status, ackNo, ackDt, signedInvoice, signedQrCode, EwbNo, EwbDt, EwbValidTill, irn, response_pdf.content, gstin, json_response, invoice_id, request_id]
                     cur.execute(Update_Query, bind_var)
@@ -493,7 +493,7 @@ class database:
             except Exception as e:
                 print("Error in updating the invoice detail in DB",e)
 
-    def persistUpdateEinvStockTransforResponseInDB(response,res_status_code,invoice_id,gstin, token,companyid, request_id):
+    def persistUpdateEinvStockTransforResponseInDB(response,res_status_code,invoice_id,gstin, token,companyid, request_id, einv_template):
         cur = connection.cursor()
         response_data = response.json()
         json_response = json.dumps(response_data)
@@ -518,7 +518,7 @@ class database:
                     EwbDt = response_data.get('response').get('EwbDt', None)
                     EwbValidTill = response_data.get('response').get('EwbValidTill', None)
                 
-                    response_pdf = apiDetails.getPDFfromEInvIO(iris_id,companyid,token)
+                    response_pdf = apiDetails.getPDFfromEInvIO(iris_id,companyid,token, einv_template)
                     Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , IRIS_QRCODE = :3, IRIS_NO = :4, IRIS_ID = :5, IRIS_STATUS = :6 , IRIS_ACK_NO = :7 , IRIS_ACK_DATE = :8 , IRIS_SIGNED_INVOICE = :9 , IRIS_SIGNED_QR_CODE = :10 , IRIS_EWB_NO = :11 , IRIS_EWB_DATE = :12 , IRIS_EWB_VALID_TILL = :13, IRIS_IRN_NO = :14, INVOICE_PDF = :15, USERGSTIN = :16,  RESPONSE_PAYLOAD = :17 where TRX_NUMBER = :18 AND REQUEST_ID = :19"
                     bind_var = [response_status, message, qr_code, iris_no, iris_id, status, ackNo, ackDt, signedInvoice, signedQrCode, EwbNo, EwbDt, EwbValidTill, irn, response_pdf.content, gstin, json_response, invoice_id, request_id]
                     cur.execute(Update_Query, bind_var)
@@ -626,10 +626,7 @@ class database:
                     connection.commit()
                     print("Cancel Invoice Updated - success")
                     # attachment procedure
-                    # attach_entity = "RA_CUSTOMER_TRX"
-                    # doc_type = "CANCEL E-INVOICE"
-                    # attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, invoice_id, doc_type)
-                    
+                   
                     attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200);  BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format( request_id, invoice_id)
                     
                     cur.execute(attachment_block)

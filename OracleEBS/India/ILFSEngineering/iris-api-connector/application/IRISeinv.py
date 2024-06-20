@@ -4,11 +4,11 @@ from domain.einvDataModel import einvDataModel
 class IRISeinv:
 
     # IRIS E-Inv
-    def einvoice_v(from_date, to_date, trx_no, gstin_state, created_by, request_id):
+    def einvoice_v(from_date, to_date, trx_no, gstin_state, created_by, request_id, customer_Gstin, einv_template):
         print("Inside E-Invoicing Class\n")
         try:
-            Header_Einv_Prj_data = einvDataModel.getEinvHeaderData(from_date, to_date, trx_no, gstin_state)
-            Header_Einv_ST_data = einvDataModel.getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state)
+            Header_Einv_Prj_data = einvDataModel.getEinvHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin)
+            Header_Einv_ST_data = einvDataModel.getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin)
             # print("Header data of EINV: ",Header_Einv_Prj_data)
             response_login = einvDataModel.executeIRISLoginAPI()
 
@@ -21,7 +21,7 @@ class IRISeinv:
                     response_payload = einvDataModel.createEinvoicePrjPayload(row)
                     einvDataModel.initiateEinvoicingProcess(response_payload[0],response_payload[1],response_payload[3], created_by, request_id)
                     response_einv = einvDataModel.performEinvoicing(response_payload[0],response_payload[2],response_login[0],response_login[1])
-                    einvDataModel.finishEinvoicingProcess(response_einv[0],response_einv[1],response_payload[1],response_payload[2],response_login[0],response_login[1], request_id)
+                    einvDataModel.finishEinvoicingProcess(response_einv[0],response_einv[1],response_payload[1],response_payload[2],response_login[0],response_login[1], request_id, einv_template)
                     print("E-Invoice Completed for a Prj invoice")
                 else:
                     print("Does not Call E-Inv API for already generated Invoice")
@@ -36,7 +36,7 @@ class IRISeinv:
                     response_payload = einvDataModel.createEinvoiceStockTransferPayload(row)
                     einvDataModel.initiateEinvoicingProcess(response_payload[0],response_payload[1],response_payload[3], created_by, request_id)
                     response_einv = einvDataModel.performEinvoicing(response_payload[0],response_payload[2],response_login[0],response_login[1])
-                    einvDataModel.finishEinvoicingStockTransferProcess(response_einv[0],response_einv[1],response_payload[1],response_payload[2],response_login[0],response_login[1], request_id)
+                    einvDataModel.finishEinvoicingStockTransferProcess(response_einv[0],response_einv[1],response_payload[1],response_payload[2],response_login[0],response_login[1], request_id, einv_template)
                     print("E-Invoice Completed for a Stock Transfer invoice")
                 else:
                     print("Does not Call E-Inv API for already generated Stock Transfer Invoice")
