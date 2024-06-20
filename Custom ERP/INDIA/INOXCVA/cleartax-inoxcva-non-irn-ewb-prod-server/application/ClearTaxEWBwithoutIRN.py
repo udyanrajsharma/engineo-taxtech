@@ -23,8 +23,7 @@ class ClearTaxEWBwithoutIRN:
                 cess_amount = 0.00
                 cess_NonAdvol_amount = 0.00
 
-                # gstIn = row[14]
-                gstIn = "27AAFCD5862R013"
+                gstIn = row[14]
                 payload = {
                 "DocumentNumber": row[0],
                 "DocumentType": row[2],
@@ -44,8 +43,7 @@ class ClearTaxEWBwithoutIRN:
                     "Stcd": row[13]
                 },
                 "SellerDtls": {
-                    # "Gstin": row[14],
-                    "Gstin": "27AAFCD5862R013",
+                    "Gstin": row[14],
                     "LglNm": row[15],
                     "TrdNm": "",
                     "Addr1": row[16],
@@ -140,8 +138,7 @@ class ClearTaxEWBwithoutIRN:
             Header_data = ewbDatamodel.getCancelEWBHeaderData()
             print("Header Cancel Data: ",Header_data)
             for row in Header_data:
-                # gstIn = row[1]
-                gstIn = "27AAFCD5862R013"
+                gstIn = row[1]
                 cancelEWBpayload = {
                     "ewbNo": row[0],
                     "cancelRsnCode": row[2],
@@ -162,8 +159,7 @@ class ClearTaxEWBwithoutIRN:
         try:
             Header_date = ewbDatamodel.getUpdateEWBHeaderData()
             for row in Header_date:
-                # gstIn = row[1]
-                gstIn = "27AAFCD5862R013"
+                gstIn = row[1]
                 print("EWB NO = ",row[0])
                 updateEWBpayload = {
                     "EwbNumber": row[0],
@@ -190,7 +186,3 @@ class ClearTaxEWBwithoutIRN:
             print("Error Occured in Payload Creation of Update EWB: ",e)
             servicelogger_error.exception("Exception Occured in Payload Creation for update EWB :\n ")
 
-    def testTableModel():
-        servicelogger_info.info("... Inside ClearTaxWithoutIRN ...\n")
-        print("... Inside ClearTaxWithoutIRN ...\n")
-        return ewbDatamodel.testtableupdate()

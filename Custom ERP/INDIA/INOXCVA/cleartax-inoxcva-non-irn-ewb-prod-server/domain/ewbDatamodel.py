@@ -159,9 +159,3 @@ class ewbDatamodel:
         except Exception as e:
             print("Error Occured in Save Response of Upadte EWB: ",e)
             servicelogger_error.exception("Exception Occured in saving the response for update EWB :\n ")
-
-    # Test Tabel
-    def testtableupdate():
-        servicelogger_info.info("... Inside ewb Data Model ...\n")
-        print("... Inside ewb Data Model ...\n")
-        return database.test_tabel()

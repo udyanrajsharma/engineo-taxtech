@@ -18,21 +18,11 @@ def decimal_default(obj):
         return float(obj)  # Convert Decimal to float
     raise TypeError
 
-# ENV File
-# extDataDir = os.getcwd()
-# if getattr(sys, "frozen", False):
-#     extDataDir = sys._MEIPASS
-# load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
-
-# DB_NAME = os.getenv("DB_NAME")
-# DB_USER = os.getenv("DB_USER")
-# DB_PASSWORD = os.getenv("DB_PASSWORD")
-# DB_SERVER = os.getenv("DB_SERVER")
 
 # INI File
 config = configparser.ConfigParser()
 extDataDir = os.path.dirname(sys.executable)
-config_path = os.path.join(extDataDir,'CLEARTAX_EWB_NONIRN_PROPERTIES.ini')
+config_path = os.path.join(extDataDir,'CLEARTAX_INOX_EWB_NONIRN_PROPERTIES_PROD_SERVER.ini')
 print("Database Config path: ", config_path)
 config.read(config_path)
 
@@ -242,17 +232,4 @@ class database:
             print("Error in failure update for EWB Update: ",e)
             servicelogger_error.exception("Exception Occured for Failure response in database for update EWB :\n ")
 
-    def test_tabel():
-        try:
-            print("Inside Method 1 in class 1")
-            servicelogger_info.info("... Inside Database Class ...\n")
-            cur = connection.cursor()
-            insert_query = "INSERT INTO [dbo].[TEST_TABLE] ([COL_1], [COL_2], [COL_3], [COL_4]) VALUES ('8c1', '8c2', '8c3', '8c4')"
-            cur.execute(insert_query)
-            connection.commit()
-            print("Inser Query Executed for method 1")
-            servicelogger_info.info("... Insert Query Executed for Test_Table ...\n")
-        except Exception as e:
-            print("Error in executing method 1 in class 1: ",e)
-            servicelogger_error.exception("Error in inserting data into test table...\n ")
    
