@@ -146,9 +146,11 @@ define([
       });
 
       log.debug("json_obj values", JSON.stringify(response));
+      log.debug("json_obj values", JSON.stringify(response.code));
       log.debug("json_obj values body", JSON.parse(response.body));
 
       var body_val = JSON.parse(response.body);
+	  if(response.code == 200){
       log.debug(
         "govt_response.ErrorDetails",
         JSON.stringify(body_val[0].govt_response.ErrorDetails)
@@ -166,7 +168,11 @@ define([
       log.debug("error_msg.error_msg", error_msg);
       log.debug("error_msg.error_msg ----", JSON.stringify(error_msg));
       var is_success = body_val[0].govt_response.Success;
-      if (is_success == "Y") {
+      }else{
+		var is_success = 'N'; 
+		   var error_msg = JSON.stringify(body_val);
+	  }
+	  if (is_success == "Y") {
         var success_msg = "Success";
         error_msg = "";
         objRecord.setValue({
