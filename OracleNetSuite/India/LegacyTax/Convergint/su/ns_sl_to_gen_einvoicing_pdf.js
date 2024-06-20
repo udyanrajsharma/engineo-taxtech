@@ -55,6 +55,9 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
 			 var generated_pdf = objRecord.getValue({fieldId: 'custbody_generated_pdf'});
 			 var client_sez = objRecord.getValue({fieldId: 'custbody_v_invoice_client_sez'});
 			 
+			  var is_b2c = objRecord.getValue({fieldId: 'custbody_is_b2c'});
+			 var transaction_id = objRecord.getValue({fieldId: 'custbody_b2c_transaction_id'});
+			 
 		log.debug('client_sez client_sez', JSON.stringify(client_sez));  	 
 			if(generated_pdf == ""){
 			 var Api_Token = GetApiToken(1);
@@ -62,6 +65,46 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
 		var token_val = Api_Token[0].token;			
 		var gstin_val = "29AABCI8139E1ZH";
 		
+		
+		if(is_b2c){
+		
+		var headerObj = new Array();
+		headerObj['X-Cleartax-Auth-Token'] = token_val;	
+		headerObj['Content-Type'] = 'application/json';	
+		headerObj['Accept'] = 'application/pdf';	
+		headerObj['Gstin'] = gstin_val;	
+		headerObj['transaction_id'] = transaction_id;	
+		
+		var template_id = 2887;
+		
+		headerObj['template'] = template_id;	
+		
+		var tr_id =	[transaction_id];
+		
+		
+		 var url_new = "https://api.clear.in/einv/v1/b2c/download-pdf";
+
+      var response = https.post({
+        url: url_new,
+        body: JSON.stringify(tr_id),
+        headers: headerObj,
+      });
+	  
+	  
+	   var pdfFile = file.create({
+        name: tranid+'.pdf',
+        fileType: file.Type.PDF,
+        contents: response.body,
+        folder: 21097125, // Folder ID in the File Cabinet
+        isOnline: true
+    });
+
+    // Save the file
+    var fileId = pdfFile.save();
+			
+		}else{
+			
+			
 		var headerObj = new Array();
 		headerObj['X-Cleartax-Auth-Token'] = token_val;	
 		headerObj['Content-Type'] = 'application/pdf';	
@@ -94,6 +137,8 @@ define(['N/record', 'N/runtime', 'N/search', 'N/ui/serverWidget', 'N/encode', 'N
 
     // Save the file
     var fileId = pdfFile.save();
+	
+		}
 	
 if(rec_type == 'Invoice'){
 			var otherId = record.submitFields({type: record.Type.INVOICE,id: invoice_id,values: {'custbody_generated_pdf' : fileId}});

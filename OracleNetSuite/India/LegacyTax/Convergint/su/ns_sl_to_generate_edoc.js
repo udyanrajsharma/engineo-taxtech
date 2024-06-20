@@ -55,6 +55,7 @@ define([
     var date_format = userObj.getPreference({ name: "DATEFORMAT" });
     var invoice_id = parameters.transId;
     var rec_type = "Invoice";
+    var doc_type = "INV";
     try {
       var objRecord = record.load({
         type: record.Type.INVOICE,
@@ -67,6 +68,7 @@ define([
       });
 
       rec_type = "CreditMemo";
+	  doc_type = "CRN";
     }
     var tranid = objRecord.getValue({ fieldId: "tranid" });
     var trandate = objRecord.getValue({ fieldId: "trandate" });
@@ -175,6 +177,7 @@ define([
     var shipstate = ship_Details[0].shipstate;
     var shipzip = ship_Details[0].shipzip;
     var shipcountry = ship_Details[0].shipcountry;
+	var shippingattention = ship_Details[0].shippingattention;
     var state_code_buyer = shipstate;
 
     if (shipcountry != "IN") {
@@ -247,11 +250,27 @@ define([
       var buyer_lglnm = Buyers_Details[0].altname;
     }
 
+	var TrdNm = Buyers_Details[0].altname;
+	
+	 log.debug("TrdNm.length TrdNm.length", JSON.stringify(TrdNm.length));
+	 
+	if(TrdNm.length > 99){
+		TrdNm = buyer_lglnm;
+	}
+
+    if(shippingattention == ""){
+		shippingattention = buyer_lglnm;
+	}
+
     log.debug("Item_Details fetch", JSON.stringify(Item_Details));
     var is_igst = false;
     if (dispatchStcd != state_code_buyer_detail) {
       is_igst = true;
-    }
+    } 
+
+    if(SupTyp == 'SEZWOP' || SupTyp == 'SEZWP'){
+		is_igst = true;
+	}
     var igst_amt;
     var cgst_amt;
 
@@ -343,7 +362,7 @@ define([
             IgstOnIntra: "N",
           },
           DocDtls: {
-            Typ: "INV",
+            Typ: doc_type,
             No: tranid,
             Dt: trandate,
           },
@@ -363,7 +382,7 @@ define([
           BuyerDtls: {
             Gstin: "",
             LglNm: buyer_lglnm,
-            TrdNm: Buyers_Details[0].altname,
+            TrdNm: TrdNm,
             Pos: state_code_buyer_detail,
             Addr1: billaddress1,
             Addr2: billaddress2,
@@ -383,8 +402,8 @@ define([
             Pin: dispatchPin,
           },
           ShipDtls: {
-            LglNm: buyer_lglnm,
-            TrdNm: Buyers_Details[0].altname,
+            LglNm: shippingattention,
+            TrdNm: TrdNm,
             Gstin: ship_gst,
             Addr1: shipaddr1,
             Addr2: shipaddr2,
@@ -482,7 +501,7 @@ define([
               BuyerDtls: {
                 Gstin: client_gst,
                 LglNm: buyer_lglnm,
-                TrdNm: Buyers_Details[0].altname,
+                TrdNm: TrdNm,
                 Pos: state_code_buyer_detail,
                 Addr1: billaddress1,
                 Addr2: billaddress2,
@@ -514,8 +533,8 @@ define([
                 Pin: dispatchPin,
               },
               ShipDtls: {
-                LglNm: buyer_lglnm,
-                TrdNm: Buyers_Details[0].altname,
+                LglNm: shippingattention,
+                TrdNm: TrdNm,
                 Gstin: ship_gst,
                 Addr1: shipaddr1,
                 Addr2: shipaddr2,
@@ -589,7 +608,7 @@ define([
               BuyerDtls: {
                 Gstin: client_gst,
                 LglNm: buyer_lglnm,
-                TrdNm: Buyers_Details[0].altname,
+                TrdNm: TrdNm,
                 Pos: state_code_buyer_detail,
                 Addr1: billaddress1,
                 Addr2: billaddress2,
@@ -621,8 +640,8 @@ define([
                 Pin: dispatchPin,
               },
               ShipDtls: {
-                LglNm: buyer_lglnm,
-                TrdNm: Buyers_Details[0].altname,
+                LglNm: shippingattention,
+                TrdNm: TrdNm,
                 Gstin: ship_gst,
                 Addr1: shipaddr1,
                 Addr2: shipaddr2,
@@ -875,6 +894,8 @@ define([
       "AND",
       ["taxline", "is", "F"],
       "AND",
+	   ["memo", "isnot", "Cost of Sales"],
+      "AND",
       ["internalid", "anyof", invoice_id],
       "AND",
       ["amount", "greaterthan", "0.00"],
@@ -926,6 +947,7 @@ define([
       search.createColumn({ name: "shipcity", label: "shipcity" }),
       search.createColumn({ name: "shipstate", label: "shipstate" }),
       search.createColumn({ name: "shipzip", label: "shipzip" }),
+	   search.createColumn({name: "shippingattention", label: "shippingattention"}),
       search.createColumn({
         name: "custrecord_india_gstin",
         join: "billingAddress",
@@ -991,6 +1013,7 @@ define([
     var columns = [
       search.createColumn({ name: "entityid", label: "name" }),
       search.createColumn({ name: "altname", label: "altname" }),
+      search.createColumn({ name: "companyname", label: "companyname" }),
       search.createColumn({ name: "custentity1_1", label: "custentity1_1" }),
       search.createColumn({ name: "address1", label: "address1" }),
       search.createColumn({ name: "address2", label: "address2" }),

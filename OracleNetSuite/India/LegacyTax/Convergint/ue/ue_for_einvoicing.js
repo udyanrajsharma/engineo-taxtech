@@ -30,6 +30,7 @@ define([
               var form = context.form;
                 var subsidiary = currRecord.getValue('subsidiary');
                 var irn = currRecord.getValue('custbody_edoc_irn');
+                var b2c_transaction_id = currRecord.getValue('custbody_b2c_transaction_id');
 				if(subsidiary == 10){
 					 form.clientScriptModulePath ="../cs/cs_einvoice.js";
                 var ei_status = currRecord.getValue('custbody_ei_status');
@@ -65,7 +66,7 @@ define([
 				}
 				
 				if(type == 'custinvc' || type == 'custcred'){
-				if(irn != "" ){
+				if(irn != "" || b2c_transaction_id != ""){
 				
 					 var generateButtonParams = {
                             id: "custpage_print_button",
