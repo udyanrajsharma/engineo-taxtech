@@ -323,19 +323,22 @@ class database:
             print("data from Log Table in E-Invoice: ",rowsLog)
             if rowsLog != []:
                 for data in rowsLog:
-                    print("data : ",data)
+                    # print("data : ",data)
                     if 'SUCCESS' in data:
-                        print("Inside Success condition in loop and break")
+                        # print("Inside Success condition in loop and break")
                         record = data[0]
+                        return record
                         break
             else:
-                record = 'None' 
-            servicelogger_info.info(f"Invoice check from database for already generated for a Invoice No:{trx_no} and already Response status in Log Table: {data}") 
+                record = 'None'
+                return record 
+            servicelogger_info.info(f"Invoice check from database for already generated for a Invoice No:{trx_no}")             
             cur.close() 
-            return record
+            
         except Exception as e:
             print("Error : ",e)
             servicelogger_error.exception(f"Exception Occured during checking already generate E-Invoice for Transaction No: {trx_no}")
+            print(f"Exception Occured during checking already generate E-Invoice for Transaction No : {trx_no}")
         finally:
             connection.close()
     
