@@ -11,8 +11,8 @@ class gstDataModel:
         return apiDetails.InvokeIRISLoginAPI()
     
     # GSTR1
-    def getGstr1HeaderData(from_date, to_date):
-        return database.executeGSTR1HeaderQuery(from_date, to_date)
+    def getGstr1HeaderData(from_date, to_date, request_id):
+        return database.executeGSTR1HeaderQuery(from_date, to_date, request_id)
     
     def getGstr1LineItemData(document_No):
         return database.executeGSTR1LineQuery(document_No)
@@ -125,8 +125,8 @@ class gstDataModel:
             servicelogger_error.exception(f"Exception occured in payload creation for GSTR1")
 
     # GSTR2    
-    def getGstr2HeaderData(from_date, to_date):
-        return database.executeGSTR2HeaderQuery(from_date, to_date)
+    def getGstr2HeaderData(from_date, to_date, request_id):
+        return database.executeGSTR2HeaderQuery(from_date, to_date, request_id)
     
     def getGstr2LineItemData(document_No):
         return database.executeGSTR2LineQuery(document_No)

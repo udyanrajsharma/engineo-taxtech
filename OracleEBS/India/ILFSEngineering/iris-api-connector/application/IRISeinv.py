@@ -10,8 +10,8 @@ class IRISeinv:
     def einvoice_v(from_date, to_date, trx_no, gstin_state, created_by, request_id, customer_Gstin, einv_template):
         try:
             servicelogger_info.info(f"E-Invoice program Called with \nFrom_date: {from_date}\nTo_date: {to_date}\nTransaction_No: {trx_no}\nGSTIN_State: {gstin_state}\nRequest_Id: {request_id}\nCustomer_GSTIN: {customer_Gstin}\nE-Invoice_template: {einv_template}")
-            Header_Einv_Prj_data = einvDataModel.getEinvHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin)
-            Header_Einv_ST_data = einvDataModel.getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin)
+            Header_Einv_Prj_data = einvDataModel.getEinvHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin, request_id)
+            Header_Einv_ST_data = einvDataModel.getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin, request_id)
             # response_login = einvDataModel.executeIRISLoginAPI()
 
             if not Header_Einv_Prj_data and not Header_Einv_ST_data:
@@ -100,7 +100,7 @@ class IRISeinv:
                 print("Inside Loop for a single EWB")
                 res_payload = einvDataModel.ewbNonIRNpayload(rows)
                 print("EWB Payload: ",res_payload)
-                einvDataModel.initiateEwbProcess(res_payload, doc_number, created_by, request_id)
+                einvDataModel.initiateEwbProcess(res_payload, doc_number, created_by, request_id, rows[5])
                 response_Ewb = einvDataModel.performEwbnonIrn(response_login[1], response_login[0], res_payload)
                 einvDataModel.finishEwbNonIrnProcess(response_Ewb[0], response_Ewb[1], doc_number, response_login[1], response_login[0], request_id)
                 servicelogger_info.info(f"E-Way Bill generated successfully for Document No: {doc_number}")

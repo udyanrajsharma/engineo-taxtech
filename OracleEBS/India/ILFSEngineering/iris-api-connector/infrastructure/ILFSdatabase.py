@@ -28,13 +28,6 @@ dsn = os.getenv("dsn")
 oracle_client_dirpath = os.getenv("oracle_client_dir")
 print("oracle_client_dirpath = " , oracle_client_dirpath)
 
-# Connect to Oracle database
-# oracledb.init_oracle_client(lib_dir=oracle_client_dirpath)
-# connection = oracledb.connect(
-#     user = user_name,
-#     password = password,
-#     dsn = dsn
-#     )
 
 class database:
 
@@ -46,14 +39,14 @@ class database:
                 password = password,
                 dsn = dsn
                 )
-            servicelogger_info.info("Database Connected")
+            # servicelogger_info.info("Database Connected")
             print("Database Connected...")
             return connection
         except Exception as e:
             servicelogger_error.exception("Exception occured in Database connection")
 
     # GSTR1
-    def executeGSTR1HeaderQuery(from_date, to_date):
+    def executeGSTR1HeaderQuery(from_date, to_date, request_id):
         try:
             print("Inside GSTR1 Header query")
             connection = database.getDatabaseConnection()
@@ -63,12 +56,11 @@ class database:
             cur.execute(Header_gstr1_Query)
             rows = cur.fetchall()
             cur.close()
-            servicelogger_info.info(f"Total records for GSTR1 fetch from database Date from {from_date} to date {to_date}")
-            
+            servicelogger_info.info(f"Total records for GSTR1 fetch from database Date from {from_date} to date {to_date} for Request Id: {request_id}")
             return rows
         except Exception as e:
             print("Error while exwcuting GSTR1 Header Query from database", e)
-            servicelogger_error.exception("Exception occured while executing GSTR1 Header Query from database")
+            servicelogger_error.exception(f"Exception occured while executing GSTR1 Header Query from database for Request Id: {request_id}")
         finally:
             connection.close()
     
@@ -81,7 +73,6 @@ class database:
             cur.execute(Line_gstr1_Query)
             rows = cur.fetchall()
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error while exwcuting GSTR1 Line Query from database", e)
@@ -102,7 +93,7 @@ class database:
             connection.commit()
             cur.close()
             
-            servicelogger_info.info(f"Data inserted for GSTR1 into database for Invoice No: {invoice_id}")
+            servicelogger_info.info(f"Data inserted for GSTR1 into database for Invoice No: {invoice_id} and Request No: {request_id}")
             print("Data inserted for GSTR1 into database for Invoice")
         except Exception as e:
             print("Error while inserting data into database for GSTR1", e)
@@ -129,7 +120,6 @@ class database:
                     cur.execute(Update_Query, bind_var)
                     connection.commit()
                     cur.close()
-                    
                     servicelogger_info.info(f"Data updated into database (GSTR1) for Invoice No: {invoice_id}")
                     print("Record update for GSTR1")
 
@@ -143,7 +133,6 @@ class database:
                     cur.execute(Update_Query, bind_var)
                     connection.commit()
                     cur.close()
-                    
                     servicelogger_info.info(f"Data updated into database (GSTR1) for Invoice No: {invoice_id}")
                     print("Record update for GSTR1")
             
@@ -156,7 +145,6 @@ class database:
                 cur.execute(Update_Query, bind_var)
                 connection.commit()
                 cur.close()
-                
                 servicelogger_info.info(f"Data updated into database (GSTR1) for Invoice No: {invoice_id}")
                 print("Record update for GSTR1")
 
@@ -168,7 +156,6 @@ class database:
                 cur.execute(Update_Query, bind_var)
                 connection.commit()
                 cur.close()
-                
                 servicelogger_info.info(f"Data updated into database (GSTR1) for Invoice No: {invoice_id}")
                 print("Record update for GSTR1")
 
@@ -179,7 +166,7 @@ class database:
             connection.close()
 
     # GSTR2
-    def executeGSTR2HeaderQuery(from_date, to_date):
+    def executeGSTR2HeaderQuery(from_date, to_date, request_id):
         try:
             connection = database.getDatabaseConnection()
             cur = connection.cursor()
@@ -187,12 +174,11 @@ class database:
             cur.execute(Header_gstr2_Query)
             rows = cur.fetchall()
             cur.close()
-            
-            servicelogger_info.info(f"Total records for GSTR2 fetch from database Date from {from_date} to date {to_date}")
+            servicelogger_info.info(f"Total records for GSTR2 fetch from database Date from {from_date} to date {to_date} for Request Id: {request_id}")
             return rows
         except Exception as e:
             print("Error while exwcuting GSTR2 Header Query from database", e)
-            servicelogger_error.exception("Exception occured while executing GSTR2 Header Query from database")
+            servicelogger_error.exception(f"Exception occured while executing GSTR2 Header Query from database for Request Id: {request_id}")
         finally:
             connection.close()
     
@@ -204,7 +190,6 @@ class database:
             cur.execute(Line_gstr1_Query)
             rows = cur.fetchall()
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error while exwcuting GSTR2 Line Query from database", e)
@@ -255,7 +240,6 @@ class database:
                     cur.execute(Update_Query, bind_var)
                     connection.commit()
                     cur.close()
-                    
                     servicelogger_info.info(f"Data updated into database (GSTR2) for Invoice No: {invoice_id}")
                 
                 else:
@@ -270,7 +254,6 @@ class database:
                     cur.execute(Update_Query, bind_var)
                     connection.commit()
                     cur.close()
-                    
                     servicelogger_info.info(f"Data updated into database (GSTR2) for Invoice No: {invoice_id}")
             
             elif res_status_code == 403:
@@ -282,7 +265,6 @@ class database:
                 cur.execute(Update_Query, bind_var)
                 connection.commit()
                 cur.close()
-                
                 servicelogger_info.info(f"Data updated into database (GSTR2) for Invoice No: {invoice_id}")
 
             else:
@@ -308,7 +290,7 @@ class database:
             connection.close()
 
     # E-INVOICE
-    def executeEinvHeaderQuery(from_date, to_date, txn_no, gstin_state, customer_Gstin):
+    def executeEinvHeaderQuery(from_date, to_date, txn_no, gstin_state, customer_Gstin, request_id):
         try:
             connection = database.getDatabaseConnection()
             cur = connection.cursor()
@@ -319,7 +301,7 @@ class database:
             # print("Einvoice Header data: ",rows)
             print("Header Query for E-Invoice Executed")
             cur.close()
-            servicelogger_info.info("Total records fetched from database for the Invoice")
+            servicelogger_info.info(f"Total records fetched from database for the Invoice for Request Id: {request_id}")
             return rows
             # return rows
         except Exception as e:
@@ -327,8 +309,7 @@ class database:
             servicelogger_error.exception("Exception occured while executing E-Invoice Header Query from database")
         finally:
             connection.close()
-            
-
+      
     def testinvoicelogrecord(from_date, to_date, txn_no):
         try:
             connection = database.getDatabaseConnection()
@@ -350,8 +331,7 @@ class database:
             else:
                 record = 'None' 
             servicelogger_info.info(f"Invoice check from database for already generated for a Invoice No:{trx_no} and already Response status in Log Table: {data}") 
-            cur.close()
-                  
+            cur.close() 
             return record
         except Exception as e:
             print("Error : ",e)
@@ -370,15 +350,13 @@ class database:
             rows = cur.fetchall()
             # print("Line Query 1 Executed")
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error in E-Invoice Line Query 1:",e)
             servicelogger_error.exception("Exception occured while executing E-Inv Line Item Query 1 from database")
         finally:
             connection.close()
-            
-    
+       
     def executeEinvLine2Query(document_No):
         try:
             connection = database.getDatabaseConnection()
@@ -390,7 +368,6 @@ class database:
             rows = cur.fetchall()
             # print("Line Query 2 Executed")
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error in E-Invoice Line Query 2:",e)
@@ -409,7 +386,6 @@ class database:
             rows = cur.fetchall()
             # print("Line Query 3 Executed")
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error in E-Invoice Line Query 3:",e)
@@ -428,7 +404,6 @@ class database:
             rows = cur.fetchall()
             # print("Line Query 4 Executed")
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error in E-Invoice Line Query 4:",e)
@@ -436,7 +411,7 @@ class database:
         finally:
             connection.close()
     
-    def executeEinvStockTransferHeaderQuery(from_date, to_date, txn_no, gstin_state, customer_Gstin):
+    def executeEinvStockTransferHeaderQuery(from_date, to_date, txn_no, gstin_state, customer_Gstin, request_id):
         try:
             connection = database.getDatabaseConnection()
             cur = connection.cursor()
@@ -445,9 +420,8 @@ class database:
             cur.execute(stockTransfer_einv_Query)
             rows = cur.fetchall()
             # print("Header Query for Stock Transfer Executed: ",rows)
-            servicelogger_info.info("Total records fetched from database for the Stock Transfer Invoice")
+            servicelogger_info.info(f"Total records fetched from database for the Stock Transfer Invoice for Request Id: {request_id}")
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error in Header Query for Stock Transfer: ",e)
@@ -466,7 +440,6 @@ class database:
             rows = cur.fetchall()
             # print("Line Query 1 Executed")
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error in Line Query 1 : ",e)
@@ -485,7 +458,6 @@ class database:
             rows = cur.fetchall()
             # print("Line Query 2 Executed")
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error in Line Query 2:",e)
@@ -504,7 +476,6 @@ class database:
             rows = cur.fetchall()
             # print("Line Query 3 Executed")
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error in Line Query 3:",e)
@@ -523,7 +494,6 @@ class database:
             rows = cur.fetchall()
             # print("Line Query 4 Executed")
             cur.close()
-            
             return rows
         except Exception as e:
             print("Error in Line Query 4:",e)
@@ -605,15 +575,13 @@ class database:
                     # doc_type = "GENERATE E-INVOICE"
                     # attachment_block = "DECLARE P_ATTACH_ENTITY VARCHAR2(200); P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); P_DOC_TYPE VARCHAR2(200); BEGIN P_ATTACH_ENTITY := '{}'; P_CONC_REQ_ID := {}; P_DOC_NUM := '{}'; P_DOC_TYPE := '{}'; XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC (P_ATTACH_ENTITY => P_ATTACH_ENTITY, P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM, P_DOC_TYPE => P_DOC_TYPE); END;".format(attach_entity, request_id, iris_no, doc_type)
                     
-                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format(request_id, iris_no)
-                    
+                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format(request_id, iris_no)                  
                     cur.execute(attachment_block)
                     connection.commit()
                     print("Invoice detail Updated and attachment - success")
                     servicelogger_info.info(f"Invoice Details updated in table and attachment added for Invoice No: {invoice_id} and Request Id: {request_id}")
                     cur.close()
-                    
-                
+               
                 else:
                     msg_values = [error["msg"] for error in response_data["errors"]]
                     all_msg_values = ", ".join(msg_values)
@@ -625,8 +593,7 @@ class database:
                     print("Invoice detail Updated - Structural Error")
                     servicelogger_info.info(f"Invoice Details updated in table for Invoice No: {invoice_id} and Request Id: {request_id}")
                     cur.close()
-                    
-            
+             
             elif res_status_code == 403:
                 print("Inside status 403")
                 message = response_data.get('message')
@@ -638,8 +605,7 @@ class database:
                 print("Invoice detail Updated - fail(403)")
                 servicelogger_info.info(f"Invoice Details updated in table for Invoice No: {invoice_id} and Request Id: {request_id}")
                 cur.close()
-                
-            
+              
             else:
                 message = response_data.get('message')
                 failure_status = "FAILURE"
@@ -651,8 +617,6 @@ class database:
                 print("Invoice detail Updated - fail")
                 servicelogger_info.info(f"Invoice Details updated in table for Invoice No: {invoice_id} and Request Id: {request_id}")
                 cur.close()
-                
-
         except Exception as e:
             print("Error in updating the invoice detail in DB",e)
             servicelogger_error.exception(f"Exception occured while updating data into database for Invoice No: {invoice_id}")
@@ -691,12 +655,10 @@ class database:
                     cur.execute(Update_Query, bind_var)
                     connection.commit()
                     
-                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format(request_id, iris_no)
-                    
+                    attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200); BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format(request_id, iris_no)                  
                     cur.execute(attachment_block)
                     connection.commit()
-                    cur.close()
-                    
+                    cur.close()                   
                     servicelogger_info.info(f"Invoice Details updated in table and attachment added for Invoice No: {invoice_id} and Request Id: {request_id}")
                 
                 else:
@@ -708,8 +670,7 @@ class database:
                     connection.commit()
                     servicelogger_info.info(f"Invoice Details updated in table for Invoice No: {invoice_id} and Request Id: {request_id}")
                     cur.close()
-                    
-            
+                               
             elif res_status_code == 403:
                 print("Inside status 403")
                 message = response_data.get('message')
@@ -720,13 +681,11 @@ class database:
                 connection.commit()
                 servicelogger_info.info(f"Invoice Details updated in table for Invoice No: {invoice_id} and Request Id: {request_id}")
                 cur.close()
-                
-            
+                     
             else:
                 message = response_data.get('message')
                 failure_status = "FAILURE"
-                print("Inside other than 200 and 403 error and \n Error Message:",message, "\nResponse data: ",response_data)
-                
+                # print("Inside other than 200 and 403 error and \n Error Message:",message, "\nResponse data: ",response_data)               
                 Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b,  RESPONSE_PAYLOAD = :d  where TRX_NUMBER = :e AND REQUEST_ID = :z"
                 bind_var = [failure_status, message, json_response, invoice_id, request_id]
                 cur.execute(Update_Query, bind_var)
@@ -734,14 +693,12 @@ class database:
                 print("Invoice detail Updated - fail")
                 servicelogger_info.info(f"Invoice Details updated in table for Invoice No: {invoice_id} and Request Id: {request_id}")
                 cur.close()
-                
-            
+                          
         except Exception as e:
             servicelogger_error.exception(f"Exception Occured in updating table for Stock Transfer Invoice No: {invoice_id}")
         finally:
             connection.close()
             
-
     # Cancel IRN
     def CancelInvoiceQuery(invoice_id):
         try:
@@ -753,8 +710,7 @@ class database:
             cur.execute(irn_query)
             rows = cur.fetchall()
             # print("Header Query Executed: ",rows)
-            cur.close()
-            
+            cur.close()            
             return rows
         except Exception as e:
             print("Error in the invoice detail for cancelling IRN :",e)
@@ -802,8 +758,7 @@ class database:
                     # cur.execute(Update_Query, {'a': response_status, 'b': message,'c': 'null' ,'e': invoice_id, 'x': irn_no, 'y': cancel_date, 'z': request_id})                  
                     connection.commit()
                     print("Cancel Invoice Updated - success")
-                    # attachment procedure
-                
+                    # attachment procedure               
                     attachment_block = "DECLARE  P_CONC_REQ_ID NUMBER; P_DOC_NUM VARCHAR2(200);  BEGIN  P_CONC_REQ_ID := {}; P_DOC_NUM := '{}';  XX_IRIS_GST_UTILS_PKG.ILFS_FND_ATTACHMENT_PRC ( P_CONC_REQ_ID => P_CONC_REQ_ID, P_DOC_NUM => P_DOC_NUM); END;".format( request_id, invoice_id)
                     
                     cur.execute(attachment_block)
@@ -811,8 +766,7 @@ class database:
                     print("Invoice detail Updated and attachment ")   
                     servicelogger_info.info(f"Cancel Invoice Details updated in table and attachment added for Invoice No: {invoice_id} and Request Id: {request_id}")                   
                     cur.close()
-                    
-             
+                                 
                 else:
                     fail_message = response_data['errors'][0]['msg']
                     print(fail_message)
@@ -824,8 +778,7 @@ class database:
                     print("Invoice detail Updated - Structural Error")    
                     servicelogger_info.info(f"Cancel Invoice Details updated in table for Invoice No: {invoice_id} and Request Id: {request_id}")             
                     cur.close()
-                    
-        
+                           
             elif res_status_code == 403:  
                 # print("Inside status 403")
                 message = response_data.get("message", '')
@@ -837,8 +790,7 @@ class database:
                 servicelogger_info.info(f"Cancel Invoice Details updated in table for Invoice No: {invoice_id} and Request Id: {request_id}")
                 print("Cancel Invoice Updated - fail(403)")
                 cur.close()
-                
-                           
+                                        
             else:
                 message = response_data.get("message", '')
                 # print("Message in 400: ",message)
@@ -850,8 +802,7 @@ class database:
                 servicelogger_info.info(f"Cancel Invoice Details updated in table for Invoice No: {invoice_id} and Request Id: {request_id}")
                 print("Cancel Invoice Updated - fail")
                 cur.close()
-                
-                
+                     
         except Exception as e:
             servicelogger_error.exception(f"Exception Occured in updating table for cancelling Invoice No: {invoice_id}")
         finally:
@@ -864,7 +815,35 @@ class database:
             print("Inside Header Query for EWB")
             cur = connection.cursor()
             trx_no = document_No.replace("'", "''")
-            Header_ewbNonIRN_Query = "SELECT distinct no, supplyType,  CASE WHEN subSplyTypewb = 'Job Work' THEN '4' WHEN subSplyTypewb = 'Supply' THEN '1' WHEN subSplyTypewb = 'Import' THEN '2' WHEN subSplyTypewb = 'Export' THEN '3' ELSE subSplyTypewb END subSplyTypewb, ewbDocType, catg, docDate, CASE WHEN trnTyp = 'REG' THEN '1' ELSE trnTyp END trnTyp, sgstin, strdNm, dgstin, dtrdNm, sbnm, sflno, sloc, sstcd, spin, bgstin, btrdNm, togstin, totrdNm, bbnm, bflno, bloc, bpin, bstcd, CASE WHEN transMode = 'ROAD' THEN '1' WHEN transMode = 'RAIL' THEN '2' WHEN transMode = 'AIR' THEN '3' WHEN transMode = 'SHIP' THEN '4' ELSE transMode END transMode, transDist, EWB_transDocDate, transDocNo, transId, transName, vehNo, vehTyp, userGstin FROM XX_ILFS_EINV_INTORG_DATA_V WHERE NO = '{}'".format(trx_no)
+            Header_ewbNonIRN_Query = """SELECT distinct no, supplyType,  
+            CASE 
+            WHEN subSplyTypewb = 'Job Work' THEN '4' 
+            WHEN subSplyTypewb = 'Supply' THEN '1' 
+            WHEN subSplyTypewb = 'Import' THEN '2' 
+            WHEN subSplyTypewb = 'Export' THEN '3' 
+            ELSE subSplyTypewb 
+            END subSplyTypewb, 
+            ewbDocType, catg, docDate, 
+            CASE 
+            WHEN trnTyp = 'REG' THEN '1' 
+            ELSE trnTyp 
+            END trnTyp, 
+            sgstin, strdNm, dgstin, dtrdNm, sbnm, sflno, sloc, sstcd, spin, bgstin, btrdNm, togstin, totrdNm, bbnm, bflno, bloc, bpin, bstcd, 
+            CASE 
+            WHEN transMode = 'ROAD' THEN '1' 
+            WHEN transMode = 'Road' THEN '1' 
+            WHEN transMode = 'RAIL' THEN '2' 
+            WHEN transMode = 'Rail' THEN '2' 
+            WHEN transMode = 'AIR' THEN '3' 
+            WHEN transMode = 'Air' THEN '3' 
+            WHEN transMode = 'SHIP' THEN '4' 
+            WHEN transMode = 'Ship' THEN '4' 
+            ELSE transMode 
+            END transMode, 
+            transDist, EWB_transDocDate, transDocNo, transId, transName, vehNo, vehTyp, userGstin 
+            FROM XX_ILFS_EINV_INTORG_DATA_V 
+            WHERE NO = '{}'""".format(trx_no)
+            
             cur.execute(Header_ewbNonIRN_Query)
             rows = cur.fetchall()
             cur.close()
@@ -895,15 +874,15 @@ class database:
         finally:
             connection.close()
     
-    def persistInsertEWBRequestInDB(payload, doc_no, createdBy, requestId):
+    def persistInsertEWBRequestInDB(payload, doc_no, createdBy, requestId, docDate):
         try:
             connection = database.getDatabaseConnection()
             cur = connection.cursor()
             json_payload = json.dumps(payload)
-            print("EWB Insert in table AND \ndate: ",date.today().strftime('%d-%m-%Y'))
-            Insert_Query = "INSERT INTO XX_IRIS_EINV_LOG_T (TRX_NUMBER,  REQUEST_PAYLOAD, CREATED_BY, CREATION_DATE, REQUEST_ID) VALUES (:1, :2, :3, TO_DATE(:4, 'DD-MM-YYYY'), :5)"
+            print("EWB Insert in table AND \n Document Date: ",docDate)
+            Insert_Query = "INSERT INTO XX_IRIS_EINV_LOG_T (TRX_NUMBER,  REQUEST_PAYLOAD, CREATED_BY, CREATION_DATE, REQUEST_ID, TRX_DATE) VALUES (:1, :2, :3, TO_DATE(:4, 'DD-MM-YYYY'), :5, TO_DATE(:6, 'DD-MM-YYYY'))"
             # foramat_insert_query = Insert_Query.format(doc_no, json_payload, createdBy, date.today().strftime('%d-%m-%Y'), requestId)
-            bind_var = [doc_no, json_payload, createdBy, date.today().strftime('%d-%m-%Y'), requestId ]
+            bind_var = [doc_no, json_payload, createdBy, date.today().strftime('%d-%m-%Y'), requestId, docDate]
             cur.execute(Insert_Query, bind_var)    
             connection.commit()
             servicelogger_info.info(f"E-Way Bill Details inserted in table for Document No: {doc_no} and Request Id: {requestId}")
@@ -920,7 +899,7 @@ class database:
             connection = database.getDatabaseConnection()
             cur = connection.cursor()
             json_payload = json.dumps(response_data)
-            print("Inside updation of table and \nResponse :",json_payload)
+            print(f"Inside updation of table for Status Code{res_status_code} and \nResponse :{json_payload}")
             if res_status_code == 200:
                 print("Inside status 200")
                 # Extract fields from the response and save them to another table
@@ -937,8 +916,8 @@ class database:
                     
                     response_pdf = apiDetails.getPDFfromEwbNo(ewbNo,companyid,token)
                 
-                    Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :1 , RESPONSE_MESSAGE = :2 , UPLOAD_TIME = :3 , LAST_UPDATED_BY = :4 , LAST_UPDATE_DATE = :5 , RESPONSE_PAYLOAD = :6 , INVOICE_PDF = :7 , IRIS_EWB_NO = :8 , IRIS_EWB_DATE = :9 , IRIS_EWB_VALID_TILL = :10, USERGSTIN = :11, TRX_DATE = :12 where TRX_NUMBER = :13 AND REQUEST_ID = :14"
-                    bind_var = [response_status, message, uploadTime, last_updateBy, date.today().strftime('%d-%m-%Y'), json_payload, response_pdf.content, ewbNo, ewbDate, validUpto, userGstin, trxdate, invoice_id, request_id]
+                    Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a , RESPONSE_MESSAGE = :b , LAST_UPDATED_BY = :c , RESPONSE_PAYLOAD = :d , INVOICE_PDF = :e , IRIS_EWB_NO = :f , IRIS_EWB_DATE = :g, IRIS_EWB_VALID_TILL = :h, USERGSTIN = :i, TRX_DATE = TO_DATE(:j, 'DD-MM-YYYY'), UPLOAD_TIME = TO_DATE(:k, 'DD-MM-YYYY'), LAST_UPDATE_DATE = TO_DATE(:l, 'DD-MM-YYYY') where TRX_NUMBER = :m AND REQUEST_ID = :n"
+                    bind_var = [response_status, message, last_updateBy,  json_payload, response_pdf.content, ewbNo, ewbDate, validUpto, userGstin, trxdate, date.today().strftime('%d-%m-%Y'), date.today().strftime('%d-%m-%Y'), invoice_id, request_id]
                     cur.execute(Update_Query, bind_var)
                     connection.commit()
 
@@ -950,40 +929,49 @@ class database:
                     servicelogger_info.info(f"E-Way Bill Details updated in table and attachment added for Document No: {invoice_id} and Request Id: {request_id}")
                     print("Invoice detail Updated and attachment ")
                     cur.close()
-                    
-                
+                        
                 else:
-                    msg_values = [error["defaultMessage"] for error in response_data["fieldErrors"]]
-                    all_msg_values = ", ".join(msg_values)
-                    print("Error Message :",all_msg_values)
-                    Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2, RESPONSE_PAYLOAD = :3  where TRX_NUMBER = :4 AND REQUEST_ID = :5"
-                    bind_var = [response_status, all_msg_values, json_payload, invoice_id ,request_id]
+                    fieldError = response_data.get("fieldErrors",'')
+                    response_fail_status = "Failure"
+                    print("Field Error: ",fieldError)
+                    if fieldError is not None:
+                        msg_values = [error["defaultMessage"] for error in response_data["fieldErrors"]]
+                        all_msg_values = ", ".join(msg_values)
+                    elif isinstance(response_data.get("response"), dict) and response_data["response"]["ewbErrorList"] :
+                        ewb_error_desc_values = [error["ewbErrorDesc"] for error in response_data["response"]["ewbErrorList"]]
+                        all_msg_values = ", ".join(ewb_error_desc_values)
+                    elif response_data["message"]:
+                        all_msg_values = response_data.get("message", "")
+                    print("All Update Records\nRESPONSE_STATUS",response_fail_status ,"\nRESPONSE_MESSAGE:",all_msg_values,"\nUPLOAD_TIME:",date.today().strftime('%d-%m-%Y'),"\nLAST_UPDATE_DATE:",date.today().strftime('%d-%m-%Y'),"\nTRX_NUMBER:",invoice_id,"\nREQUEST_ID:",request_id,"\nRESPONSE_PAYLOAD: ",json_payload)
+
+                    Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b, RESPONSE_PAYLOAD = :c, UPLOAD_TIME = TO_DATE(:d, 'DD-MM-YYYY'), LAST_UPDATE_DATE = TO_DATE(:e, 'DD-MM-YYYY') where TRX_NUMBER = :f AND REQUEST_ID = :g"
+                    bind_var = [response_fail_status, all_msg_values, json_payload, date.today().strftime('%d-%m-%Y'), date.today().strftime('%d-%m-%Y'), invoice_id, request_id]
+                    # Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b, RESPONSE_PAYLOAD = :c where TRX_NUMBER = :f AND REQUEST_ID = :g"
+                    # bind_var = [response_fail_status, all_msg_values, json_payload, invoice_id, request_id]
                     cur.execute(Update_Query, bind_var)
                     connection.commit()
                     servicelogger_info.info(f"E-Way Bill Details updated in table for Document No: {invoice_id} and Request Id: {request_id}")
                     print("Invoice detail Updated - Structural Error")
                     cur.close()
-                    
-        
+                         
             elif res_status_code == 403:
                 # print("Inside status 403")
                 message = response_data.get("message", '')
                 failure_status = "FAILURE"
-                Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , RESPONSE_PAYLOAD = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-                bind_var = [failure_status, message, json_payload, invoice_id, request_id]
+                Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :1, RESPONSE_MESSAGE = :2, RESPONSE_PAYLOAD = :3, LAST_UPDATE_DATE = TO_DATE(:4, 'DD-MM-YYYY') where TRX_NUMBER = :5 AND REQUEST_ID = :6"
+                bind_var = [failure_status, message, json_payload, date.today().strftime('%d-%m-%Y'), invoice_id, request_id]
                 cur.execute(Update_Query, bind_var)
                 connection.commit()
                 servicelogger_info.info(f"E-Way Bill Details updated in table for Document No: {invoice_id} and Request Id: {request_id}")
                 print("Cancel Invoice Updated - fail(403)")
                 cur.close()
                 
-            
             else:
                 message = response_data.get("message", '')
                 # print("Message in 400: ",message)
                 failure_status = "FAILURE"
-                Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :a ,RESPONSE_MESSAGE = :b , RESPONSE_PAYLOAD = :c where TRX_NUMBER = :e AND REQUEST_ID = :z"
-                bind_var = [failure_status, message, json_payload, invoice_id, request_id]
+                Update_Query = "UPDATE XX_IRIS_EINV_LOG_T SET RESPONSE_STATUS = :1 ,RESPONSE_MESSAGE = :2 , RESPONSE_PAYLOAD = :3, LAST_UPDATE_DATE = TO_DATE(:4, 'DD-MM-YYYY') where TRX_NUMBER = :5 AND REQUEST_ID = :6"
+                bind_var = [failure_status, message, json_payload, date.today().strftime('%d-%m-%Y'), invoice_id, request_id]
                 cur.execute(Update_Query, bind_var)
                 connection.commit()
                 print("Cancel Invoice Updated - fail")
@@ -991,6 +979,6 @@ class database:
                 cur.close()
                 
         except Exception as e:
-            servicelogger_error.exception(f"Exception Occured in update teh E-Way Bill for request Id: {request_id}")
+            servicelogger_error.exception(f"Exception Occured in update E-Way Bill for request Id: {request_id}")
         finally:
             connection.close()

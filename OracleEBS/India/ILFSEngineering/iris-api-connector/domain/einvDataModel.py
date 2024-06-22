@@ -12,8 +12,8 @@ class einvDataModel:
 
     # E-INVOICE
     # E-Inv Only Prj
-    def getEinvHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin):
-        return database.executeEinvHeaderQuery(from_date, to_date, trx_no, gstin_state, customer_Gstin)
+    def getEinvHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin, request_id):
+        return database.executeEinvHeaderQuery(from_date, to_date, trx_no, gstin_state, customer_Gstin, request_id)
     
     def testgetEinvHeaderData(from_date, to_date, trx_no):
         return database.testexecuteEinvHeaderQuery(from_date, to_date, trx_no)
@@ -34,8 +34,8 @@ class einvDataModel:
         return database.executeEinvLine4Query(document_No)
     
     # Stock Transfer E-Inv 
-    def getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin):
-        return database.executeEinvStockTransferHeaderQuery(from_date, to_date, trx_no, gstin_state, customer_Gstin)
+    def getEinvStockTransferHeaderData(from_date, to_date, trx_no, gstin_state, customer_Gstin, request_id):
+        return database.executeEinvStockTransferHeaderQuery(from_date, to_date, trx_no, gstin_state, customer_Gstin, request_id)
     
     def getEinvStockTransferLineItem1Data(document_No):
         return database.executeEinvStockTransferLine1Query(document_No)
@@ -730,6 +730,8 @@ class einvDataModel:
             camt = 0.00
             iamt = 0.00
             csamt = 0.00
+            transDate = row[27]
+            transDocDate = transDate.replace("-", "/")
             payload = {
                 "supplyType": row[1],
                 "subSupplyType": row[2],
@@ -740,30 +742,30 @@ class einvDataModel:
                 "transactionType": row[6],
                 "referencInum": None,
                 "referenceIdt": None,
-                "fromGstin": row[7],
-                # "fromGstin": "05AAAAU1183B1Z0",
+                # "fromGstin": row[7],
+                "fromGstin": "05AAAAU1183B1Z0",
                 "fromTrdName": row[8],
                 "dispatchFromGstin": row[9],
                 "dispatchFromTradeName": row[10],
                 "fromAddr1": row[11],
                 "fromAddr2": row[12],
                 "fromPlace": row[13],
-                "fromStateCode": row[14],
-                # "fromStateCode": "05",
-                "fromPincode": row[15],
-                # "fromPincode": "248001",
-                "toGstin": row[16],
-                # "toGstin": "08ACSPJ8289N1ZE",
+                # "fromStateCode": row[14],
+                "fromStateCode": "05",
+                # "fromPincode": row[15],
+                "fromPincode": "248001",
+                # "toGstin": row[16],
+                "toGstin": "08ACSPJ8289N1ZE",
                 "toTrdName": row[17],
                 "shipToGstin": row[18],
                 "shipToTradeName": row[19],
                 "toAddr1": row[20],
                 "toAddr2": row[21],
                 "toPlace": row[22],
-                "toPincode": row[23],
-                # "toPincode": "302001",
-                "toStateCode": row[24],
-                # "toStateCode": "08",
+                # "toPincode": row[23],
+                "toPincode": "302001",
+                # "toStateCode": row[24],
+                "toStateCode": "08",
                 "totInvValue": "",
                 "totalValue": "",
                 "cgstValue": "",
@@ -775,7 +777,8 @@ class einvDataModel:
                 "transMode": row[25],
                 "transDistance": row[26],
                 "transDocDate": row[27],
-                "transDocNo": row[28],
+                "transDocDate": transDocDate,
+                # "transDocNo": row[28],
                 "transporterId": row[29],
                 "transporterName": row[30],
                 "vehicleNo": row[31],
@@ -785,8 +788,8 @@ class einvDataModel:
                 "itemList": [   
                 ],
                 "companyId": None,
-                # "userGstin": "05AAAAU1183B1Z0",
-                "userGstin": row[33],
+                "userGstin": "05AAAAU1183B1Z0",
+                # "userGstin": row[33],
                 "forceDuplicateCheck": None
                 }
             
@@ -824,6 +827,7 @@ class einvDataModel:
             payload["igstValue"] = round(tot_iamt,2)
             payload["cessValue"] = round(tot_csamt,2)
             servicelogger_info.info(f"Payload creted for E-Way Bill No: {row[0]}")
+            print(f"Payload creted for E-Way Bill No: {row[0]}")
             return payload
         except Exception as e:
             servicelogger_info.exception(f"Exception Occured during payload creadtion for E-Way Bill for Document No: {row[0]}")
@@ -841,8 +845,8 @@ class einvDataModel:
     def performEwbnonIrn(companyId,token,payload):
         return apiDetails.InvokeEwbNonIrn(companyId,token,payload)
     
-    def initiateEwbProcess(payload, doc_no, createdBy, requestId):
-        return database.persistInsertEWBRequestInDB(payload, doc_no, createdBy, requestId)
+    def initiateEwbProcess(payload, doc_no, createdBy, requestId, docDate):
+        return database.persistInsertEWBRequestInDB(payload, doc_no, createdBy, requestId, docDate)
     
     def finishEwbNonIrnProcess(response_data, res_status_code, invoice_id, companyid, token, request_id):
         return database.persistUpdateEWBResponseInDB(response_data, res_status_code, invoice_id, companyid, token, request_id)

@@ -10,7 +10,7 @@ class IRISgst:
     def gstr1_v(from_date, to_date, created_by, request_id):
         try:
             print("Inside GSTR1 Model Class\n")
-            Header_Gstr1_data = gstDataModel.getGstr1HeaderData(from_date, to_date)
+            Header_Gstr1_data = gstDataModel.getGstr1HeaderData(from_date, to_date, request_id)
             if not Header_Gstr1_data:
                 servicelogger_info.info(f"No Records found for GSTR1 from database for this request id {request_id}")
                 # print(f"No Records found from database for this request id {request_id}")
@@ -33,7 +33,7 @@ class IRISgst:
     def gstr2_v(from_date, to_date, created_by, request_id):
         try:
             # print("Inside GSTR2 Model Class\n")
-            Header_Gstr2_data = gstDataModel.getGstr2HeaderData(from_date, to_date)
+            Header_Gstr2_data = gstDataModel.getGstr2HeaderData(from_date, to_date, request_id)
             if not Header_Gstr2_data:
                 servicelogger_info.info(f"No Records found for GSTR2 from database for this request id {request_id}")
                 # print(f"No Records found from database for this request id {request_id}")

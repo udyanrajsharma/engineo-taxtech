@@ -187,10 +187,10 @@ class apiDetails:
     def  getPDFfromEInvIO(Id,companyId,token, einv_template):
         try:
             print("Template from Concurrent: ",einv_template)
-            if einv_template == "ILFS -Regular Invoice":
+            if einv_template == "ILFS-Client Template":
                 templateName = "ILFS- Regular Invoice"
-            elif einv_template == "ILFS - Credit/Debit Memo":
-                templateName = "ILFS - Credit/Debit/Stock"
+            elif einv_template == "ILFS-Others Template":
+                templateName = "ILFS-Credit/Debit/Stock"
             else:
                 templateName = "ILFS- Regular Invoice"
 
