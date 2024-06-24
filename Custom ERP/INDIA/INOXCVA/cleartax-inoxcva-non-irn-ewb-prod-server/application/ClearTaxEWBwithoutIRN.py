@@ -127,7 +127,7 @@ class ClearTaxEWBwithoutIRN:
                 servicelogger_info.info("...Payload for generate EWB created...\n")
                 response = ewbDatamodel.executeClearTaxEWBapi(payload, gstIn) # Calling Clear Tax EWB API
                 print("Response From Clear Tax API: ",response[0])
-                ewbDatamodel.saveResponse(response[0], response[1], payload)
+                ewbDatamodel.saveResponse(response[0], response[1], payload, gstIn)
         except Exception as e:
             print("Error Occured in Payload Creation of EWB generation: ",e)
             servicelogger_error.exception("Exception Occured in Payload Creation for generate EWB :\n ")

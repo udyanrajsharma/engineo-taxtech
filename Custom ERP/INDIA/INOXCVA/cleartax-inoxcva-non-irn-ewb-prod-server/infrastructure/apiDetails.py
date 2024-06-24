@@ -9,8 +9,6 @@ import sys
 import configparser
 import base64
 import logging
-# import ssl
-# import certifi
 
 servicelogger_info = logging.getLogger("ClearTaxEWBServiceLogger")
 servicelogger_error = logging.getLogger("ClearTaxEWBErrorLogger")
@@ -38,6 +36,8 @@ prodClearTaxEwbToken = decode_value(config.get('API_DETAILS', 'clearTaxProdINOXE
 genEwbApiUrl = decode_value(config.get('API_DETAILS', 'generateEwbApiUrl'))
 canEwbApiUrl = decode_value(config.get('API_DETAILS', 'cancelEwbApiUrl'))
 updEwbApiUrl = decode_value(config.get('API_DETAILS', 'updateEwbApiUrl'))
+printEWBApiUrl = decode_value(config.get('API_DETAILS', 'printewbpdfurl'))
+ewbPDFprintType = "DETAILED"
 
 class apiDetails:
 
@@ -51,8 +51,10 @@ class apiDetails:
                 'X-Cleartax-Auth-Token': prodClearTaxEwbToken,  
                 'gstin': gstIn
             }
+            servicelogger_info.info(f"request Paylaod: {payload}")
             response = requests.put(url=clear_tax_generateEWBapi_url, headers=request_headers, json=json.loads(json.dumps(payload, default=decimal_default)))
-            response_statusCode = response.status_code            
+            response_statusCode = response.status_code 
+            servicelogger_info.info(f"Response from API: {response.text}")           
             try:
                 data = response.json()
             except ValueError:
@@ -102,3 +104,25 @@ class apiDetails:
         except Exception as e:
             print("Error Occured in Calling Generate EWB Non IRN API :",e)
             servicelogger_error.exception("...Exception Occured in Calling the ClearTax Update EWB API... \n ")
+
+    def printEwbPDF(ewbNo, gstIn):
+        try:
+            print()
+            clearTax_printEWB_api_url = printEWBApiUrl
+            # clearTax_printEWB_api_url = "https://api-sandbox.clear.in/einv/v2/eInvoice/ewaybill/print"
+            request_header_printEWB = {
+            'X-Cleartax-Auth-Token': prodClearTaxEwbToken,
+            'gstin': gstIn
+            }
+            request_payload = {
+                "ewb_numbers": [ewbNo],
+                "print_type": ewbPDFprintType
+            }
+            request_params = {
+                "format": "pdf"
+            }
+            response = requests.post(url=clearTax_printEWB_api_url, headers=request_header_printEWB, json=json.loads(json.dumps(request_payload, default=decimal_default)), params=request_params)
+            return response
+        except Exception as e:
+            servicelogger_error.exception("Exception Occured in Calling the Clear Tax print EWB pdf \n")
+  

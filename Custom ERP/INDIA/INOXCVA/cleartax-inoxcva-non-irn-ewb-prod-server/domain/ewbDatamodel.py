@@ -1,9 +1,16 @@
-from infrastructure.database import database
 from infrastructure.apiDetails import apiDetails
+from infrastructure.database import database
 import logging
+from datetime import datetime
+import os
+import sys
 
 servicelogger_info = logging.getLogger("ClearTaxEWBServiceLogger")
 servicelogger_error = logging.getLogger("ClearTaxEWBErrorLogger")
+current_dir = os.path.dirname(sys.executable)
+log_dir = os.path.join(current_dir,"E-WAY_BILL_PDF")
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
 
 class ewbDatamodel:
 
@@ -16,8 +23,30 @@ class ewbDatamodel:
     
     def executeClearTaxEWBapi(payload,gstIn):
         return apiDetails.InvokeClearTaxGenerateEWBAPI(payload,gstIn)
+    
+    def createEWBpdfFile(ewbNo, gstIn, documentNo, ewbType):
+        try:    
+            current_time = datetime.now().strftime("%d%m%Y_%H%M%S")
+            if ewbType == 'CANCELLED':
+                file = os.path.join(log_dir,f"EWB_{ewbType}_{ewbNo}_{current_time}.pdf")
+            elif ewbType == 'GENERATED':  
+                file = os.path.join(log_dir,f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}.pdf")
+            else:
+                file = os.path.join(log_dir,f"E_WAY_BILL_{current_time}.pdf")
 
-    def saveResponse(response_data, res_status_code, payload):
+            servicelogger_info.info(f"File Path: {file}")
+            responsePdf = apiDetails.printEwbPDF(ewbNo, gstIn)
+            pdfContent = responsePdf.content
+            if pdfContent:
+                # Write the PDF content to a file
+                with open(file, "wb") as file:
+                    file.write(pdfContent)
+                    servicelogger_info.info(f"PDF file saved for document No : {documentNo}")
+ 
+        except Exception as e :
+            servicelogger_error.exception("Exception Occured to call method for pdf file:")
+
+    def saveResponse(response_data, res_status_code, payload, gstIn):
         try:
             DocumentNumber = response_data.get('ewb_request', {}).get("DocumentNumber", '')
             if res_status_code == 200:
@@ -25,7 +54,6 @@ class ewbDatamodel:
                 Gstin_s = response_data.get('ewb_request', {}).get('SellerDtls', {}).get("Gstin", '')
                 
                 Success = response_data.get('govt_response', {}).get("Success", '')
-                transaction_id = response_data.get("transaction_id", '')
                 TotalInvoiceAmount = response_data.get('ewb_request', {}).get("TotalInvoiceAmount", '')
                 if Success == "Y":
                     print("Inside Success: ",Success)
@@ -33,10 +61,11 @@ class ewbDatamodel:
                     EwbNo = response_data.get('govt_response', {}).get("EwbNo", '')
                     EwbDt = response_data.get('govt_response', {}).get("EwbDt", '')
                     EwbValidTill = response_data.get('govt_response', {}).get("EwbValidTill", '')
-                    Alert = response_data.get('govt_response', {}).get("Alert", '')
                     print(Status,EwbNo,EwbDt,EwbValidTill)
-                    servicelogger_info.info("... Success Response from ClearTax EWB generation...\n")
-                    database.persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber, payload, response_data)
+                    servicelogger_info.info(f"... Success Response from ClearTax EWB generation for Document Number {DocumentNumber}...\n")
+                    ewbType = "GENERATED"
+                    ewbDatamodel.createEWBpdfFile(EwbNo, gstIn, DocumentNumber, ewbType)
+                    database.persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber, payload, response_data, gstIn)
 
                 elif Success == "N" :
                     print("Inside Success: ",Success)
@@ -47,7 +76,7 @@ class ewbDatamodel:
                         error_message = error.get("error_message")
                         error_source = error.get("error_source")
                     print(fail_status,error_message)
-                    servicelogger_info.info("... Failure Response from ClearTax EWB generation...\n")
+                    servicelogger_info.info(f"... Failure Response from ClearTax EWB generation for Document Number {DocumentNumber}...\n")
                     database.persistFailureResponseInDB(fail_status,error_message, error_code, error_source, DocumentNumber, payload, response_data)
 
                 # print("Data from response saved successfully.",response_data)
@@ -58,7 +87,7 @@ class ewbDatamodel:
                 errorSource = response_data.get("error_source", '')
                 errorCode = response_data.get("error_code", '')
                 errorMessage = response_data.get("error_message", '')
-                servicelogger_info.info("... Failure Response from ClearTax EWB generation...\n")
+                servicelogger_info.info(f"... Failure Response from ClearTax EWB generation for Document Number {DocumentNumber}...\n")
                 database.persistFailureResponseInDB(fail_status, errorMessage, errorCode, errorSource, DocumentNumber, payload, response_data)
                 print("Response from Clear Tax API on failure: {} \nError: Failed to make API call to ClearTax API.".format(response_data))
 
@@ -86,6 +115,9 @@ class ewbDatamodel:
                 servicelogger_info.info("... Success Response from ClearTax EWB cancellation...\n")
                 if errorDetails == None:
                     print("Inside Success: ")
+                    ewbType = "CANCELLED"
+                    DocumentNumber = None
+                    ewbDatamodel.createEWBpdfFile(ewbNumber, gstin, DocumentNumber, ewbType)
                     database.persistCancelEWBSuccessResponseInDB(gstin,irn,ewbNumber,ewbStatus, cancelEWBpayload, response_data)
 
                 else :
@@ -128,6 +160,9 @@ class ewbDatamodel:
                     ValidUpto = response_data.get("ValidUpto", '')
                     print("Success response Update EWB called")
                     servicelogger_info.info("... Success Response from ClearTax EWB update...\n")
+                    ewbType = "UPDATE"
+                    # DocumentNumber = None
+                    # ewbDatamodel.createEWBpdfFile(EwbNo, gstin, DocumentNumber, ewbType)
                     database.persistUpdateEWBSuccessResponseInDB(EwbNo, UpdatedDate, ValidUpto, updateEWBpayload, response_data)
 
                 else:
