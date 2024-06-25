@@ -70,7 +70,7 @@ class ewbDatamodel:
                     servicelogger_info.info(f"... Success Response from ClearTax EWB generation for Document Number {DocumentNumber}...\n")
                     ewbType = "GENERATED"
                     pdfFileName = ewbDatamodel.createEWBpdfFile(EwbNo, gstIn, DocumentNumber, ewbType)
-                    database.persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber, payload, response_data, gstIn)
+                    database.persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber, payload, response_data, gstIn, pdfFileName)
 
                 elif Success == "N" :
                     error_details = response_data.get("govt_response", {}).get("ErrorDetails", [])
@@ -114,7 +114,7 @@ class ewbDatamodel:
                     ewbType = "CANCELLED"
                     DocumentNumber = None
                     pdfFileName = ewbDatamodel.createEWBpdfFile(ewbNumber, gstin, DocumentNumber, ewbType)
-                    database.persistCancelEWBSuccessResponseInDB(gstin,irn,ewbNumber,ewbStatus, cancelEWBpayload, response_data)
+                    database.persistCancelEWBSuccessResponseInDB(gstin,irn,ewbNumber,ewbStatus, cancelEWBpayload, response_data, pdfFileName)
 
                 else :
                     error_message = response_data.get("errorDetails", {}).get("error_message", '')
@@ -150,21 +150,21 @@ class ewbDatamodel:
                     servicelogger_info.info("... Success Response from ClearTax EWB update...\n")
                     ewbType = "UPDATE"
                     pdfFileName = ewbDatamodel.createEWBpdfFile(EwbNo, usergstIn, documentNo, ewbType)
-                    database.persistUpdateEWBSuccessResponseInDB(EwbNo, UpdatedDate, ValidUpto, updateEWBpayload, response_data)
+                    database.persistUpdateEWBSuccessResponseInDB(EwbNo, UpdatedDate, ValidUpto, updateEWBpayload, response_data, pdfFileName)
 
                 else:
                     error_details = response_data.get("errors", [])
                     
                     for error in error_details:
                         error_message = error.get("error_message")
-                    fail_status = "FAILURE"
-                    servicelogger_info.info("... Failure Response from ClearTax EWB update...\n")
+                    
+                    servicelogger_info.info(f"... Failure Response from ClearTax EWB update {error_message} And \nStatus Code {res_status_code}...\n")
                     database.persistUpdateEWBFailureResponseInDB(error_message, updateEWBpayload, response_data, ewbNo)
                 
             else:
                 msg_values = [error["error_message"] for error in response_data["errors"]]
                 all_msg_values = ", ".join(msg_values)
-                servicelogger_info.info("... Failure Response from ClearTax EWB update...\n")
+                servicelogger_info.info(f"... Failure Response from ClearTax EWB update {error_message} And \nStatus code: {res_status_code}...\n")
                 database.persistUpdateEWBFailureResponseInDB(all_msg_values, updateEWBpayload, response_data, ewbNo)
         except Exception as e:
             servicelogger_error.exception("Exception Occured in saving the response for update EWB :\n ")
