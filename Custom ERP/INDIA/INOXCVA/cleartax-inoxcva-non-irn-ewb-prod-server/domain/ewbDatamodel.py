@@ -26,15 +26,19 @@ class ewbDatamodel:
     
     def createEWBpdfFile(ewbNo, gstIn, documentNo, ewbType):
         try:    
-            current_time = datetime.now().strftime("%d%m%Y_%H%M%S")
+            current_time = datetime.now().strftime("%d%m%Y_%H%M")
             if ewbType == 'CANCELLED':
                 file = os.path.join(log_dir,f"EWB_{ewbType}_{ewbNo}_{current_time}.pdf")
+                fileName = f"EWB_{ewbType}_{ewbNo}_{current_time}.pdf"
             elif ewbType == 'GENERATED':  
                 file = os.path.join(log_dir,f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}.pdf")
+                fileName = f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}.pdf"
             elif ewbType == 'UPDATE':
                 file = os.path.join(log_dir,f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}.pdf")
+                fileName = f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}.pdf"
             else:
                 file = os.path.join(log_dir,f"E_WAY_BILL_{current_time}.pdf")
+                fileName = f"E_WAY_BILL_{current_time}.pdf"
 
             servicelogger_info.info(f"File Path: {file}")
             responsePdf = apiDetails.printEwbPDF(ewbNo, gstIn)
@@ -43,8 +47,9 @@ class ewbDatamodel:
                 # Write the PDF content to a file
                 with open(file, "wb") as file:
                     file.write(pdfContent)
-                    servicelogger_info.info(f"PDF file saved for document No : {documentNo}")
- 
+                    servicelogger_info.info(f"PDF file Name {fileName} saved for document No : {documentNo}")
+            
+            return fileName
         except Exception as e :
             servicelogger_error.exception("Exception Occured to call method for pdf file:")
 
@@ -64,7 +69,7 @@ class ewbDatamodel:
                     EwbValidTill = response_data.get('govt_response', {}).get("EwbValidTill", '')
                     servicelogger_info.info(f"... Success Response from ClearTax EWB generation for Document Number {DocumentNumber}...\n")
                     ewbType = "GENERATED"
-                    ewbDatamodel.createEWBpdfFile(EwbNo, gstIn, DocumentNumber, ewbType)
+                    pdfFileName = ewbDatamodel.createEWBpdfFile(EwbNo, gstIn, DocumentNumber, ewbType)
                     database.persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber, payload, response_data, gstIn)
 
                 elif Success == "N" :
@@ -108,7 +113,7 @@ class ewbDatamodel:
                 if errorDetails == None:
                     ewbType = "CANCELLED"
                     DocumentNumber = None
-                    ewbDatamodel.createEWBpdfFile(ewbNumber, gstin, DocumentNumber, ewbType)
+                    pdfFileName = ewbDatamodel.createEWBpdfFile(ewbNumber, gstin, DocumentNumber, ewbType)
                     database.persistCancelEWBSuccessResponseInDB(gstin,irn,ewbNumber,ewbStatus, cancelEWBpayload, response_data)
 
                 else :
@@ -144,7 +149,7 @@ class ewbDatamodel:
                     ValidUpto = response_data.get("ValidUpto", '')
                     servicelogger_info.info("... Success Response from ClearTax EWB update...\n")
                     ewbType = "UPDATE"
-                    ewbDatamodel.createEWBpdfFile(EwbNo, usergstIn, documentNo, ewbType)
+                    pdfFileName = ewbDatamodel.createEWBpdfFile(EwbNo, usergstIn, documentNo, ewbType)
                     database.persistUpdateEWBSuccessResponseInDB(EwbNo, UpdatedDate, ValidUpto, updateEWBpayload, response_data)
 
                 else:
