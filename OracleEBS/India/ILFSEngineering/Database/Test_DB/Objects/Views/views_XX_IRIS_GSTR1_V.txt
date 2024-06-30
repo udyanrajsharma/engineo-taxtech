@@ -1,0 +1,1029 @@
+
+  CREATE OR REPLACE FORCE VIEW "APPS"."XX_IRIS_GSTR1_V" ("TXN_TYPE", "ACTUAL_TRX_NUMBER", "TRX_DATE", "TRX_ID", "FP", "GSTIN", "DTY", "INVTYP", "DST", "SPLYTY", "CTPY", "CTIN", "CNAME", "NTNUM", "NTDT", "INUM", "RSN", "P_GST", "OMON", "ONT_NUM", "ONT_DT", "OINUM", "OIDT", "OCTIN", "VAL", "POS", "RCHRG", "ETIN", "SBDT", "SBPCODE", "NUM", "SVAL", "DISC", "ADVAL", "TY", "HSN_SC", "DESCRIPTION", "UQC", "QTY", "TXVAL", "RT", "IRT", "IAMT", "CRT", "CAMT", "SRT", "SAMT", "CSRT", "CSAMT", "TXP", "FY", "REFNUM", "REFIDT", "IDT", "IVST", "CPTYCDE", "GEN1", "GEN2", "GEN3", "GEN4", "GEN5", "GEN6", "GEN7", "GEN8", "GEN9", "GEN10", "GEN11", "GEN12", "GEN13", "GEN14", "GEN15", "GEN16", "GEN17", "GEN18", "GEN19", "GEN20", "IVAL", "PROJECT_CODE", "PROJECT_NAME") AS 
+  SELECT DISTINCT
+    'PROJECT_INVOICE' txn_type,
+    rcta.TRX_NUMBER ACTUAL_TRX_NUMBER,
+    rcta.TRX_DATE TRX_DATE,
+    rcta.CUSTOMER_TRX_ID TRX_ID,
+    TO_CHAR(rcta.TRX_DATE,'MMYYYY') fp,
+    CASE
+		WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM IN ('29AABCM3722F1Z0','29AABCM3722F1ZO') THEN '29ABCDE9876A1ZE'
+		WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '24AABCM3722F1ZY' THEN '24ABCDE9876A1ZE'
+        WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '10AABCM3722F1Z7' THEN '10ABCDE9876A1ZI'
+        
+        WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '36AABCM3722F1ZT' THEN '36ABCDE9876A1ZE'
+        WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '09AABCM3722F1ZQ' THEN '09ABCDE9876A1ZE'
+        WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '27AABCM3722F1ZS' THEN '27ABCDE9876A1ZE'
+        WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '37AABCM3722F1ZR' THEN '37ABCDE9876A1ZE'
+--		WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '29AABCM3722F1Z0' THEN '29AAACI9260R000'
+--		WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '09AABCM3722F1ZQ' THEN '09AAACI9260R002'
+--		WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '36AABCM3722F1ZT' THEN '36AAACI9260R002'
+--		WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '37AABCM3722F1ZR' THEN '37AAACI9260R002'
+--        WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '24AABCM3722F1ZY' THEN '24AAACI9260R002'
+--        WHEN jtl.FIRST_PARTY_PRIMARY_REG_NUM = '27AABCM3722F1ZS' THEN '27AAACI9260R002'
+		ELSE jtl.FIRST_PARTY_PRIMARY_REG_NUM
+	END gstin,
+--    jtl.FIRST_PARTY_PRIMARY_REG_NUM gstin,
+    CASE 
+        WHEN rctta.TYPE = 'INV' THEN 'RI'
+        WHEN rctta.TYPE = 'CM' THEN 'C'
+        WHEN rctta.TYPE = 'DM' THEN 'D'
+        ELSE 'RI' -- To capture other types and to be added later.
+    END dty, -- TBD     
+    CASE 
+        WHEN buyer_dtls.BUYER_GSTIN IS NULL THEN 'B2C'
+        ELSE 'B2B'
+    END invTyp,
+--    CASE 
+--        WHEN rctta.TYPE = 'INV' THEN 'O'
+--        WHEN rctta.TYPE IN ('CM','DM') THEN 'R'
+--    END dst,
+	'O' dst,
+    CASE 
+        WHEN substr(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) <> substr(buyer_dtls.BUYER_GSTIN,0,2) THEN 'INTER'
+        WHEN substr(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) = substr(buyer_dtls.BUYER_GSTIN,0,2) THEN 'INTRA'
+        ELSE NULL
+    END splyTy,
+
+    CASE 
+        WHEN buyer_dtls.BUYER_GSTIN IS NULL THEN 'U'
+        ELSE 'R' 
+    END ctpy,
+    buyer_dtls.BUYER_GSTIN ctin,
+    buyer_dtls.PARTY_NAME cname,
+    CASE WHEN rctta.TYPE IN ('CM','DM')
+        THEN rcta.TRX_NUMBER
+    END ntnum,
+    CASE WHEN rctta.TYPE IN ('CM','DM')
+        THEN TO_CHAR(rcta.TRX_DATE,'DD-MM-YYYY') 
+    END ntdt,
+    rcta.TRX_NUMBER inum,
+    NULL rsn, -- reason for CM, DM -- TDB
+    'N' p_gst, -- Hardcoded as no pre-gst regime invoice to be considered
+    NULL omon, -- Applicable only for Lease transactions, Cases yet to be identified
+    NULL ont_num, -- TDB
+    NULL ont_dt, -- TBD
+    NULL oinum, -- TBD
+    NULL oidt, -- TBD
+    NULL octin, -- TBD
+    0 val, -- Total Invoice Amount incl Tax
+    (SELECT 
+        flv.LOOKUP_CODE
+     FROM 
+        FND_LOOKUP_VALUES flv
+     WHERE 1=1
+        AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+        AND flv.LOOKUP_CODE = SUBSTR(buyer_dtls.BUYER_GSTIN,0,2)
+    ) pos,
+    CASE WHEN jr.REGIME_NAME = 'RCM' THEN 'Y'
+        ELSE 'N'
+    END rchrg,
+    NULL etin, -- Null as E-Commerce scenarios do not exist
+    NULL sbdt, -- Only one export case found for the ILFS India OU, hence this will added if required later.
+    NULL sbpcode, -- Only one export case found for the ILFS India OU, hence this will added if required later.
+    rctla.LINE_NUMBER num,
+    abs(jtl.LINE_AMT) sval,
+    0 disc,
+    0 adval,
+    CASE 
+        WHEN SUBSTR((SELECT NVL(jrc.REPORTING_CODE,'NULL') 
+        FROM 
+            JAI_TAX_DET_FACTORS jtdf,
+            JAI_REPORTING_CODES jrc
+         WHERE 1=1
+            AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+            AND jtdf.HSN_CODE_ID = jrc.REPORTING_CODE_ID
+            AND TRUNC(NVL(jrc.EFFECTIVE_TO, SYSDATE)) >= TRUNC(SYSDATE)
+        ),0,2) = '99' THEN 'S'
+    ELSE 'G'
+    END ty, -- 'G' for Goods, 'S' for Services
+    CASE 
+        WHEN (SELECT NVL(jrc.REPORTING_CODE,'NULL') 
+        FROM 
+            JAI_TAX_DET_FACTORS jtdf,
+            JAI_REPORTING_CODES jrc
+         WHERE 1=1
+            AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+            AND jtdf.HSN_CODE_ID = jrc.REPORTING_CODE_ID
+            AND TRUNC(NVL(jrc.EFFECTIVE_TO, SYSDATE)) >= TRUNC(SYSDATE)
+        ) <> '995421' THEN (SELECT NVL(jrc.REPORTING_CODE,'NULL') 
+        FROM 
+            JAI_TAX_DET_FACTORS jtdf,
+            JAI_REPORTING_CODES jrc
+         WHERE 1=1
+            AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+            AND jtdf.HSN_CODE_ID = jrc.REPORTING_CODE_ID
+            AND TRUNC(NVL(jrc.EFFECTIVE_TO, SYSDATE)) >= TRUNC(SYSDATE)
+        )
+    ELSE '995421'
+    END hsn_sc, -- Construction Services hardcoded as HSN
+    rctla.DESCRIPTION description,
+    'NOS' uqc, --Hardcoded as per past GSTIN returns in ILFS
+    rctla.QUANTITY_INVOICED qty,
+    abs(jtl.UNROUND_TAXABLE_AMT_TRX_CURR) txval,
+    CASE 
+        WHEN substr(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) <> substr(buyer_dtls.BUYER_GSTIN,0,2) THEN jtl.ACTUAL_TAX_RATE
+        ELSE (jtl.ACTUAL_TAX_RATE * 2)
+    END rt, -- Blank as it is automatically derived by IRIS
+
+	(SELECT 
+        SUM(ABS(jtl.ACTUAL_TAX_RATE))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_ID = jtl2.TRX_ID
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'IGST%'
+    ) irt,
+    --jtl.ACTUAL_TAX_RATE irt,
+
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'IGST%'
+    )iamt,
+
+	(SELECT 
+        SUM(ABS(jtl.ACTUAL_TAX_RATE))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_ID = jtl2.TRX_ID
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'CGST%'
+    ) crt,
+
+    --jtl.ACTUAL_TAX_RATE crt,
+
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'CGST%'
+    ) camt,
+
+	(SELECT 
+        SUM(ABS(jtl.ACTUAL_TAX_RATE))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_ID = jtl2.TRX_ID
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'SGST%'
+    ) srt,
+
+    --jtl.ACTUAL_TAX_RATE srt,
+
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'SGST%'
+    ) samt,
+    NULL csrt, -- Applicable in case of CESS, Scenarios to be confirmed
+    NULL csamt, -- Applicable in case of CESS, Scenarios to be confirmed
+    'T' txp,
+    ( EXTRACT (YEAR FROM ADD_MONTHS (rcta.TRX_DATE, -3))
+       || '-'
+       || EXTRACT (YEAR FROM ADD_MONTHS (rcta.TRX_DATE, 9))
+    ) fy,
+    CASE 
+        WHEN rctta.TYPE IN ('CM','DM') 
+            THEN 
+                (SELECT 
+                    LISTAGG(rcta2.TRX_NUMBER,',') WITHIN GROUP (ORDER BY rcta2.TRX_NUMBER)
+                FROM 
+                    AR_RECEIVABLE_APPLICATIONS_ALL araa,
+                    RA_CUSTOMER_TRX_ALL rcta2
+                WHERE 
+                    rcta.CUSTOMER_TRX_ID = araa.CUSTOMER_TRX_ID
+                    AND araa.APPLIED_CUSTOMER_TRX_ID = rcta2.CUSTOMER_TRX_ID
+                    AND araa.APPLICATION_TYPE = 'CM'
+                    AND araa.STATUS = 'APP'
+                    AND araa.DISPLAY = 'Y'
+                )
+        ELSE NULL
+    END refnum,
+    
+    CASE 
+        WHEN rctta.TYPE IN ('CM','DM') 
+            THEN 
+                (SELECT 
+                    LISTAGG(TO_CHAR(rcta.TRX_DATE,'DD-MM-YYYY'),',') WITHIN GROUP (ORDER BY rcta2.TRX_DATE)
+                FROM 
+                    AR_RECEIVABLE_APPLICATIONS_ALL araa,
+                    RA_CUSTOMER_TRX_ALL rcta2
+                WHERE 
+                    rcta.CUSTOMER_TRX_ID = araa.CUSTOMER_TRX_ID
+                    AND araa.APPLIED_CUSTOMER_TRX_ID = rcta2.CUSTOMER_TRX_ID
+                    AND araa.APPLICATION_TYPE = 'CM'
+                    AND araa.STATUS = 'APP'
+                    AND araa.DISPLAY = 'Y'
+                )
+        ELSE NULL
+    END refidt,
+    TO_CHAR(rcta.TRX_DATE,'DD-MM-YYYY') idt,
+    NULL ivst,
+    buyer_dtls.PARTY_NUMBER cptycde,
+    NULL gen1,
+    NULL gen2,
+    NULL gen3,
+    NULL gen4,
+    NULL gen5,
+    NULL gen6,
+    NULL gen7,
+    NULL gen8,
+    NULL gen9,
+    NULL gen10,
+    rcta.INTERFACE_HEADER_ATTRIBUTE1 gen11,
+    rcta.INTERFACE_HEADER_ATTRIBUTE4 gen12,
+    (SELECT 
+        flv.DESCRIPTION
+    FROM 
+        FND_LOOKUP_VALUES flv
+    WHERE  1 = 1
+        AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+        AND flv.LOOKUP_CODE = SUBSTR(jtl.FIRST_PARTY_PRIMARY_REG_NUM, 0, 2)
+    ) gen13,
+    NULL gen14,
+    NULL gen15,
+    NULL gen16,
+    NULL gen17,
+    NULL gen18,
+    NULL gen19,
+    NULL gen20,
+    NULL ival,
+    rcta.INTERFACE_HEADER_ATTRIBUTE1 PROJECT_CODE,
+    rcta.INTERFACE_HEADER_ATTRIBUTE4 PROJECT_NAME
+FROM
+    RA_CUSTOMER_TRX_ALL rcta,
+    HR_ALL_ORGANIZATION_UNITS hrou,
+    RA_CUST_TRX_TYPES_ALL rctta,
+    RA_CUSTOMER_TRX_LINES_ALL rctla,
+    JAI_TAX_LINES_ALL jtl,
+    JAI_TAX_DET_FACTORS jtdf,
+    JAI_TAX_RATES jtr,
+    JAI_REGIMES jr,
+    (SELECT 
+        hca.CUST_ACCOUNT_ID, 
+        hcas.CUST_ACCT_SITE_ID, 
+        hcsu.SITE_USE_ID,
+        hp.PARTY_ID,
+        hp.PARTY_NAME,
+        hp.PARTY_NUMBER,
+        hzl.ADDRESS1,
+        hzl.ADDRESS2,
+        hzl.CITY,
+        hzl.STATE,
+        REGEXP_REPLACE(hzl.POSTAL_CODE, '[^0-9]', '') POSTAL_CODE,
+        (
+        SELECT
+           NVL( MIN(jprl.REGISTRATION_NUMBER) , 'X')
+        FROM
+            JAI_PARTY_REG_LINES jprl
+        WHERE 1=1
+            AND jprl.PARTY_REG_ID = jpr.PARTY_REG_ID
+            AND NVL(jprl.EFFECTIVE_TO, SYSDATE) >= SYSDATE
+            AND UPPER(jprl.REGISTRATION_TYPE_CODE) = 'GST'
+        ) BUYER_GSTIN
+    FROM
+        HZ_CUST_ACCOUNTS_ALL hca,
+        HZ_PARTIES hp,
+        HZ_CUST_ACCT_SITES_ALL hcas,
+        HZ_PARTY_SITES hps,
+        HZ_CUST_SITE_USES_ALL hcsu,
+        HZ_LOCATIONS hzl,
+        JAI_PARTY_REGS jpr
+    WHERE 1=1
+        AND hca.PARTY_ID = hp.PARTY_ID
+        AND hca.CUST_ACCOUNT_ID = hcas.CUST_ACCOUNT_ID
+        AND hp.PARTY_ID = hps.PARTY_ID
+        AND hcas.PARTY_SITE_ID = hps.PARTY_SITE_ID
+        AND hcas.CUST_ACCT_SITE_ID = hcsu.CUST_ACCT_SITE_ID
+        AND hcsu.SITE_USE_CODE = 'BILL_TO'
+        AND hcsu.STATUS = 'A'
+        AND hps.LOCATION_ID = hzl.LOCATION_ID
+        AND hca.CUST_ACCOUNT_ID = jpr.PARTY_ID
+        AND hcas.CUST_ACCT_SITE_ID = jpr.PARTY_SITE_ID
+        AND UPPER(jpr.PARTY_TYPE_CODE) IN ( 'THIRD_PARTY', 'THIRD_PARTY_SITE' )
+    ) buyer_dtls,
+--    HZ_CUST_ACCOUNTS hca,
+--    HZ_PARTIES hp_cust,
+    (SELECT
+        hrl.LOCATION_ID,
+        hrl.ADDRESS_LINE_1 ADDRESS1,
+        hrl.ADDRESS_LINE_2 ADDRESS2,
+        hrl.LOC_INFORMATION15 CITY,
+        hrl.LOC_INFORMATION16 STATE,
+        REGEXP_REPLACE(hrl.POSTAL_CODE, '[^0-9]', '') POSTAL_CODE
+    FROM
+        HR_LOCATIONS hrl
+    WHERE 1 = 1
+        ) seller_dtls
+WHERE 1=1
+--    AND rcta.TRX_DATE BETWEEN TO_DATE(:p_from_date,'DD-MON-YYYY') AND TO_DATE(:p_to_date,'DD-MON-YYYY')
+--    AND rctta.TYPE = 'CM'
+--    AND rcta.TRX_NUMBER = 'RA/26/100/BIEC'
+    AND rcta.ORG_ID = hrou.ORGANIZATION_ID
+--    AND hrou.NAME = 'ILFS India OU'
+    AND rcta.CUSTOMER_TRX_ID = rctla.CUSTOMER_TRX_ID
+    AND rctla.LINE_TYPE = 'LINE'
+    AND rcta.CUST_TRX_TYPE_ID = rctta.CUST_TRX_TYPE_ID
+    AND rcta.ORG_ID = rctta.ORG_ID
+    AND rcta.CUSTOMER_TRX_ID = jtl.TRX_ID
+    AND rctla.CUSTOMER_TRX_LINE_ID = jtl.TRX_LINE_ID
+    AND jtl.ENTITY_CODE = 'TRANSACTIONS'
+    AND jtl.EVENT_CLASS_CODE IN ('INVOICE','CREDIT_MEMO','DEBIT_MEMO')
+    AND jtl.FIRST_PARTY_PRIMARY_REG_NUM IS NOT NULL
+    AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+    AND jtl.TAX_RATE_ID = jtr.TAX_RATE_ID
+    AND jtr.REGIME_ID = jr.REGIME_ID
+    AND rcta.BILL_TO_CUSTOMER_ID = buyer_dtls.CUST_ACCOUNT_ID
+--    AND buyer_dtls.BUYER_GSTIN IS NOT NULL
+--    AND hca.PARTY_ID = hp_cust.PARTY_ID
+    AND jtl.LOCATION_ID = seller_dtls.LOCATION_ID
+
+UNION ALL
+
+SELECT DISTINCT
+    'PAYABLES_REVERSAL' txn_type,
+    aia.INVOICE_NUM ACTUAL_TRX_NUMBER,
+    aia.INVOICE_DATE TRX_DATE,
+    aia.INVOICE_ID TRX_ID,
+    TO_CHAR(aia.INVOICE_DATE,'MMYYYY') fp,
+    CASE
+		WHEN seller_dtls.SELLER_GSTIN IN ('29AABCM3722F1Z0','29AABCM3722F1ZO') THEN '29ABCDE9876A1ZE'
+		WHEN seller_dtls.SELLER_GSTIN = '24AABCM3722F1ZY' THEN '24ABCDE9876A1ZE'
+        WHEN seller_dtls.SELLER_GSTIN = '10AABCM3722F1Z7' THEN '10ABCDE9876A1ZI'
+        WHEN seller_dtls.SELLER_GSTIN = '36AABCM3722F1ZT' THEN '36ABCDE9876A1ZE'
+        WHEN seller_dtls.SELLER_GSTIN = '09AABCM3722F1ZQ' THEN '09ABCDE9876A1ZE'
+        WHEN seller_dtls.SELLER_GSTIN = '27AABCM3722F1ZS' THEN '27ABCDE9876A1ZE'
+        WHEN seller_dtls.SELLER_GSTIN = '37AABCM3722F1ZR' THEN '37ABCDE9876A1ZE'
+
+--		WHEN seller_dtls.SELLER_GSTIN = '29AABCM3722F1Z0' THEN '29AAACI9260R000'
+--		WHEN seller_dtls.SELLER_GSTIN = '09AABCM3722F1ZQ' THEN '09AAACI9260R002'
+--		WHEN seller_dtls.SELLER_GSTIN = '36AABCM3722F1ZT' THEN '36AAACI9260R002'
+--		WHEN seller_dtls.SELLER_GSTIN = '37AABCM3722F1ZR' THEN '37AAACI9260R002'
+--        WHEN seller_dtls.SELLER_GSTIN = '24AABCM3722F1ZY' THEN '24AAACI9260R002'
+--        WHEN seller_dtls.SELLER_GSTIN = '27AABCM3722F1ZS' THEN '27AAACI9260R002'
+		ELSE seller_dtls.SELLER_GSTIN
+	END gstin,
+    
+--    seller_dtls.SELLER_GSTIN gstin,
+    
+    CASE 
+        WHEN aia.INVOICE_TYPE_LOOKUP_CODE = 'DEBIT' THEN 'D'
+        WHEN aia.INVOICE_TYPE_LOOKUP_CODE = 'CREDIT' THEN 'C'
+        ELSE 'RI' -- To capture other types and to be added later.
+    END dty, -- TBD     
+    CASE 
+        WHEN buyer_dtls.BUYER_GSTIN IS NULL THEN 'B2C'
+        ELSE 'B2B'
+    END invTyp,
+--    CASE 
+--        WHEN rctta.TYPE = 'INV' THEN 'O'
+--        WHEN rctta.TYPE IN ('CM','DM') THEN 'R'
+--    END dst,
+	'O' dst,
+    NVL((CASE 
+        WHEN substr(buyer_dtls.BUYER_GSTIN,0,2) <> substr(seller_dtls.SELLER_GSTIN,0,2) THEN 'INTER'
+        WHEN substr(buyer_dtls.BUYER_GSTIN,0,2) = substr(seller_dtls.SELLER_GSTIN,0,2) THEN 'INTRA'
+        ELSE NULL
+    END), XX_IRIS_GST_UTILS_PKG.ILFS_GST_SUPPLY_TYPE(jtl.TRX_ID)) splyTy,
+
+    CASE 
+        WHEN buyer_dtls.BUYER_GSTIN IS NULL THEN 'U'
+        ELSE 'R' 
+    END ctpy,
+    buyer_dtls.BUYER_GSTIN ctin,
+    buyer_dtls.VENDOR_NAME cname,
+    CASE WHEN aia.INVOICE_TYPE_LOOKUP_CODE IN ('DEBIT', 'CREDIT') 
+        THEN aia.INVOICE_NUM
+    END ntnum,
+    CASE WHEN aia.INVOICE_TYPE_LOOKUP_CODE IN ('DEBIT', 'CREDIT') 
+        THEN TO_CHAR(aia.INVOICE_DATE,'DD-MM-YYYY')
+    END ntdt,
+    aia.INVOICE_NUM inum,
+    NULL rsn, -- reason for CM, DM -- TDB
+    'N' p_gst, -- Hardcoded as no pre-gst regime invoice to be considered
+    NULL omon, -- Applicable only for Lease transactions, Cases yet to be identified
+    NULL ont_num, -- TDB
+    NULL ont_dt, -- TBD
+    NULL oinum, -- TBD
+    NULL oidt, -- TBD
+    NULL octin, -- TBD
+    0 val, -- Total Invoice Amount incl Tax
+    (SELECT 
+        flv.LOOKUP_CODE
+     FROM 
+        FND_LOOKUP_VALUES flv
+     WHERE 1=1
+        AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+        AND flv.LOOKUP_CODE = SUBSTR(buyer_dtls.BUYER_GSTIN,0,2)
+    ) pos,
+    CASE WHEN jr.REGIME_NAME = 'RCM' THEN 'Y'
+        ELSE 'N'
+    END rchrg,
+    NULL etin, -- Null as E-Commerce scenarios do not exist
+    NULL sbdt, -- Only one export case found for the ILFS India OU, hence this will added if required later.
+    NULL sbpcode, -- Only one export case found for the ILFS India OU, hence this will added if required later.
+    aila.LINE_NUMBER num,
+    abs(NVL((jtl.ROUNDED_TAXABLE_AMT_FUN_CURR),0)
+        + NVL((SELECT sum(jtll.ROUNDED_TAX_AMT_TRX_CURR) 
+        FROM apps.JAI_TAX_LINES_ALL jtll
+        WHERE jtll.TRX_ID = jtl.TRX_ID
+        AND jtll.TRX_LINE_ID = jtl.TRX_LINE_ID
+        AND jtll.tax_line_id > '0' 
+        AND jtll.TAX_RATE_ID in('23091','33833','33894','23070','23090','33853','33893'))
+    ,0)) sval,
+    0 disc,
+    0 adval,
+    CASE 
+        WHEN SUBSTR((SELECT NVL(jrc.REPORTING_CODE,'NULL') 
+        FROM 
+            JAI_TAX_DET_FACTORS jtdf,
+            JAI_REPORTING_CODES jrc
+         WHERE 1=1
+            AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+            AND jtdf.HSN_CODE_ID = jrc.REPORTING_CODE_ID
+            AND TRUNC(NVL(jrc.EFFECTIVE_TO, SYSDATE)) >= TRUNC(SYSDATE)
+        ),0,2) = '99' THEN 'S'
+    ELSE 'G'
+    END ty, -- 'G' for Goods, 'S' for Services
+--    TO_CHAR(jtl.ITEM_ID) hsn_sc,
+    (SELECT NVL(jrc.REPORTING_CODE,'NULL') 
+    FROM 
+        JAI_TAX_DET_FACTORS jtdf,
+        JAI_REPORTING_CODES jrc
+     WHERE 1=1
+        AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+        AND jtdf.HSN_CODE_ID = jrc.REPORTING_CODE_ID
+        AND TRUNC(NVL(jrc.EFFECTIVE_TO, SYSDATE)) >= TRUNC(SYSDATE)
+    ) hsn_sc, -- Construction Services hardcoded as HSN
+    aila.DESCRIPTION description,
+    'NOS' uqc, --Hardcoded as per past GSTIN returns in ILFS
+    NVL(jtl.TRX_LINE_QUANTITY,'1') qty,
+    abs(NVL((jtl.ROUNDED_TAXABLE_AMT_FUN_CURR),0)
+        + NVL((SELECT sum(jtll.ROUNDED_TAX_AMT_TRX_CURR) 
+        FROM apps.jai_tax_lines_all jtll
+        WHERE jtll.trx_id = jtl.TRX_ID
+        AND jtll.TRX_LINE_ID = jtl.TRX_LINE_ID
+        AND jtll.tax_line_id > '0' 
+        AND jtll.TAX_RATE_ID in('23091','33833','33894','23070','23090','33853','33893'))
+    ,0)) txval,
+    CASE 
+        WHEN substr(buyer_dtls.BUYER_GSTIN,0,2) <> substr(seller_dtls.SELLER_GSTIN,0,2) THEN jtl.ACTUAL_TAX_RATE
+        ELSE (jtl.ACTUAL_TAX_RATE * 2)
+    END rt, -- Blank as it is automatically derived by IRIS
+
+	(SELECT 
+        SUM(ABS(jtl.ACTUAL_TAX_RATE))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_ID = jtl2.TRX_ID
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'IGST%'
+    ) irt,
+    --jtl.ACTUAL_TAX_RATE irt,
+
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_ID = jtl2.TRX_ID
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'IGST%'
+    )iamt,
+
+	(SELECT 
+        SUM(ABS(jtl.ACTUAL_TAX_RATE))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_ID = jtl2.TRX_ID
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'CGST%'
+    ) crt,
+
+    --jtl.ACTUAL_TAX_RATE crt,
+
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_ID = jtl2.TRX_ID
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'CGST%'
+    ) camt,
+
+	(SELECT 
+        SUM(ABS(jtl.ACTUAL_TAX_RATE))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_ID = jtl2.TRX_ID
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'SGST%'
+    ) srt,
+
+    --jtl.ACTUAL_TAX_RATE srt,
+
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_ID = jtl2.TRX_ID
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE 'SGST%'
+    ) samt,
+    NULL csrt, -- Applicable in case of CESS, Scenarios to be confirmed
+    NULL csamt, -- Applicable in case of CESS, Scenarios to be confirmed
+    'T' txp,
+    ( EXTRACT (YEAR FROM ADD_MONTHS (aia.INVOICE_DATE, -3))
+       || '-'
+       || EXTRACT (YEAR FROM ADD_MONTHS (aia.INVOICE_DATE, 9))
+    ) fy,
+    (CASE 
+        WHEN aia.INVOICE_TYPE_LOOKUP_CODE IN ('DEBIT','CREDIT') 
+            THEN (SELECT aia2.INVOICE_NUM
+                FROM 
+                    AP_INVOICE_DISTRIBUTIONS_ALL aida,
+                    AP_INVOICES_ALL aia2
+                WHERE 1=1
+                    AND aia.INVOICE_ID = aida.INVOICE_ID
+                    AND aida.PARENT_INVOICE_ID = aia2.INVOICE_ID
+                    AND aida.LINE_TYPE_LOOKUP_CODE = 'ITEM')
+    ELSE NULL -- To capture other types and to be added later.
+    END) refnum,
+    (CASE 
+        WHEN aia.INVOICE_TYPE_LOOKUP_CODE IN ('DEBIT','CREDIT') 
+            THEN (SELECT TO_CHAR(aia2.INVOICE_DATE, 'DD-MM-YYYY')
+                FROM 
+                    AP_INVOICE_DISTRIBUTIONS_ALL aida,
+                    AP_INVOICES_ALL aia2
+                WHERE 1=1
+                    AND aia.INVOICE_ID = aida.INVOICE_ID
+                    AND aida.PARENT_INVOICE_ID = aia2.INVOICE_ID
+                    AND aida.LINE_TYPE_LOOKUP_CODE = 'ITEM')
+        ELSE NULL -- To capture other types and to be added later.
+    END) refidt,
+    TO_CHAR(aia.INVOICE_DATE,'DD-MM-YYYY') idt,
+    NULL ivst,
+    TO_CHAR(seller_dtls.INVENTORY_ORGANIZATION_ID) cptycde,
+    NULL gen1,
+    NULL gen2,
+    NULL gen3,
+    NULL gen4,
+    NULL gen5,
+    NULL gen6,
+    NULL gen7,
+    NULL gen8,
+    NULL gen9,
+    NULL gen10,
+    seller_dtls.LOCATION_CODE gen11,
+    seller_dtls.SELLER_NAME gen12,
+    seller_dtls.STATE gen13,
+    NULL gen14,
+    NULL gen15,
+    NULL gen16,
+    NULL gen17,
+    NULL gen18,
+    NULL gen19,
+    NULL gen20,
+    NULL ival,
+    seller_dtls.LOCATION_CODE PROJECT_CODE,
+    seller_dtls.SELLER_NAME PROJECT_NAME
+FROM
+    AP_INVOICES_ALL aia,
+    AP_INVOICE_LINES_ALL aila,
+    JAI_TAX_LINES jtl,
+    JAI_TAX_DET_FACTORS jtdf,
+    JAI_TAX_RATES jtr,
+    JAI_REGIMES jr,
+    (SELECT 
+        aps.VENDOR_ID,
+        aps.VENDOR_NAME,
+        apss.VENDOR_SITE_ID,
+--        jprl.REGISTRATION_NUMBER SELLER_GSTIN,
+        (SELECT jprl.REGISTRATION_NUMBER
+        FROM    
+            JAI_PARTY_REGS jpr,
+            JAI_PARTY_REG_LINES jprl
+        WHERE 1=1
+            AND aps.VENDOR_ID = jpr.PARTY_ID
+            AND apss.VENDOR_SITE_ID = jpr.PARTY_SITE_ID
+            AND jpr.PARTY_TYPE_CODE IN ('THIRD_PARTY_SITE','THIRD_PARTY')
+            AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+            AND jprl.REGISTRATION_TYPE_CODE = 'GST'
+            AND NVL(jprl.EFFECTIVE_TO, SYSDATE) >= SYSDATE
+            AND ROWNUM = 1
+        ) BUYER_GSTIN,
+        hzl.LOCATION_ID,
+        hzl.ADDRESS1,
+        hzl.ADDRESS2,
+        hzl.CITY,
+        hzl.STATE,
+        REGEXP_REPLACE(hzl.POSTAL_CODE, '[^0-9]', '') POSTAL_CODE
+    FROM 
+        AP_SUPPLIERS aps,
+        AP_SUPPLIER_SITES_ALL apss,
+        HZ_LOCATIONS hzl
+    WHERE 1=1
+        AND aps.VENDOR_ID = apss.VENDOR_ID
+        AND apss.LOCATION_ID = hzl.LOCATION_ID
+    ) buyer_dtls,
+    (SELECT DISTINCT
+        (SELECT jprl.REGISTRATION_NUMBER
+        FROM
+            JAI_PARTY_REGS jpr,
+            JAI_PARTY_REG_LINES jprl
+        WHERE 1=1
+            AND hrl.INVENTORY_ORGANIZATION_ID = jpr.PARTY_ID
+            AND hrl.LOCATION_ID = jpr.PARTY_SITE_ID
+            AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+            AND jpr.PARTY_TYPE_CODE = 'IO'
+            AND jprl.REGISTRATION_TYPE_CODE = 'GST'
+            AND NVL(jprl.EFFECTIVE_TO, SYSDATE) >= SYSDATE
+            AND ROWNUM = 1
+        ) SELLER_GSTIN,
+        (SELECT 
+            hraou.NAME
+        FROM 
+            HR_ALL_ORGANIZATION_UNITS hraou
+        WHERE 
+            hrl.INVENTORY_ORGANIZATION_ID = hraou.ORGANIZATION_ID
+        ) SELLER_NAME,
+        hrl.INVENTORY_ORGANIZATION_ID,
+        hrl.LOCATION_ID,
+        SUBSTR(LOCATION_CODE,0,INSTR(LOCATION_CODE,'-',1) - 1) LOCATION_CODE,
+        hrl.ADDRESS_LINE_1,
+        hrl.ADDRESS_LINE_2,
+        hrl.LOC_INFORMATION15 CITY,
+        (SELECT flv.DESCRIPTION
+        FROM
+            JAI_PARTY_REGS jpr,
+            JAI_PARTY_REG_LINES jprl,
+            FND_LOOKUP_VALUES flv
+        WHERE 1=1
+            AND hrl.INVENTORY_ORGANIZATION_ID = jpr.PARTY_ID
+            AND hrl.LOCATION_ID = jpr.PARTY_SITE_ID
+            AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+            AND jpr.PARTY_TYPE_CODE = 'IO'
+            AND jprl.REGISTRATION_TYPE_CODE = 'GST'
+            AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+            AND flv.LOOKUP_CODE = SUBSTR(jprl.REGISTRATION_NUMBER,0,2)
+            AND ROWNUM = 1
+        ) STATE,
+        REGEXP_REPLACE(hrl.POSTAL_CODE, '[^0-9]', '') POSTAL_CODE
+    FROM 
+        HR_LOCATIONS hrl
+    WHERE 1=1
+    ) seller_dtls
+WHERE 1=1
+--    AND aia.INVOICE_DATE BETWEEN TO_DATE(:p_from_date,'DD-MON-YYYY') AND TO_DATE(:p_to_date,'DD-MON-YYYY')
+    AND aia.INVOICE_ID = jtl.TRX_ID
+    AND aia.INVOICE_ID = aila.INVOICE_ID
+    AND aila.LINE_NUMBER = jtl.TRX_LINE_ID
+    AND aila.LINE_TYPE_LOOKUP_CODE = 'ITEM'
+    AND aia.VENDOR_ID = buyer_dtls.VENDOR_ID
+    AND aia.VENDOR_SITE_ID = buyer_dtls.VENDOR_SITE_ID
+    AND jtl.LOCATION_ID = seller_dtls.LOCATION_ID
+    AND jtl.TRX_TYPE IN ('CREDIT','DEBIT')
+    AND jtl.TAX_RATE_ID NOT IN ('23091','33833','33894','23070','23090','33853','33893')
+    AND jtl.TAX_REGIME_CODE <>'RCM'
+    AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+    AND jtl.TAX_RATE_ID = jtr.TAX_RATE_ID
+    AND jtr.REGIME_ID = jr.REGIME_ID
+--    AND aia.INVOICE_ID = 13206469
+
+UNION ALL
+
+SELECT DISTINCT
+    'STOCK_TRANSFER' txn_type,
+    NVL(rsh.SHIPMENT_NUM, jtdf.TAX_INVOICE_NUM) ACTUAL_TRX_NUMBER,
+    rsh.SHIPPED_DATE TRX_DATE,
+    rsh.SHIPMENT_HEADER_ID TRX_ID,
+    TO_CHAR(rsh.SHIPPED_DATE,'MMYYYY') fp,
+    CASE
+		WHEN seller_dtls.SELLER_GSTIN IN ('29AABCM3722F1Z0','29AABCM3722F1ZO') THEN '29ABCDE9876A1ZE'
+		WHEN seller_dtls.SELLER_GSTIN = '24AABCM3722F1ZY' THEN '24ABCDE9876A1ZE'
+        WHEN seller_dtls.SELLER_GSTIN = '10AABCM3722F1Z7' THEN '10ABCDE9876A1ZI'
+        WHEN seller_dtls.SELLER_GSTIN = '36AABCM3722F1ZT' THEN '36ABCDE9876A1ZE'
+        WHEN seller_dtls.SELLER_GSTIN = '09AABCM3722F1ZQ' THEN '09ABCDE9876A1ZE'
+        WHEN seller_dtls.SELLER_GSTIN = '27AABCM3722F1ZS' THEN '27ABCDE9876A1ZE'
+        WHEN seller_dtls.SELLER_GSTIN = '37AABCM3722F1ZR' THEN '37ABCDE9876A1ZE'
+
+--		WHEN seller_dtls.SELLER_GSTIN = '29AABCM3722F1Z0' THEN '29AAACI9260R000'
+--		WHEN seller_dtls.SELLER_GSTIN = '09AABCM3722F1ZQ' THEN '09AAACI9260R002'
+--		WHEN seller_dtls.SELLER_GSTIN = '36AABCM3722F1ZT' THEN '36AAACI9260R002'
+--		WHEN seller_dtls.SELLER_GSTIN = '37AABCM3722F1ZR' THEN '37AAACI9260R002'
+--        WHEN seller_dtls.SELLER_GSTIN = '24AABCM3722F1ZY' THEN '24AAACI9260R002'
+--        WHEN seller_dtls.SELLER_GSTIN = '27AABCM3722F1ZS' THEN '27AAACI9260R002'
+		ELSE seller_dtls.SELLER_GSTIN
+	END gstin,
+    'RI' dty,
+    CASE 
+        WHEN buyer_dtls.BUYER_GSTIN IS NULL THEN 'B2C'
+        ELSE 'B2B'
+    END invTyp,
+	'O' dst,
+    CASE 
+        WHEN substr(seller_dtls.SELLER_GSTIN,0,2) <> substr(buyer_dtls.BUYER_GSTIN,0,2) THEN 'INTER'
+        WHEN substr(seller_dtls.SELLER_GSTIN,0,2) = substr(buyer_dtls.BUYER_GSTIN,0,2) THEN 'INTRA'
+        ELSE NULL
+    END splyTy,
+    CASE 
+        WHEN buyer_dtls.BUYER_GSTIN IS NULL THEN 'U'
+        ELSE 'R' 
+    END ctpy,
+    buyer_dtls.BUYER_GSTIN ctin,
+    buyer_dtls.PARTY_NAME cname,
+    NULL ntnum,
+    NULL ntdt,
+    NVL(rsh.SHIPMENT_NUM, jtdf.TAX_INVOICE_NUM) inum,
+    NULL rsn, -- reason for CM, DM -- TDB
+    'N' p_gst, -- Hardcoded as no pre-gst regime invoice to be considered
+    NULL omon, -- Applicable only for Lease transactions, Cases yet to be identified
+    NULL ont_num, -- TDB
+    NULL ont_dt, -- TBD
+    NULL oinum, -- TBD
+    NULL oidt, -- TBD
+    NULL octin, -- TBD
+    0 val, -- Total Invoice Amount incl Tax
+    (SELECT 
+        flv.LOOKUP_CODE
+     FROM 
+        FND_LOOKUP_VALUES flv
+     WHERE 1=1
+        AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+        AND flv.LOOKUP_CODE = SUBSTR(buyer_dtls.BUYER_GSTIN,0,2)
+    ) pos,
+    CASE WHEN jr.REGIME_NAME = 'RCM' THEN 'Y'
+        ELSE 'N'
+    END rchrg,
+    NULL etin, -- Null as E-Commerce scenarios do not exist
+    NULL sbdt, -- Only one export case found for the ILFS India OU, hence this will added if required later.
+    NULL sbpcode, -- Only one export case found for the ILFS India OU, hence this will added if required later.
+    rsl.LINE_NUM num,
+    abs(jtl.LINE_AMT) sval,
+    0 disc,
+    0 adval,
+    CASE 
+        WHEN SUBSTR((SELECT NVL(jrc.REPORTING_CODE,'NULL') 
+        FROM 
+            JAI_TAX_DET_FACTORS jtdf,
+            JAI_REPORTING_CODES jrc
+         WHERE 1=1
+            AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+            AND jtdf.HSN_CODE_ID = jrc.REPORTING_CODE_ID
+            AND TRUNC(NVL(jrc.EFFECTIVE_TO, SYSDATE)) >= TRUNC(SYSDATE)
+        ),0,2) = '99' THEN 'S'
+    ELSE 'G'
+    END ty, -- 'G' for Goods, 'S' for Services
+    (SELECT NVL(jrc.REPORTING_CODE,'NULL') 
+    FROM 
+        JAI_TAX_DET_FACTORS jtdf,
+        JAI_REPORTING_CODES jrc
+     WHERE 1=1
+        AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+        AND jtdf.HSN_CODE_ID = jrc.REPORTING_CODE_ID
+            AND TRUNC(NVL(jrc.EFFECTIVE_TO, SYSDATE)) >= TRUNC(SYSDATE)
+    ) hsn_sc, -- Construction Services hardcoded as HSN
+    rsl.ITEM_DESCRIPTION description,
+    'NOS' uqc, --Hardcoded as per past GSTIN returns in ILFS
+    rsl.QUANTITY_RECEIVED qty,
+    NVL(jtl.ROUNDED_TAXABLE_AMT_FUN_CURR,0) txval,
+    CASE 
+        WHEN substr(seller_dtls.SELLER_GSTIN,0,2) <> substr(buyer_dtls.BUYER_GSTIN,0,2) THEN jtl.ACTUAL_TAX_RATE
+        ELSE (jtl.ACTUAL_TAX_RATE * 2)
+    END rt, -- Blank as it is automatically derived by IRIS
+    CASE 
+        WHEN substr(seller_dtls.SELLER_GSTIN,0,2) <> substr(buyer_dtls.BUYER_GSTIN,0,2) THEN jtl.ACTUAL_TAX_RATE
+        ELSE NULL
+    END irt,
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE '%IGST%'
+        AND jtl2.TRX_TYPE = 'DELIVER'
+    )iamt,
+    CASE 
+        WHEN substr(seller_dtls.SELLER_GSTIN,0,2) = substr(buyer_dtls.BUYER_GSTIN,0,2) THEN jtl.ACTUAL_TAX_RATE
+        ELSE NULL
+    END crt,
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE '%CGST%'
+        AND jtl2.TRX_TYPE = 'DELIVER'
+    ) camt,
+    CASE 
+        WHEN substr(seller_dtls.SELLER_GSTIN,0,2) = substr(buyer_dtls.BUYER_GSTIN,0,2) THEN jtl.ACTUAL_TAX_RATE
+        ELSE NULL
+    END srt,
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE '%SGST%'
+        AND jtl2.TRX_TYPE = 'DELIVER'
+    ) samt,
+    NULL csrt,
+    NULL csamt,
+    'T' txp,
+    NULL fy,
+    NULL refnum,
+    NULL refidt,
+    TO_CHAR(rsh.SHIPPED_DATE,'DD-MM-YYYY') idt,
+    NULL ivst,
+    NULL cptycde,
+    NULL gen1,
+    NULL gen2,
+    NULL gen3,
+    NULL gen4,
+    NULL gen5,
+    NULL gen6,
+    NULL gen7,
+    NULL gen8,
+    NULL gen9,
+    NULL gen10,
+    seller_dtls.LOCATION_CODE gen11,
+    seller_dtls.PARTY_NAME gen12,
+    (SELECT 
+        flv.DESCRIPTION
+    FROM 
+        FND_LOOKUP_VALUES flv
+    WHERE     1 = 1
+        AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+        AND flv.LOOKUP_CODE =
+        SUBSTR (seller_dtls.SELLER_GSTIN, 0, 2)
+    )gen13,
+    NULL gen14,
+    NULL gen15,
+    NULL gen16,
+    NULL gen17,
+    NULL gen18,
+    NULL gen19,
+    NULL gen20,
+    NULL ival,
+-- ,jtl.EVENT_CLASS_CODE
+    seller_dtls.LOCATION_CODE PROJECT_CODE,
+    seller_dtls.PARTY_NAME PROJECT_NAME
+FROM 
+    RCV_SHIPMENT_HEADERS rsh,
+    RCV_SHIPMENT_LINES rsl,
+    RCV_TRANSACTIONS rcv,
+    JAI_TAX_LINES_ALL jtl,
+    JAI_TAX_DET_FACTORS jtdf,
+    JAI_TAX_RATES jtr,
+    JAI_REGIMES jr,
+    MTL_MATERIAL_TRANSACTIONS mtt,
+    (SELECT 
+        hrl.ORGANIZATION_ID ORG_ID,
+        ood.ORGANIZATION_NAME PARTY_NAME,
+        hrl.LOCATION_CODE,
+        hrl.ADDRESS_LINE_1,
+        hrl.ADDRESS_LINE_2,
+        hrl.ADDRESS_LINE_3,
+        hrl.POSTAL_CODE,
+        hrl.LOC_INFORMATION15 CITY,
+        jpr.PARTY_ID,
+        jprl.REGISTRATION_NUMBER SELLER_GSTIN
+    FROM
+        ORG_ORGANIZATION_DEFINITIONS ood,
+        HR_ORGANIZATION_UNITS_V hrl,
+        JAI_PARTY_REGS jpr,
+        JAI_PARTY_REG_LINES jprl
+    WHERE 1=1
+        AND ood.ORGANIZATION_ID = hrl.ORGANIZATION_ID
+        AND ood.ORGANIZATION_ID = jpr.PARTY_ID
+        AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+        AND NVL(jprl.EFFECTIVE_TO, SYSDATE) >= SYSDATE
+    ) seller_dtls,
+    (SELECT 
+        hrl.INVENTORY_ORGANIZATION_ID ORG_ID,
+        hou.NAME PARTY_NAME,
+        hrl.ADDRESS_LINE_1,
+        hrl.ADDRESS_LINE_2,
+        hrl.ADDRESS_LINE_3,
+        hrl.POSTAL_CODE,
+        hrl.LOC_INFORMATION15 CITY,
+        jprl.REGISTRATION_NUMBER BUYER_GSTIN
+    FROM
+        HR_LOCATIONS hrl,
+        JAI_PARTY_REGS jpr,
+        JAI_PARTY_REG_LINES jprl,
+        HR_ORGANIZATION_UNITS hou
+    WHERE 1=1
+        AND hrl.INVENTORY_ORGANIZATION_ID = jpr.PARTY_ID
+        AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+        AND hrl.INVENTORY_ORGANIZATION_ID = hou.ORGANIZATION_ID
+        AND jpr.PARTY_TYPE_CODE = 'IO' 
+        AND jprl.EFFECTIVE_TO IS NULL
+        AND jprl.REGIME_ID = '10000'
+        AND NVL(jprl.EFFECTIVE_TO, SYSDATE) >= SYSDATE
+    ) buyer_dtls
+WHERE 1=1
+--    AND rcv.TRANSACTION_DATE BETWEEN TO_DATE(:p_from_date,'DD-MON-YYYY') AND TO_DATE(:p_to_date,'DD-MON-YYYY')
+--    AND rctta.TYPE = 'CM'
+--    AND rsh.SHIPMENT_NUM LIKE '%307%'
+    AND rsh.SHIPMENT_HEADER_ID = rsl.SHIPMENT_HEADER_ID
+    AND rsl.SHIPMENT_LINE_ID = rcv.SHIPMENT_LINE_ID
+    AND rcv.TRANSACTION_ID = mtt.RCV_TRANSACTION_ID
+    AND rcv.SOURCE_DOCUMENT_CODE = 'INVENTORY'
+    AND rcv.TRANSACTION_TYPE = 'DELIVER'
+    AND NOT EXISTS (
+        SELECT rcv2.SHIPMENT_HEADER_ID 
+        FROM RCV_TRANSACTIONS rcv2 
+        WHERE rcv2.TRANSACTION_TYPE LIKE 'RETURN TO%' 
+        AND rcv2.SHIPMENT_HEADER_ID = rsh.SHIPMENT_HEADER_ID
+    )
+    AND rcv.TRANSACTION_ID = jtl.TRX_LOC_LINE_ID
+--    AND jtl.ROUNDED_TAX_AMT_FUN_CURR > 0
+    AND jtl.ROUNDED_TAX_AMT_FUN_CURR IS NOT NULL
+--    AND jtl.FIRST_PARTY_PRIMARY_REG_NUM IS NOT NULL
+    AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+    AND jtl.TAX_RATE_ID = jtr.TAX_RATE_ID
+    AND jtr.REGIME_ID = jr.REGIME_ID
+    AND rsh.ORGANIZATION_ID = seller_dtls.ORG_ID
+    AND rsh.SHIP_TO_ORG_ID = buyer_dtls.ORG_ID;
+

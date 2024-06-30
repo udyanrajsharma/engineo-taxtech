@@ -1,0 +1,25 @@
+create or replace PACKAGE   XXIRIS_UTILS_PKG1 AUTHID CURRENT_USER
+
+AS
+	
+    PROCEDURE XXIRIS_GSTR1_API_PRC
+    ( 
+        L_ERRBUF        VARCHAR2,
+        L_RETCODE       NUMBER,
+        P_FROM_DATE     VARCHAR2,
+        P_TO_DATE       VARCHAR2
+    );
+    
+    PROCEDURE CALL_IRIS_API
+    (   
+        P_PK1_ID        NUMBER,
+        P_USERGSTIN     VARCHAR2,
+        P_JSON_REQ      CLOB
+    );
+    
+    PROCEDURE SAVE_IRIS_RESPONSE_STATUS
+    (   
+        P_PK1_ID        NUMBER
+    );
+
+END XXIRIS_UTILS_PKG1;
