@@ -9,6 +9,7 @@ import configparser
 import base64
 import sys
 import logging
+# from infrastructure.apiDetails import apiDetails
 
 servicelogger_info = logging.getLogger("ClearTaxEWBServiceLogger")
 servicelogger_error = logging.getLogger("ClearTaxEWBErrorLogger")
@@ -23,7 +24,6 @@ def decimal_default(obj):
 config = configparser.ConfigParser()
 extDataDir = os.path.dirname(sys.executable)
 config_path = os.path.join(extDataDir,'CLEARTAX_INOX_EWB_NONIRN_PROPERTIES_PROD_SERVER.ini')
-print("Database Config path: ", config_path)
 config.read(config_path)
 
 def decode_value(encoded_str):
@@ -36,14 +36,6 @@ DB_USER = decode_value(config.get('DB_CONNECTION', 'DB_USER'))
 DB_PASSWORD = decode_value(config.get('DB_CONNECTION', 'DB_PASSWORD'))
 DB_SERVER = decode_value(config.get('DB_CONNECTION', 'DB_SERVER'))
 
-# Connect to MSSQL
-# connection = pymssql.connect(
-#     server = DB_SERVER,
-#     user= DB_USER,
-#     password= DB_PASSWORD,
-#     database= DB_NAME
-# )
-
 class database:
 
     def databaseConnection():
@@ -54,7 +46,7 @@ class database:
                 password= DB_PASSWORD,
                 database= DB_NAME
             )
-            servicelogger_info.info("database connected")
+            # servicelogger_info.info("database connected")
             return connection
         except Exception as e:
             servicelogger_error.exception("..Exception Occured during Connection with database...\n")
@@ -67,12 +59,10 @@ class database:
             cur.execute(Header_query)
             rows = cur.fetchall()
             cur.close()
-            connection.close()
             servicelogger_info.info("...Data fetch from [EWAY_BILL_FORMAT_FIDR1376_FOR_EWAY_PURPOSE] table from database for generate E-Way Bill...\n")
             connection.close()
             return rows
         except Exception as e:
-            print("Error : ",e)
             servicelogger_error.exception("Exception Occured in executing the Header Query from database for generate EWB :\n ")
         finally:
             connection.close()
@@ -88,21 +78,20 @@ class database:
             connection.close()
             return rows
         except Exception as e:
-            print("Error : ",e)
             servicelogger_error.exception("Exception Occured in executing the Line Item Query from database for generate EWB :\n ")
         finally:
             connection.close()
 
-    def persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber, payload, response_data):
+    def persistSuccessResponseInDB(Status,EwbNo,EwbDt,EwbValidTill,DocumentNumber, payload, response_data, gstIn, pdfFileName):
         try:
             connection = database.databaseConnection()
             json_Reqpayload = json.dumps(payload, default=decimal_default)
             json_ResponsePayload = json.dumps(response_data, default=decimal_default)
             cur_2 = connection.cursor()
-            print("Inside Success Resonse for EWB and connection with database and current Time: ", datetime.now().strftime("%m-%d-%Y %H:%M:%S"))
-            # Insert the response data into another MSSQL table
-            insert_query = "INSERT INTO [dbo].[EWB_NON_IRN_RESPONSE] ([Ewb_status], [Ewb_Number], [Ewb_Generated_Date], [Ewb_Due_Date], [DOCUMENT_NUMBER], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME]) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-            bind_var = [Status, EwbNo, EwbDt, EwbValidTill, DocumentNumber, json_Reqpayload, json_ResponsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
+
+            # Insert the response data into table
+            insert_query = "INSERT INTO [dbo].[EWB_NON_IRN_RESPONSE] ([Ewb_status], [Ewb_Number], [Ewb_Generated_Date], [Ewb_Due_Date], [DOCUMENT_NUMBER], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME], [EWAY_FILE_NAME]) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            bind_var = [Status, EwbNo, EwbDt, EwbValidTill, DocumentNumber, json_Reqpayload, json_ResponsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S"), pdfFileName]
             cur_2.execute(insert_query, bind_var)
             connection.commit()
 
@@ -112,9 +101,8 @@ class database:
 
             cur_2.close()
             connection.close()
-            servicelogger_info.info("... Response Records from ClearTax API for generate EWB inserted into [EWB_NON_IRN_RESPONSE] table for Success status...\n")
+            servicelogger_info.info(f"... Response Records from ClearTax API for generate EWB inserted into [EWB_NON_IRN_RESPONSE] table for Success status for Document No: {DocumentNumber}...\n")
         except Exception as e:
-            print("Error in Insert Success EWB Generation in db : ",e)
             servicelogger_error.exception("Exception Occured for Success response in database for generate EWB :\n ")
         finally:
             connection.close()
@@ -125,7 +113,6 @@ class database:
             cur = connection.cursor()
             json_requestPayload = json.dumps(payload ,default=decimal_default)
             json_responsePayload = json.dumps(response_data ,default=decimal_default)
-            print("Inside Failure Resonse for EWB and Current Time :", datetime.now().strftime("%m-%d-%Y %H:%M:%S"))
             # Insert the response data into another MSSQL table
             insert_query = "INSERT INTO [dbo].[EWB_NON_IRN_RESPONSE] ([Ewb_status], [Error_code], [Error_message], [Error_source], [DOCUMENT_NUMBER], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME]) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
             bind_var = [fail_status, error_code, error_message, error_source, DocumentNumber, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
@@ -138,9 +125,8 @@ class database:
 
             cur.close() 
             connection.close()
-            servicelogger_info.info("... Response Records from ClearTax API for generate EWB inserted into [EWB_NON_IRN_RESPONSE] table for Failure status...\n")
+            servicelogger_info.info(f"... Response Records from ClearTax API for generate EWB inserted into [EWB_NON_IRN_RESPONSE] table for Failure status for Document Number : {DocumentNumber}...\n")
         except Exception as e:
-            print("Error in Insert Fail EWB Generation in db : ",e)
             servicelogger_error.exception("Exception Occured for Failure response in database for generate EWB :\n ")
         finally:
             connection.close()
@@ -158,12 +144,11 @@ class database:
             connection.close()
             return rows
         except Exception as e:
-            print("Error : ",e)
             servicelogger_error.exception("Exception Occured in executing the database Query for cancel EWB :\n ")
         finally:
             connection.close()
 
-    def persistCancelEWBSuccessResponseInDB(gstin,irn,ewbNumber,ewbStatus, cancelEWBpayload, response_data):
+    def persistCancelEWBSuccessResponseInDB(gstin,irn,ewbNumber,ewbStatus, cancelEWBpayload, response_data, pdfFileName):
         try:
             connection = database.databaseConnection()
             cur = connection.cursor()
@@ -171,8 +156,8 @@ class database:
             json_responsePayload = json.dumps(response_data ,default=decimal_default)
             active_status = '1'
             # Insert the response data into another MSSQL table
-            insert_query = "INSERT INTO [dbo].[CANCEL_RESPONSE_DATA] ([GSTIN], [IRN], [EWB_NO], [EWB_STATUS], [ACTIVE], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME]) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-            bind_var = [gstin, irn, ewbNumber, ewbStatus, active_status, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
+            insert_query = "INSERT INTO [dbo].[CANCEL_RESPONSE_DATA] ([GSTIN], [IRN], [EWB_NO], [EWB_STATUS], [ACTIVE], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME], [EWAY_FILE_NAME]) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            bind_var = [gstin, irn, ewbNumber, ewbStatus, active_status, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S"), pdfFileName]
             cur.execute(insert_query, bind_var)
             connection.commit()
 
@@ -184,7 +169,6 @@ class database:
             cur.close()
             connection.close() 
         except Exception as e:
-            print("Error : ",e)
             servicelogger_error.exception("Exception Occured for Success response in database for cancel EWB :\n ")
         finally:
             connection.close()
@@ -196,11 +180,10 @@ class database:
             json_requestPayload = json.dumps(cancelEWBpayload ,default=decimal_default)
             json_responsePayload = json.dumps(response_data ,default=decimal_default)
             # Insert the response data into another MSSQL table
-            insert_query = "INSERT INTO [dbo].[CANCEL_RESPONSE_DATA] ( [EWB_STATUS], [ERROR_MESSAGE], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME]) VALUES ( %s, %s, %s, %s, %s)"
-            bind_var = [ ewbStatus, error_message, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
+            insert_query = "INSERT INTO [dbo].[CANCEL_RESPONSE_DATA] ( [EWB_NO],[EWB_STATUS], [ERROR_MESSAGE], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME]) VALUES ( %s, %s, %s, %s, %s, %s)"
+            bind_var = [ewbNo, ewbStatus, error_message, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
             cur.execute(insert_query, bind_var)
             connection.commit()
-            print("Failure Response inserted for Cancel EWB")
             servicelogger_info.info("... Response Records from ClearTax API for Cancel EWB inserted into [CANCEL_RESPONSE_DATA] table for Failure status...\n")
 
             update_query = "update [dbo].[ICUST_IIL096_C] set [ACTIVE] = '2' WHERE [EWAY_BILL_NO] = %s"            
@@ -210,7 +193,6 @@ class database:
             cur.close()
             connection.close()
         except Exception as e:
-            print("Error : ",e)
             servicelogger_error.exception("Exception Occured for Failure response in database for cancel EWB :\n ")
         finally:
             connection.close()
@@ -228,12 +210,11 @@ class database:
             connection.close()
             return rows
         except Exception as e:
-            print("Error : ",e)
             servicelogger_error.exception("Exception Occured in executing the database Query for update EWB :\n ")
         finally:
             connection.close()
 
-    def persistUpdateEWBSuccessResponseInDB(EWB_No, Updated_date, valid_upto, updateEWBpayload, response_data):
+    def persistUpdateEWBSuccessResponseInDB(EWB_No, Updated_date, valid_upto, updateEWBpayload, response_data, pdfFileName):
         try:
             connection = database.databaseConnection()
             json_requestPayload = json.dumps(updateEWBpayload ,default=decimal_default)
@@ -242,8 +223,8 @@ class database:
             # Insert the response data into another MSSQL table
             status = "SUCCESS"
             active_status = '1'
-            insert_query = "INSERT INTO [dbo].[UPDATE_RESPONSE_DATA] ([EWB_NO], [UPDATED_DATE], [VALID_UPTO], [STATUS], [ACTIVE], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME]) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-            bind_var = [EWB_No, Updated_date, valid_upto, status, active_status, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
+            insert_query = "INSERT INTO [dbo].[UPDATE_RESPONSE_DATA] ([EWB_NO], [UPDATED_DATE], [VALID_UPTO], [STATUS], [ACTIVE], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME], [EWAY_FILE_NAME]) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            bind_var = [EWB_No, Updated_date, valid_upto, status, active_status, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S"), pdfFileName]
             cur.execute(insert_query, bind_var)
             connection.commit()
             
@@ -254,7 +235,6 @@ class database:
             cur.close() 
             connection.close()
         except Exception as e:
-            print("Error in Success update for EWB Update : ",e)
             servicelogger_error.exception("Exception Occured for Success response in database for update EWB :\n ")
         finally:
             connection.close()
@@ -267,11 +247,11 @@ class database:
             cur = connection.cursor()
             # Insert the response data into another MSSQL table
             status = "FAILURE"
-            insert_query = "INSERT INTO [dbo].[UPDATE_RESPONSE_DATA] ( [STATUS], [ERROR_MESSAGE], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME]) VALUES ( %s, %s, %s, %s, %s)"
-            bind_var = [status, error_message, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
+            insert_query = "INSERT INTO [dbo].[UPDATE_RESPONSE_DATA] ( [EWB_NO], [STATUS], [ERROR_MESSAGE], [REQUEST_PAYLOAD], [RESPONSE_PAYLOAD], [UPLOAD_TIME]) VALUES ( %s, %s, %s, %s, %s, %s)"
+            bind_var = [ewbNo, status, error_message, json_requestPayload, json_responsePayload, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
             cur.execute(insert_query, bind_var)
             connection.commit()
-            servicelogger_info.info("... Response Records from ClearTax API for Update EWB inserted into [UPDATE_RESPONSE_DATA] table for Failure status...\n")
+            servicelogger_info.info(f"... Response Records from ClearTax API for Update EWB inserted into [UPDATE_RESPONSE_DATA] table for Failure status of E-Way Bill No: {ewbNo}...\n")
             
             update_query = "update [dbo].[ICUST_IIL097_C] set [ACTIVE] = '2' WHERE [EWAY_BILL_NO] = %s"
             cur.execute(update_query, (ewbNo))
@@ -280,7 +260,6 @@ class database:
             cur.close()
             connection.close()
         except Exception as e:
-            print("Error in failure update for EWB Update: ",e)
             servicelogger_error.exception("Exception Occured for Failure response in database for update EWB :\n ")
         finally:
             connection.close()
