@@ -29,16 +29,16 @@ class ewbDatamodel:
             current_time = datetime.now().strftime("%d%m%Y_%H%M")
             if ewbType == 'CANCELLED':
                 file = os.path.join(log_dir,f"EWB_{ewbType}_{ewbNo}_{current_time}.pdf")
-                fileName = f"EWB_{ewbType}_{ewbNo}_{current_time}.pdf"
+                fileName = f"EWB_{ewbType}_{ewbNo}_{current_time}"
             elif ewbType == 'GENERATED':  
                 file = os.path.join(log_dir,f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}.pdf")
-                fileName = f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}.pdf"
+                fileName = f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}"
             elif ewbType == 'UPDATE':
                 file = os.path.join(log_dir,f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}.pdf")
-                fileName = f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}.pdf"
+                fileName = f"EWB_{ewbType}_{documentNo}_{ewbNo}_{current_time}"
             else:
                 file = os.path.join(log_dir,f"E_WAY_BILL_{current_time}.pdf")
-                fileName = f"E_WAY_BILL_{current_time}.pdf"
+                fileName = f"E_WAY_BILL_{current_time}"
 
             servicelogger_info.info(f"File Path: {file}")
             responsePdf = apiDetails.printEwbPDF(ewbNo, gstIn)

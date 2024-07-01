@@ -93,7 +93,6 @@ class ClearTaxEWBwithoutIRN:
                     igst_amount += float(items[11])
                     cess_amount += float(items[13])
                     cess_NonAdvol_amount += float(items[15])
-                    total_Invoice_Amount += total_assessable_Amount + cgst_amount + sgst_amount + igst_amount + cess_amount + cess_NonAdvol_amount
                     
                     payload["ItemList"].append  ({
                         "ProdName": items[0],
@@ -113,13 +112,15 @@ class ClearTaxEWBwithoutIRN:
                         "OthChrg": items[14],
                         "CesNonAdvAmt": items[15]
                 })
-                payload["TotalInvoiceAmount"] = total_Invoice_Amount
+                
                 payload["TotalCgstAmount"] = cgst_amount
                 payload["TotalSgstAmount"] = sgst_amount
                 payload["TotalIgstAmount"] = igst_amount
                 payload["TotalCessAmount"] = cess_amount
                 payload["TotalCessNonAdvolAmount"] = cess_NonAdvol_amount
                 payload["TotalAssessableAmount"] = total_assessable_Amount
+                total_Invoice_Amount = total_assessable_Amount + cgst_amount + sgst_amount + igst_amount + cess_amount + cess_NonAdvol_amount
+                payload["TotalInvoiceAmount"] = total_Invoice_Amount
 
                 servicelogger_info.info("...Payload for generate EWB created...\n")
                 response = ewbDatamodel.executeClearTaxEWBapi(payload, gstIn) # Calling Clear Tax EWB API
