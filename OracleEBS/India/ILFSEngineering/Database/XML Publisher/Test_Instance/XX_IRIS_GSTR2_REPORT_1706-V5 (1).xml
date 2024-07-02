@@ -1,0 +1,357 @@
+<?xml version = "1.0" encoding="UTF-8"?>
+
+<dataTemplate name="XX_IRIS_GSTR2_PDF" description="ILFS GSTR2 Template" version="1.0" >
+	<parameters>
+		<parameter name="P_REQUEST_ID" dataType="number"/>
+	</parameters>
+
+	<properties>
+	</properties>
+	
+	<dataQuery>
+		<sqlStatement name="Q_HEADERS">
+		<![CDATA[
+		SELECT DISTINCT
+            log_t.REQUEST_ID,
+			log_t.RETURN_PERIOD,
+			(SELECT 
+                COUNT(*)
+            FROM 
+                XX_IRIS_GSTR2_LOG_T log_t2 
+			WHERE 1=1
+                AND log_t.REQUEST_ID = log_t2.REQUEST_ID
+            ) No_of_Records_Processed,
+			(SELECT 
+                COUNT(*) 
+			FROM 
+                XX_IRIS_GSTR2_LOG_T log_t2 
+			WHERE 1=1
+                AND log_t.REQUEST_ID = log_t2.REQUEST_ID
+                AND log_t2.RESPONSE_STATUS = 'SUCCESS'
+            AND REQUEST_ID = :P_REQUEST_ID) No_of_Successful_Records,
+			(SELECT COUNT(*) 
+			FROM
+                XX_IRIS_GSTR2_LOG_T log_t2 
+			WHERE 1=1
+                AND log_t.REQUEST_ID = log_t2.REQUEST_ID
+                AND log_t2.RESPONSE_STATUS = 'FAILURE'
+            AND REQUEST_ID = :P_REQUEST_ID) No_of_Failed_Records
+		FROM 
+			XX_IRIS_GSTR2_LOG_T log_t
+		WHERE 
+			log_t.REQUEST_ID = :P_REQUEST_ID
+		]]>
+		</sqlStatement>
+		<sqlStatement name="Q_LINES">
+		<![CDATA[
+        SELECT row_number() over (partition by xx.REQUEST_ID order by xx.INVOICE_DATE DESC) S_NO,
+        XX.*
+        FROM (
+        SELECT DISTINCT
+			aia.INVOICE_NUM INVOICE_NUMBER, 
+			TO_CHAR(aia.INVOICE_DATE,'DD-MON-YYYY')  INVOICE_DATE,
+            jtl.LOCATION_ID,
+            (SELECT jprl.REGISTRATION_NUMBER
+            FROM
+                HR_LOCATIONS hrl,
+                JAI_PARTY_REGS jpr,
+                JAI_PARTY_REG_LINES jprl
+            WHERE 1=1
+                AND jtl.LOCATION_ID = hrl.LOCATION_ID
+                AND hrl.INVENTORY_ORGANIZATION_ID = jpr.PARTY_ID
+                AND hrl.LOCATION_ID = jpr.PARTY_SITE_ID
+                AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+                AND jpr.PARTY_TYPE_CODE = 'IO'
+                AND jprl.REGISTRATION_TYPE_CODE = 'GST'
+                AND jprl.REGIME_ID = 10000
+                AND TRUNC(NVL(jprl.EFFECTIVE_TO,SYSDATE)) >= TRUNC(SYSDATE)
+            ) GSTIN_UIN_RECIPIENT,
+			(SELECT jprl.REGISTRATION_NUMBER
+            FROM
+                JAI_PARTY_REGS jpr,
+                JAI_PARTY_REG_LINES jprl
+            WHERE 1=1
+            AND apss.ORG_ID = jpr.ORG_ID
+            AND apss.VENDOR_ID = jpr.PARTY_ID
+            AND apss.VENDOR_SITE_ID = jpr.PARTY_SITE_ID
+            AND jpr.PARTY_TYPE_CODE IN ('THIRD_PARTY_SITE','THIRD_PARTY')
+            AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+            AND jprl.REGISTRATION_TYPE_CODE = 'GST'
+                AND jprl.REGIME_ID = 10000
+            AND TRUNC(NVL(jprl.EFFECTIVE_TO,SYSDATE)) >= TRUNC(SYSDATE)
+            ) SUPPLIER_GSTIN,
+			aps.VENDOR_NAME SUPPLIER_NAME,
+            aps.SEGMENT1 ERP_VENDOR_CODE,
+			CASE 
+				WHEN upper(aia.INVOICE_TYPE_LOOKUP_CODE) = 'STANDARD' THEN 'Purchase Invoice'
+				WHEN upper(aia.INVOICE_TYPE_LOOKUP_CODE) = 'CREDIT' THEN 'Credit Note'
+				WHEN upper(aia.INVOICE_TYPE_LOOKUP_CODE) = 'DEBIT' THEN 'Debit Note'
+			END DOC_TYPE,
+			'Inward' SUPPLY_TYPE,
+            (SELECT INITCAP(flv.DESCRIPTION)
+            FROM
+                JAI_PARTY_REGS jpr,
+                JAI_PARTY_REG_LINES jprl,
+                FND_LOOKUP_VALUES flv
+            WHERE 1=1
+                AND aps.VENDOR_ID = jpr.PARTY_ID
+                AND apss.VENDOR_SITE_ID = jpr.PARTY_SITE_ID
+                AND jpr.PARTY_TYPE_CODE IN ('THIRD_PARTY_SITE','THIRD_PARTY')
+                AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+                AND jprl.REGISTRATION_TYPE_CODE = 'GST'
+                AND flv.LOOKUP_CODE = SUBSTR(jprl.REGISTRATION_NUMBER,0,2)
+                AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+                AND jprl.REGIME_ID = 10000
+                AND TRUNC(NVL(jprl.EFFECTIVE_TO,SYSDATE)) >= TRUNC(SYSDATE)
+            ) SUPPLIER_STATE,
+			(SELECT SUBSTR(jprl.REGISTRATION_NUMBER,0,2)
+            FROM
+                JAI_PARTY_REGS jpr,
+                JAI_PARTY_REG_LINES jprl
+            WHERE 1=1
+                AND aps.VENDOR_ID = jpr.PARTY_ID
+                AND apss.VENDOR_SITE_ID = jpr.PARTY_SITE_ID
+                AND jpr.PARTY_TYPE_CODE IN ('THIRD_PARTY_SITE','THIRD_PARTY')
+                AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+                AND jprl.REGISTRATION_TYPE_CODE = 'GST'
+                AND jprl.REGIME_ID = 10000
+                AND TRUNC(NVL(jprl.EFFECTIVE_TO,SYSDATE)) >= TRUNC(SYSDATE)
+            ) SUPPLIER_STATE_CODE,
+			aia.INVOICE_NUM INWARD_NO,
+			TO_CHAR(aia.INVOICE_DATE,'DD-MON-YYYY') INWARD_DATE,
+			aia.INVOICE_NUM SUPPLIER_INV_NO,
+			TO_CHAR(aia.INVOICE_DATE,'DD-MON-YYYY') SUPPLIER_INV_DATE,
+			abs(NVL((jtl.ROUNDED_TAXABLE_AMT_FUN_CURR),0)
+                + NVL((SELECT sum(jtll.ROUNDED_TAX_AMT_TRX_CURR) 
+                FROM apps.jai_tax_lines_all jtll
+                WHERE jtll.trx_id = jtl.TRX_ID
+                AND jtll.TRX_LINE_ID = jtl.TRX_LINE_ID
+                AND jtll.tax_line_id > '0' 
+                AND jtll.TAX_RATE_ID in('23091','33833','33894','23070','23090','33853','33893'))
+            ,0)) TAXABLE_VALUE,
+            (
+                abs(NVL((jtl.ROUNDED_TAXABLE_AMT_FUN_CURR),0)
+                    + NVL((SELECT sum(jtll.ROUNDED_TAX_AMT_TRX_CURR) 
+                    FROM apps.jai_tax_lines_all jtll
+                    WHERE jtll.trx_id = jtl.TRX_ID
+                    AND jtll.TRX_LINE_ID = jtl.TRX_LINE_ID
+                    AND jtll.tax_line_id > '0' 
+                    AND jtll.TAX_RATE_ID in('23091','33833','33894','23070','23090','33853','33893'))
+                ,0))
+            +
+                (SELECT 
+                    NVL(SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR)),0)
+                FROM 
+                    JAI_TAX_LINES jtl2,
+                    JAI_TAX_RATES jtr2,
+                    JAI_TAX_TYPES jtt
+                WHERE 1=1
+                    AND jtl.TRX_ID = jtl2.TRX_ID
+                    AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+                    AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+                    AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+                    AND jtt.TAX_TYPE_CODE LIKE 'IGST%'
+                )
+            +
+                (SELECT 
+                    NVL(SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR)),0)
+                FROM 
+                    JAI_TAX_LINES jtl2,
+                    JAI_TAX_RATES jtr2,
+                    JAI_TAX_TYPES jtt
+                WHERE 1=1
+                    AND jtl.TRX_ID = jtl2.TRX_ID
+                    AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+                    AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+                    AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+                    AND jtt.TAX_TYPE_CODE LIKE 'CGST%'
+                )
+            +
+                (SELECT 
+                    NVL(SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR)),0)
+                FROM 
+                    JAI_TAX_LINES jtl2,
+                    JAI_TAX_RATES jtr2,
+                    JAI_TAX_TYPES jtt
+                WHERE 1=1
+                    AND jtl.TRX_ID = jtl2.TRX_ID
+                    AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+                    AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+                    AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+                    AND jtt.TAX_TYPE_CODE LIKE 'SGST%'
+                )
+            ) INVOICE_VALUE,
+            (SELECT 
+                SUM(ABS(jtl2.TAX_RATE_PERCENTAGE))
+            FROM 
+                JAI_TAX_LINES jtl2,
+                JAI_TAX_RATES jtr2,
+                JAI_TAX_TYPES jtt
+            WHERE 1=1
+                AND jtl.TRX_ID = jtl2.TRX_ID
+                AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+                AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+                AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+                AND jtt.TAX_TYPE_CODE LIKE 'IGST%'
+            ) IGST_RATE,
+			(SELECT 
+                NVL(SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR)),0)
+            FROM 
+                JAI_TAX_LINES jtl2,
+                JAI_TAX_RATES jtr2,
+                JAI_TAX_TYPES jtt
+            WHERE 1=1
+                AND jtl.TRX_ID = jtl2.TRX_ID
+                AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+                AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+                AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+                AND jtt.TAX_TYPE_CODE LIKE 'IGST%'
+            ) IGST_AMOUNT,			
+            (SELECT 
+                SUM(ABS(jtl2.TAX_RATE_PERCENTAGE))
+            FROM 
+                JAI_TAX_LINES jtl2,
+                JAI_TAX_RATES jtr2,
+                JAI_TAX_TYPES jtt
+            WHERE 1=1
+                AND jtl.TRX_ID = jtl2.TRX_ID
+                AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+                AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+                AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+                AND jtt.TAX_TYPE_CODE LIKE 'CGST%'
+            ) CGST_RATE,
+			(SELECT 
+                NVL(SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR)),0)
+            FROM 
+                JAI_TAX_LINES jtl2,
+                JAI_TAX_RATES jtr2,
+                JAI_TAX_TYPES jtt
+            WHERE 1=1
+                AND jtl.TRX_ID = jtl2.TRX_ID
+                AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+                AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+                AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+                AND jtt.TAX_TYPE_CODE LIKE 'CGST%'
+            ) CGST_AMOUNT,
+            (SELECT 
+                SUM(ABS(jtl2.TAX_RATE_PERCENTAGE))
+            FROM 
+                JAI_TAX_LINES jtl2,
+                JAI_TAX_RATES jtr2,
+                JAI_TAX_TYPES jtt
+            WHERE 1=1
+                AND jtl.TRX_ID = jtl2.TRX_ID
+                AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+                AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+                AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+                AND jtt.TAX_TYPE_CODE LIKE 'SGST%'
+            ) SGST_RATE,
+			(SELECT 
+                NVL(SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR)),0)
+            FROM 
+                JAI_TAX_LINES jtl2,
+                JAI_TAX_RATES jtr2,
+                JAI_TAX_TYPES jtt
+            WHERE 1=1
+                AND jtl.TRX_ID = jtl2.TRX_ID
+                AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+                AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+                AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+                AND jtt.TAX_TYPE_CODE LIKE 'SGST%'
+            ) SGST_AMOUNT,
+            DECODE(jtl.ITEM_ID,NULL,'SERVICES','PURCHASES') TRANSACTION_TYPE,
+			(SELECT hrl.LOCATION_CODE
+            FROM 
+                HR_LOCATIONS hrl
+            WHERE 1=1
+                AND jtl.LOCATION_ID = hrl.LOCATION_ID) PROJECT_CODE,
+			(SELECT hraou.NAME
+            FROM 
+                HR_LOCATIONS hrl,
+                HR_ALL_ORGANIZATION_UNITS hraou
+            WHERE 1=1
+                AND jtl.LOCATION_ID = hrl.LOCATION_ID
+                AND hrl.INVENTORY_ORGANIZATION_ID = hraou.ORGANIZATION_ID
+            ) PROJECT_NAME,
+			(SELECT flv.DESCRIPTION
+            FROM
+                HR_LOCATIONS hrl,
+                JAI_PARTY_REGS jpr,
+                JAI_PARTY_REG_LINES jprl,
+                FND_LOOKUP_VALUES flv
+            WHERE 1=1
+                AND jtl.LOCATION_ID = hrl.LOCATION_ID
+                AND hrl.INVENTORY_ORGANIZATION_ID = jpr.PARTY_ID
+                AND hrl.LOCATION_ID = jpr.PARTY_SITE_ID
+                AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+                AND jpr.PARTY_TYPE_CODE = 'IO'
+                AND jprl.REGISTRATION_TYPE_CODE = 'GST'
+                AND flv.LOOKUP_CODE = SUBSTR(jprl.REGISTRATION_NUMBER,0,2)
+                AND flv.lookup_type = 'GST STATE LOOKUP'
+                AND jprl.REGIME_ID = 10000
+                AND TRUNC(NVL(jprl.EFFECTIVE_TO,SYSDATE)) >= TRUNC(SYSDATE)
+            )
+			PROJECT_STATE,
+			log_t.RESPONSE_STATUS STATUS,
+			log_t.REQUEST_ID REQUEST_ID,
+			log_t.RESPONSE_MESSAGE REMARKS
+        FROM 
+            XX_IRIS_GSTR2_LOG_T log_t,
+			AP_INVOICES_ALL aia,
+            JAI_TAX_LINES jtl,
+            AP_SUPPLIERS aps,
+            AP_SUPPLIER_SITES_ALL apss
+        WHERE 1=1
+			AND log_t.REQUEST_ID = :P_REQUEST_ID
+            AND log_t.RETURN_PERIOD = TO_CHAR(aia.INVOICE_DATE,'MMYYYY')
+			AND log_t.TRX_NUMBER = aia.INVOICE_NUM
+			AND aia.INVOICE_ID = jtl.TRX_ID
+            AND aia.VENDOR_ID = aps.VENDOR_ID
+            AND aia.VENDOR_SITE_ID = apss.VENDOR_SITE_ID
+            AND aps.VENDOR_ID = apss.VENDOR_ID
+        ) XX
+		]]>
+		</sqlStatement>
+		</dataQuery>
+	<datastructure>
+		<group name="G_HEADERS" source="Q_HEADERS">
+			<element name="REQUEST_ID" value="REQUEST_ID"/>
+			<element name="RETURN_PERIOD" value="RETURN_PERIOD"/>
+			<element name="No_of_Records_Processed" value="No_of_Records_Processed"/>
+			<element name="No_of_Successful_Records" value="No_of_Successful_Records"/>
+			<element name="No_of_Failed_Records" value="No_of_Failed_Records"/>
+		</group>
+		<group name="G_LINES" source="Q_LINES">
+			<element name="S_NO" value="S_NO"/>
+			<element name="TRANSACTION_TYPE" value="TRANSACTION_TYPE"/>
+			<element name="GSTIN_UIN_RECIPIENT" value="GSTIN_UIN_RECIPIENT"/>
+			<element name="PROJECT_STATE" value="PROJECT_STATE"/>
+			<element name="PROJECT_CODE" value="PROJECT_CODE"/>
+			<element name="PROJECT_NAME" value="PROJECT_NAME"/>
+			<element name="INVOICE_NUMBER" value="INVOICE_NUMBER"/>
+			<element name="INVOICE_DATE" value="INVOICE_DATE"/>
+			<element name="DOC_TYPE" value="DOC_TYPE"/>
+			<element name="SUPPLY_TYPE" value="SUPPLY_TYPE"/>
+			<element name="SUPPLIER_GSTIN" value="SUPPLIER_GSTIN"/>
+			<element name="ERP_VENDOR_CODE" value="ERP_VENDOR_CODE"/>
+			<element name="SUPPLIER_NAME" value="SUPPLIER_NAME"/>
+			
+			<element name="SUPPLIER_STATE" value="SUPPLIER_STATE"/>
+			<element name="SUPPLIER_STATE_CODE" value="SUPPLIER_STATE_CODE"/>
+			<element name="SUPPLIER_INV_NO" value="SUPPLIER_INV_NO"/>
+			<element name="SUPPLIER_INV_DATE" value="SUPPLIER_INV_DATE"/>
+			
+			<element name="TAXABLE_VALUE" value="TAXABLE_VALUE"/>
+			<element name="INVOICE_VALUE" value="INVOICE_VALUE"/>
+			<element name="IGST_RATE" value="IGST_RATE"/>
+			<element name="IGST_AMOUNT" value="IGST_AMOUNT"/>
+			<element name="CGST_RATE" value="CGST_RATE"/>
+			<element name="CGST_AMOUNT" value="CGST_AMOUNT"/>
+			<element name="SGST_RATE" value="SGST_RATE"/>
+			<element name="SGST_AMOUNT" value="SGST_AMOUNT"/>
+			<element name="STATUS" value="STATUS"/>
+			<element name="REMARKS" value="REMARKS"/>
+						
+		</group>
+	</datastructure>
+</dataTemplate>
