@@ -86,10 +86,17 @@ define([
     var subsidiary = objRecord.getValue({ fieldId: "subsidiary" });
     var entity = objRecord.getValue({ fieldId: "entity" });
     var location_val = objRecord.getValue({ fieldId: "location" });
-
+	
+	var discounttotal = objRecord.getValue({fieldId: 'discounttotal'});
+			  
+			  if(discounttotal != ""){
+				  discounttotal = 0;
+			  }
+			  
     var subtotal = objRecord.getValue({ fieldId: "subtotal" });
     var createdfrom = objRecord.getValue("createdfrom");
     var taxtotal = objRecord.getValue({ fieldId: "taxtotal" });
+    var india_dexp = objRecord.getValue({ fieldId: "custbody_invoice_india_dexp" });
     // is SEZ
     var custbody187 = objRecord.getValue({
       fieldId: "custbody_v_invoice_client_sez",
@@ -105,6 +112,9 @@ define([
     } else {
       var SupTyp = "B2B";
     }
+	if(india_dexp){
+		var SupTyp = "DEXP";
+	}
 
     // var client_gst = objRecord.getValue({fieldId: 'custbody_ein_cus_gstin'});
 
@@ -116,6 +126,7 @@ define([
     var total = objRecord.getValue({ fieldId: "total" });
 
     var subsidiary_val = objRecord.getText({ fieldId: "subsidiary" });
+     var buyergstn = objRecord.getText({ fieldId: "custbody_invoice_buyergstn" });
 
     var Seller_Details = GetSellerDetails(subsidiary, nexus);
 
@@ -205,8 +216,11 @@ define([
     }
 
   
+    if(buyergstn == ""){
       var client_gst = GetGSTIN(entity, billstate);
-   
+  }else{
+	var client_gst =   buyergstn;
+  }
 
     var ship_gst = GetGSTIN(entity, shipstate);
    
@@ -271,6 +285,12 @@ define([
     if(SupTyp == 'SEZWOP' || SupTyp == 'SEZWP'){
 		is_igst = true;
 	}
+	
+	 var discountrate = Math.abs(objRecord.getValue({fieldId: 'discountrate'}));
+
+if(discountrate == ""){
+	discountrate = 0;
+}
     var igst_amt;
     var cgst_amt;
 
@@ -281,6 +301,14 @@ define([
       cgst_amt = parseFloat(taxtotal / 2).toFixed(2);
       igst_amt = 0;
     }
+	
+	
+	 if(discountrate != 0){
+			discounttotal =  parseFloat((subtotal*discountrate)/100).toFixed(2);
+			 subtotal = parseFloat(Number(subtotal) - Number(discounttotal)).toFixed(2); 
+			   discounttotal = 0;
+		  }
+		  
     var values = [];
     for (var p = 0; p < Item_Details.length; p++) {
       log.debug(
@@ -289,7 +317,20 @@ define([
       );
       var qty_item = Math.abs(Item_Details[p].quantity);
       var TotAmt = Math.abs(Item_Details[p].fxrate * 1);
+	  var TotAmt_ass =  TotAmt;
+			 var dis_amt = 0;
+			 
       var tax_ammt = Math.abs(Item_Details[p].tax_amt * 1);
+	  
+	  if(discountrate != 0){
+				TotAmt_ass = parseFloat((TotAmt_ass*100)/(100-discountrate)).toFixed(2);
+			dis_amt = parseFloat((Number(TotAmt_ass) - Number(TotAmt))).toFixed(2);
+			 }
+			 if(dis_amt > 0){
+		
+			tax_ammt = parseFloat((TotAmt*Item_Details[p].tax_rate)/100).toFixed(2);
+			 }
+			 
       var hsn = Item_Details[p].hsn;
       var type = Item_Details[p].type;
       if (hsn == "") {
@@ -306,7 +347,9 @@ define([
         var uom = "";
         var IsServc = "Y";
       }
-
+		
+		  var total_item_amt  =  parseFloat(Number(TotAmt)+Number(tax_ammt)).toFixed(2);
+		  
       if (is_igst) {
         var igst_item_amt = tax_ammt;
         var cgst_item_amt = 0;
@@ -326,9 +369,9 @@ define([
         Qty: qty_item,
         FreeQty: null,
         Unit: uom,
-        UnitPrice: parseFloat(TotAmt / qty_item).toFixed(2),
-        TotAmt: TotAmt,
-        Discount: 0,
+        UnitPrice: parseFloat(TotAmt_ass/qty_item).toFixed(2),
+        TotAmt: TotAmt_ass,
+        Discount: dis_amt,
         PreTaxVal: null,
         AssAmt: TotAmt,
         GstRt: Item_Details[p].tax_rate,
@@ -343,7 +386,7 @@ define([
         StateCesNonAdvlAmt: null,
         OthChrg: null,
         OrdLineRef: null,
-        TotItemVal: TotAmt + parseFloat(tax_ammt),
+        TotItemVal: total_item_amt,
         OrgCntry: null,
         PrdSlNo: null,
         AttribDtls: null,
@@ -679,7 +722,7 @@ define([
     var File = file.create({
       name: fileName,
       fileType: file.Type.JSON,
-      contents: JSON.stringify(edocContent),
+     contents: JSON.stringify(edocContent,null,4)
     });
 
     File.folder = 21097122;
@@ -830,20 +873,20 @@ define([
       JSON.stringify(invoice_id)
     );
 
-    var filters = [
-      ["type", "anyof", "CustCred"],
-      "AND",
-      ["mainline", "is", "F"],
-      "AND",
-      ["shipping", "is", "F"],
-      "AND",
-      ["taxline", "is", "F"],
-      "AND",
-      ["memo", "isnot", "Cost of Sales"],
-      "AND",
-
-      ["internalid", "anyof", invoice_id],
-    ];
+ var filters=[ ["type","anyof","CustCred"], 
+      "AND", 
+      ["mainline","is","F"], 
+      "AND", 
+      ["shipping","is","F"], 
+      "AND", 
+      ["taxline","is","F"], 
+      "AND", 
+      ["memo","isnot","Cost of Sales"],"AND", 
+	  
+      ["internalid","anyof",invoice_id],
+	  "AND", 
+      ["item.type","noneof","Discount"]
+   ];
 
     var columns = [
       search.createColumn({ name: "item", label: "item" }),
