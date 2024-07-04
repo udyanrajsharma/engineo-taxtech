@@ -9,9 +9,7 @@ class ClearTaxEWBwithoutIRN:
     # Generate EWB
     def EWBwithoutIRN():
         try:
-            print("Inside Service Class\n")
             Header_data = ewbDatamodel.getHeaderData()
-            print("Header Data: ",Header_data)
             for row in Header_data:
                 document_No = row[0]
                 LineItem_data = ewbDatamodel.getLineItemData(document_No) # Get the line item data
@@ -95,7 +93,6 @@ class ClearTaxEWBwithoutIRN:
                     igst_amount += float(items[11])
                     cess_amount += float(items[13])
                     cess_NonAdvol_amount += float(items[15])
-                    total_Invoice_Amount += total_assessable_Amount + cgst_amount + sgst_amount + igst_amount + cess_amount + cess_NonAdvol_amount
                     
                     payload["ItemList"].append  ({
                         "ProdName": items[0],
@@ -115,28 +112,26 @@ class ClearTaxEWBwithoutIRN:
                         "OthChrg": items[14],
                         "CesNonAdvAmt": items[15]
                 })
-                payload["TotalInvoiceAmount"] = total_Invoice_Amount
+                
                 payload["TotalCgstAmount"] = cgst_amount
                 payload["TotalSgstAmount"] = sgst_amount
                 payload["TotalIgstAmount"] = igst_amount
                 payload["TotalCessAmount"] = cess_amount
                 payload["TotalCessNonAdvolAmount"] = cess_NonAdvol_amount
                 payload["TotalAssessableAmount"] = total_assessable_Amount
+                total_Invoice_Amount = total_assessable_Amount + cgst_amount + sgst_amount + igst_amount + cess_amount + cess_NonAdvol_amount
+                payload["TotalInvoiceAmount"] = total_Invoice_Amount
 
-                print("Clear Tax API Called \n")
                 servicelogger_info.info("...Payload for generate EWB created...\n")
                 response = ewbDatamodel.executeClearTaxEWBapi(payload, gstIn) # Calling Clear Tax EWB API
-                print("Response From Clear Tax API: ",response[0])
-                ewbDatamodel.saveResponse(response[0], response[1], payload)
+                ewbDatamodel.saveResponse(response[0], response[1], payload, gstIn)
         except Exception as e:
-            print("Error Occured in Payload Creation of EWB generation: ",e)
             servicelogger_error.exception("Exception Occured in Payload Creation for generate EWB :\n ")
 
     # Cancel E-Way Bill
     def cancelEWB():
         try:
             Header_data = ewbDatamodel.getCancelEWBHeaderData()
-            print("Header Cancel Data: ",Header_data)
             for row in Header_data:
                 gstIn = row[1]
                 cancelEWBpayload = {
@@ -144,14 +139,11 @@ class ClearTaxEWBwithoutIRN:
                     "cancelRsnCode": row[2],
                     "cancelRmrk" : row[3]
                 }
-                print("Payload for Cancel EWB: \n",cancelEWBpayload)
                 servicelogger_info.info("...Payload for cancel EWB created...\n")
                 # Clear Tax API Called
                 response = ewbDatamodel.executeCancelEWBClearTaxEWBapi(cancelEWBpayload,gstIn)
-                print("Response from ClearTax Cancel API: ",response)
                 ewbDatamodel.cancelEWBsaveResponse(response[0], response[1], cancelEWBpayload, row[0])
         except Exception as e:
-            print("Error Occured in Payload Creation of Cancellation of EWB: ",e)
             servicelogger_error.exception("Exception Occured in Payload Creation for Cancel EWB :\n ")
 
     # Update E-Way Bill
@@ -160,7 +152,6 @@ class ClearTaxEWBwithoutIRN:
             Header_date = ewbDatamodel.getUpdateEWBHeaderData()
             for row in Header_date:
                 gstIn = row[1]
-                print("EWB NO = ",row[0])
                 updateEWBpayload = {
                     "EwbNumber": row[0],
                     "FromPlace": row[2],
@@ -176,13 +167,11 @@ class ClearTaxEWBwithoutIRN:
                     "VehicleType": row[12],
                     "VehNo": row[13]
                 }
-                print("Payload for Update EWB: \n",updateEWBpayload)
                 servicelogger_info.info("...Payload for update EWB created...\n")
                 # Clear Tax API Called
                 response = ewbDatamodel.executeUpdateEWBClearTaxEWBapi(updateEWBpayload,gstIn)
                 # Response save in Database
-                ewbDatamodel.saveResponseUpdateEWB(response[0], response[1], updateEWBpayload, row[0])
+                ewbDatamodel.saveResponseUpdateEWB(response[0], response[1], updateEWBpayload, row[0], row[1], row[9])
         except Exception as e:
-            print("Error Occured in Payload Creation of Update EWB: ",e)
             servicelogger_error.exception("Exception Occured in Payload Creation for update EWB :\n ")
 

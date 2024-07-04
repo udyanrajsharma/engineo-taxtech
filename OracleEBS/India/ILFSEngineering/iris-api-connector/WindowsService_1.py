@@ -21,30 +21,47 @@ if getattr(sys, "frozen", False):
 load_dotenv(dotenv_path=os.path.join(extDataDir, ".env"))
 
 serviceName = os.getenv("service_name")
-# logFilePath = os.getenv("log_filepath")
 # Sets log file path.
-current_date = datetime.now().strftime("%d%m%Y")
-log_file = f"C:\\IRIS\\Output_{current_date}.log"
+current_dir = os.path.dirname(sys.executable)
+
+log_dir = os.path.join(current_dir,"LOGS")
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+log_file_info = os.path.join(log_dir,f"IRIS_ILFS_INTEGRATION_INFO.log")
+log_file_error = os.path.join(log_dir, f"IRIS_ILFS_INTEGRATION_ERROR.log")
 
 # Return a logger with the specified name.
-servicelogger = logging.getLogger("IRISConnectorServiceLogger")
+servicelogger_info = logging.getLogger("IRISEWBServiceInfoLogger")
+servicelogger_error = logging.getLogger("IRISEWBServiceErrorLogger")
 
 # Sets the threshold for this logger to lvl. Logging messages which are less severe than lvl will be ignored.
-servicelogger.setLevel(logging.DEBUG)
+level = logging.DEBUG
+servicelogger_info.setLevel(logging.DEBUG)
+servicelogger_error.setLevel(logging.DEBUG)
 
-handler = logging.handlers.RotatingFileHandler(
-    log_file, maxBytes=10485760, backupCount=10
+handler_info = logging.handlers.TimedRotatingFileHandler(
+    log_file_info, when='midnight', interval=1, backupCount=10
 )
+handler_info.suffix = "%d%m%Y" 
+handler_info.setLevel(level)
+
+handler_error = logging.handlers.TimedRotatingFileHandler(
+    log_file_error, when='midnight', interval=1, backupCount=10
+)
+handler_error.suffix = "%d%m%Y" 
+handler_error.setLevel(level)
 
 # Sets format of record in log file
 formatter = logging.Formatter(
     "%(asctime)s - %(module)-10s - %(levelname)-8s %(message)s", "%d-%m-%Y %H:%M:%S"
 )
-handler.setFormatter(formatter)
+handler_info.setFormatter(formatter)
+handler_error.setFormatter(formatter)
 
-# Adds the specified handler to logger "MyLogger"
-servicelogger.addHandler(handler)
-
+# Adds the specified handler to logger 
+servicelogger_info.addHandler(handler_info)
+servicelogger_error.addHandler(handler_error)
 
 class WindowsService(win32serviceutil.ServiceFramework):
     _svc_name_ = serviceName
@@ -61,7 +78,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
 
     # start command service
     def SvcDoRun(self):
-        servicelogger.info("*** STARTING WINDOWS SERVICE ***\n")
+        servicelogger_info.info("*** STARTING WINDOWS SERVICE ***\n")
         try:  # try main
             self.main()
         except:
@@ -73,7 +90,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
     # main process
     def main(self):
 
-        servicelogger.info("... STARTING PROCESS ...\n")
+        servicelogger_info.info("... STARTING PROCESS ...\n")
         from flask import Flask
         app.run(host="0.0.0.0", port=5500)
 

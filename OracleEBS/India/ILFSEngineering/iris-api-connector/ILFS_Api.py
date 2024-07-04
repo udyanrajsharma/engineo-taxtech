@@ -6,14 +6,17 @@ from application.IRISgst import IRISgst
 from application.IRISeinv import IRISeinv
 import threading
 import time
+import logging
 
+servicelogger_info = logging.getLogger("IRISEWBServiceInfoLogger")
+servicelogger_error = logging.getLogger("IRISEWBServiceErrorLogger")
 
 app = Flask(__name__)
-
 
 @app.route("/ilfs/gstr1/", methods=["POST"])
 def api_gstr1():
     try:
+        
         data = request.get_json()
         from_date = data.get("From_date", "")
         to_date = data.get("To_Date", "")
@@ -21,7 +24,10 @@ def api_gstr1():
         request_id = data.get("Request_Id", "")
 
         def long_running_task():
+            servicelogger_info.info(f"\n..............GSTR1 program called for  request_id: {request_id }..............\n")
             IRISgst.gstr1_v(from_date, to_date, created_by, request_id)
+            servicelogger_info.info(f"\n...............GSTR1 request processed successfully for request_id: {request_id }.............\n")
+            servicelogger_info.info("\n\n------------------------------------------------------------------------------------------------------------------------------------------\n\n")
 
         thread1 = threading.Thread(target=long_running_task)
         thread1.start()
@@ -34,12 +40,14 @@ def api_gstr1():
         return jsonify(message), 200
 
     except Exception as e:
+        servicelogger_error.exception("Exception Occured to call the GSTR1 concurrent program")
         return jsonify({"result": "error", "message": str(e)})
 
 
 @app.route("/ilfs/gstr2/", methods=["POST"])
 def api_gstr2():
     try:
+        # servicelogger_info.info("...GSTR2 generation Function Called...\n")
         data = request.get_json()
         # print("API Called")
         from_date = data.get("From_date", "")
@@ -48,7 +56,10 @@ def api_gstr2():
         request_id = data.get("Request_Id", "")
 
         def long_running_task():
+            servicelogger_info.info(f"\n.......GSTR2 program called for  request_id: {request_id }.........\n")
             IRISgst.gstr2_v(from_date, to_date, created_by, request_id)
+            servicelogger_info.info(f"\n..........GSTR2 request processed successfully for request_id: {request_id }...........\n")
+            servicelogger_info.info("\n\n--------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n")
 
         thread1 = threading.Thread(target=long_running_task)
         thread1.start()
@@ -61,12 +72,14 @@ def api_gstr2():
         return jsonify(message), 200
 
     except Exception as e:
+        servicelogger_error.exception("Exception Occured to call the GSTR2 concurrent program")
         return jsonify({"result": "error", "message": str(e)})
 
 
 @app.route("/ilfs/einvoice/", methods=["POST"])
 def api_eInvoicing():
     try:
+        servicelogger_info.info("...E-Invoice generation Function Called...\n")
         data = request.get_json()
         print("API Called")
         from_date = data.get('From_Date','')
@@ -79,7 +92,10 @@ def api_eInvoicing():
         einv_template = data.get('P_EINV_TEMP','')
 
         def long_running_task():
+            servicelogger_info.info(f"\n........E-Invoice generation Program called for  request_id: {request_id }.............\n")
             IRISeinv.einvoice_v(from_date, to_date, trx_no, gstin_State, created_by, request_id, customer_Gstin, einv_template)
+            servicelogger_info.info(f"\n......E-Invoice Generation request processed successfully for request_id: {request_id }.........\n")
+            servicelogger_info.info("\n\n---------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n")
             # IRISeinv.Test_einvoice_v(from_date, to_date, trx_no, created_by, request_id)
 
         thread1 = threading.Thread(target=long_running_task)
@@ -90,12 +106,14 @@ def api_eInvoicing():
         )
         return jsonify(message), 200
     except Exception as e:
+        servicelogger_error.exception("Exception Occured during call the E-Invoice generation Concurrent program: ")
         return jsonify({"result": "error", "message": str(e)})
 
 
 @app.route("/ilfs/cancelirn/", methods=["POST"])
 def api_cancelIrn():
     try:
+        
         data = request.get_json()
         # print("Cancel Reason, Cancel Remark, Invoice Id")
         cancel_reason = data.get("CANCEL_REASON", "")
@@ -104,15 +122,19 @@ def api_cancelIrn():
         created_by = data.get("Created_By", "")
         request_id = data.get("Request_Id", "")
 
+        servicelogger_info.info(f"\n............E-Invoice cancellation Program called for  request_id: {request_id } and Invoice No: {invoice_id}..............\n")
         IRISeinv.cancelIRN(
             cancel_reason, cancel_remark, invoice_id, created_by, request_id
-        )
+        )   
+        servicelogger_info.info(f"\n............E-Invoice cancellation request processed successfully for request_id: {request_id } and Invoice No :{invoice_id}............\n")
+        servicelogger_info.info("\n\n---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n")
         
         message = "Cancel IRN API called successfully for Invoice ID {}".format(
             invoice_id
         )
         return jsonify(message), 200
     except Exception as e:
+        servicelogger_error.exception("Exception Occured during call the E-Invoice cancellation Concurrent program: ")
         return jsonify({"result": "error", "message": str(e)})
 
 
@@ -125,9 +147,11 @@ def api_ewbNonIrn():
         request_id = data.get("Request_Id", "")
 
         def long_running_task():
+            servicelogger_info.info(f"\n........E-Way Bill Function program called for  request_id: {request_id} and Document No: {doc_number}.........\n")
             IRISeinv.generateEwbNonIrn(
                 doc_number, created_by, request_id
             )
+            servicelogger_info.info("\n\n---------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n")
 
         thread1 = threading.Thread(target=long_running_task)
         thread1.start()
@@ -137,6 +161,7 @@ def api_ewbNonIrn():
         )
         return jsonify(message), 200
     except Exception as e:
+        servicelogger_error.exception("Exception Occured during call the E-Way Bill generation Concurrent program: ")
         return jsonify({"result": "error", "message": str(e)})
 
 
