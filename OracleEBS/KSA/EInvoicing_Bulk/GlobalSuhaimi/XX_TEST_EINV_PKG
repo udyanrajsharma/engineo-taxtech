@@ -1,0 +1,35 @@
+create or replace PACKAGE      XX_TEST_EINV_PKG
+AS
+
+
+
+    PROCEDURE GET_APPLICABLE_TXNS 
+    (  
+--        P_FROM_DATE     VARCHAR2 ,
+--        P_TO_DATE       VARCHAR2 
+          o_chr_errbuf OUT VARCHAR2,
+          o_chr_retcode OUT VARCHAR2,
+          P_DAY IN NUMBER
+          
+    );
+    PROCEDURE PREP_JSON_REQ_RETENTION
+    ( 
+        P_TRX_NUM       VARCHAR2
+    );
+    PROCEDURE PREP_JSON_REQ
+    (
+        P_TRX_NUM       VARCHAR2
+    );
+    
+    PROCEDURE CALL_CLEARTAX_API
+    ( 
+        P_TRX_NUMB      VARCHAR2,
+        P_JSON_REQ      CLOB
+    );
+    PROCEDURE SAVE_CLEARTAX_RESPONSE
+    (
+        P_TRX_NUMB       VARCHAR2,
+        P_JSON_RES       CLOB
+    );
+    
+END XX_TEST_EINV_PKG;

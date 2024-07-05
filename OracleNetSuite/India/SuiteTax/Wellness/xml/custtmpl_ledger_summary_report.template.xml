@@ -1,0 +1,124 @@
+<?xml version="1.0"?><!DOCTYPE pdf PUBLIC "-//big.faceless.org//report" "report-1.1.dtd">
+<pdfset>
+<pdf>
+<head>
+  <title>InXpress Ledger Report</title>
+	<link name="NotoSans" type="font" subtype="truetype" src="${nsfont.NotoSans_Regular}" src-bold="${nsfont.NotoSans_Bold}" src-italic="${nsfont.NotoSans_Italic}" src-bolditalic="${nsfont.NotoSans_BoldItalic}" bytes="2" />
+	<#if .locale == "zh_CN">
+		<link name="NotoSansCJKsc" type="font" subtype="opentype" src="${nsfont.NotoSansCJKsc_Regular}" src-bold="${nsfont.NotoSansCJKsc_Bold}" bytes="2" />
+	<#elseif .locale == "zh_TW">
+		<link name="NotoSansCJKtc" type="font" subtype="opentype" src="${nsfont.NotoSansCJKtc_Regular}" src-bold="${nsfont.NotoSansCJKtc_Bold}" bytes="2" />
+	<#elseif .locale == "ja_JP">
+		<link name="NotoSansCJKjp" type="font" subtype="opentype" src="${nsfont.NotoSansCJKjp_Regular}" src-bold="${nsfont.NotoSansCJKjp_Bold}" bytes="2" />
+	<#elseif .locale == "ko_KR">
+		<link name="NotoSansCJKkr" type="font" subtype="opentype" src="${nsfont.NotoSansCJKkr_Regular}" src-bold="${nsfont.NotoSansCJKkr_Bold}" bytes="2" />
+	<#elseif .locale == "th_TH">
+		<link name="NotoSansThai" type="font" subtype="opentype" src="${nsfont.NotoSansThai_Regular}" src-bold="${nsfont.NotoSansThai_Bold}" bytes="2" />
+	</#if>
+      
+    <style type="text/css">* {
+						<#if .locale == "zh_CN">
+							font-family: NotoSans, NotoSansCJKsc, sans-serif;
+						<#elseif .locale == "zh_TW">
+							font-family: NotoSans, NotoSansCJKtc, sans-serif;
+						<#elseif .locale == "ja_JP">
+							font-family: NotoSans, NotoSansCJKjp, sans-serif;
+						<#elseif .locale == "ko_KR">
+							font-family: NotoSans, NotoSansCJKkr, sans-serif;
+						<#elseif .locale == "th_TH">
+							font-family: NotoSans, NotoSansThai, sans-serif;
+						<#else>
+							font-family: NotoSans, sans-serif;
+						</#if>
+					}
+					td p { align:left }
+					.border {
+  border-right: 0.1px solid;
+  border-left: 0.1px solid;
+  border-top: 0.1px solid;
+  border-bottom: 0.1px solid;
+  white-space : wrap;
+}
+.border_right {
+ 
+  border-left: 0.1px solid;
+  
+  border-bottom: 0.1px solid;
+}
+				.border_left {
+  border-right: 0.1px solid;
+	
+  border-bottom: 0.1px solid;
+}
+
+.size_class{
+font-size:10px;
+}
+
+
+</style>
+</head>
+<body padding="0.5in 0.5in 0.5in 0.5in" size="A4-landscape">
+  <#if results?size != 0><#list results as result></#list>
+    </#if>
+  
+     <p align="center"> <img  src="https://7640589-sb1.secure.netsuite.com/core/media/media.nl?id=88209&amp;c=&amp;h=5JaFS30Q_7o06cs3g76JmLZVR5xnDXskHQknu9b71JY-_mOV"  height="60" width="180"></img></p>
+     <p align="right">Report Generated: ${results.today}</p>
+
+      
+		<#list results.subsidiary_data as subsidiary_data>
+		<div id="sub_data" align="center">
+		<h2 id="subsid"> ${subsidiary_data.legalname} </h2>
+		<p id="subsid1"> ${subsidiary_data.address1} </p>
+		<p id="subsid2">${subsidiary_data.address2} ${subsidiary_data.city} </p>
+		<p id="subsid3">${subsidiary_data.state}</p>
+		<p id="subsid4">GST : ${subsidiary_data.taxregistrationnumber} </p>
+               	<h3>${results.vendor_name} </h3>
+               <p id="">Ledger Account </p>
+		</div>
+		</#list>
+		
+		
+		<div id="sub_dataw" align="center">
+	
+		<p id=""><strong>Opening Balance As of ${results.start_date} : ${results.symbol} ${results.open_bal} </strong></p>
+		<p id=""><strong>Closing Balance As of ${results.end_date} : ${results.symbol} ${results.close_bal} </strong></p>
+		
+		</div>
+		
+		
+		<table id="myTable">
+            <thead>
+                <tr border="1">
+                    <th  >Date</th>
+                    <th  >Posting</th>
+                    <th  >Type</th>
+                    <th  >Journal Name</th>
+                    <th >Account Code</th>
+                    <th  >Amount Dr</th>
+                    <th  >Amount Cr</th>
+                    <th >Narration</th>
+                </tr>
+            </thead>
+            
+			<tbody id="tbody">
+                <#list results.delaer_obj as delaer_obj>
+				<tr >
+					<td  >${delaer_obj.trandate}</td>
+				<td  >${delaer_obj.postingperiod}</td> 
+				<td  >${delaer_obj.type}</td>
+				<td  >${delaer_obj.account?replace('&','&amp;') }</td> 
+				<td  >${delaer_obj.account_type}</td>
+				<td  >${delaer_obj.debitamount?replace('-','') }</td>
+				<td  >${delaer_obj.creditamount?replace('-','') }</td>
+				<td  >${delaer_obj.memo}</td>
+				</tr>
+				</#list>
+				
+            </tbody>
+            
+        </table>
+		
+	 
+</body>
+</pdf></pdfset>

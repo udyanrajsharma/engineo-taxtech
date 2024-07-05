@@ -1,0 +1,599 @@
+create or replace PACKAGE BODY  XXIRIS_UTILS_PKG1 
+AS
+
+G_USER_ID       NUMBER          := FND_GLOBAL.USER_ID;
+G_REQUEST_ID    NUMBER          := FND_GLOBAL.CONC_REQUEST_ID;
+
+    PROCEDURE XXIRIS_GSTR1_API_PRC
+    ( 
+        L_ERRBUF varchar2,
+        L_RETCODE number,
+        P_FROM_DATE varchar2,
+        P_TO_DATE varchar2
+    )
+    AS
+    
+    /* GSTR1 header assigment fields */
+    
+    L_TXN_TYPE  VARCHAR2(400);
+    L_TRX_NUM   VARCHAR2(400);
+    L_TRX_DATE  VARCHAR2(400);
+    L_TRX_ID    VARCHAR2(400);
+    L_GSTIN     VARCHAR2(400);
+    L_FP        VARCHAR2(400);
+    L_INUM      VARCHAR2(400);
+    L_INVTYP      VARCHAR2(400);
+    L_SPLYTY      VARCHAR2(400);
+    L_DST      VARCHAR2(400);
+    L_REFNUM      VARCHAR2(400);
+    L_IDT      VARCHAR2(400);
+    L_CTPY      VARCHAR2(400);
+    L_CTIN      VARCHAR2(400);
+    L_CNAME      VARCHAR2(400);
+    L_NTNUM      VARCHAR2(400);
+    L_NTDT      VARCHAR2(400);
+    L_VAL      VARCHAR2(400);
+    L_POS      VARCHAR2(400);
+    L_RCHRG      VARCHAR2(400);
+    L_FY      VARCHAR2(400);
+    L_DTY      VARCHAR2(400);
+    L_RSN      VARCHAR2(400);
+    L_P_GST      VARCHAR2(400);
+    L_GEN2      VARCHAR2(400);
+    L_GEN7      VARCHAR2(400);
+    L_GEN8      VARCHAR2(400);
+    L_GEN10      VARCHAR2(400);
+    L_GEN11      VARCHAR2(400);
+    L_GEN12      VARCHAR2(400);
+    L_GEN13      VARCHAR2(400);
+    
+    /* GSTR1 line assigment fields */
+    L_SVAL      VARCHAR2(400);
+    L_TY        VARCHAR2(400);
+    L_HSN_SC    VARCHAR2(400);
+    L_DESCRIPTION   VARCHAR2(400);
+    L_UQC       VARCHAR2(400);
+    L_QTY       VARCHAR2(400);
+    L_TXVAL     VARCHAR2(400);
+    L_IRT       VARCHAR2(400);
+    L_IAMT      VARCHAR2(400);
+    L_CRT       VARCHAR2(400);
+    L_CAMT      VARCHAR2(400);
+    L_SRT       VARCHAR2(400);
+    L_SAMT      VARCHAR2(400);
+    L_CSRT      VARCHAR2(400);
+    L_CSAMT     VARCHAR2(400);
+    L_TXP       VARCHAR2(400);
+    L_DISC      VARCHAR2(400);
+    L_ADVAL     VARCHAR2(400);
+    L_RT        VARCHAR2(400); 
+    L_PROJECT_CODE  VARCHAR2(150);
+    L_PROJECT_NAME  VARCHAR2(400);
+    L_RPT_TXN_TYPE  VARCHAR2(60);
+    
+    L_RPT_SERIAL    NUMBER  := 0;
+    L_LINE_CNT  NUMBER  := 0;
+      
+    L_TOT_SVAL  NUMBER := 0;
+    L_TOT_TXVAL NUMBER := 0;
+    L_TOT_VAL   NUMBER := 0;
+    L_TOT_IAMT  NUMBER := 0;
+    L_TOT_CAMT  NUMBER := 0;
+    L_TOT_SAMT  NUMBER := 0;
+    
+    L_LOG_PK_ID NUMBER;
+    
+    JSON_DATA       VARCHAR2(32000);
+    
+    
+    CURSOR c_gstr1_hdr (C_FROM_DATE VARCHAR2, C_TO_DATE VARCHAR2)
+    IS 
+        SELECT
+            TXN_TYPE,
+            ACTUAL_TRX_NUMBER,
+            TRX_DATE,
+            TRX_ID,
+            FP,
+            GSTIN
+        FROM
+            XXIRIS_GSTR1_HDR_V
+        WHERE 
+            TRX_DATE BETWEEN TO_DATE(C_FROM_DATE, 'DD-MON-YYYY') AND TO_DATE(C_TO_DATE, 'DD-MON-YYYY')
+--            AND ACTUAL_TRX_NUMBER = 'BBR/IPC-36'
+        ORDER BY 
+            TXN_TYPE,
+            ACTUAL_TRX_NUMBER
+        ;
+            
+    CURSOR c_gstr1_lines (C_DOC_ID   NUMBER, C_DOC_NO   VARCHAR2)
+    IS
+        SELECT
+            nvl(sval, 0) sval,
+            ty,
+            hsn_sc,
+            description,
+            uqc,
+            qty,
+            nvl(txval, 0) txval,
+            nvl(irt,0) irt,
+            iamt,
+            nvl(crt,0) crt,
+            camt,
+            nvl(srt,0) srt,
+            samt,
+            nvl(csrt,0) csrt,
+            csamt,
+            txp,
+            disc,
+            nvl(adval, 0) adval,
+            rt
+        FROM
+            xx_iris_gstr1_v 
+        WHERE 
+            TRX_ID = C_DOC_ID
+            AND ACTUAL_TRX_NUMBER = C_DOC_NO;
+
+    BEGIN
+        /* GSTR1 headers loop starts */
+        BEGIN
+            
+            FOR i IN c_gstr1_hdr (P_FROM_DATE, P_TO_DATE)
+            LOOP
+                DBMS_OUTPUT.PUT_LINE('GSTR1 headers loop starts for Request ID - '||G_REQUEST_ID||' '||'Document Number - '||i.ACTUAL_TRX_NUMBER);
+                JSON_DATA := NULL;
+                
+                L_TXN_TYPE  := i.TXN_TYPE;
+                L_TRX_NUM   := i.ACTUAL_TRX_NUMBER;
+                L_TRX_DATE  := i.TRX_DATE;
+                L_TRX_ID    := i.TRX_ID;
+                L_GSTIN     := i.GSTIN;
+                L_FP        := i.FP;
+                
+                
+                BEGIN
+                    INSERT INTO
+                        XX_IRIS_GSTR1_LOG_T 
+                        (
+                            TXN_TYPE,
+                            TRX_ID,
+                            TRX_NUMBER,
+                            TRX_DATE,
+                            GSTIN,
+                            RETURN_PERIOD,
+                            CREATED_BY,
+                            CREATION_DATE,
+                            REQUEST_ID
+                        ) 
+                        VALUES 
+                        (
+                            L_TXN_TYPE,
+                            L_TRX_ID,
+                            L_TRX_NUM,
+                            TO_DATE(L_TRX_DATE, 'DD-MM-YYYY'),
+                            L_GSTIN,
+                            L_FP,
+                            G_USER_ID,
+                            TO_DATE(SYSDATE, 'DD-MM-YYYY'),
+                            G_REQUEST_ID
+                        ) RETURNING LOG_ID INTO L_LOG_PK_ID;
+                EXCEPTION WHEN OTHERS THEN
+                    FND_FILE.PUT_LINE(FND_FILE.LOG,'Error while Inserting header data for Request ID - '||G_REQUEST_ID||' '||'Document Number - '||L_TRX_NUM);
+                    DBMS_OUTPUT.PUT_LINE('Error while Inserting header data for Request ID - '||G_REQUEST_ID||' '||'Document Number - '||L_INUM);
+                END;
+                
+                DBMS_OUTPUT.PUT_LINE('Log ID - '||L_LOG_PK_ID||' Inserted for Request ID - '||G_REQUEST_ID||' '||'Document Number - '||i.ACTUAL_TRX_NUMBER);
+                
+                COMMIT;
+                
+                BEGIN
+                    SELECT DISTINCT
+                        gstr_v.INVTYP,
+                        gstr_v.SPLYTY,
+                        gstr_v.DST,
+                        gstr_v.REFNUM,
+                        gstr_v.CTPY,
+                        gstr_v.CTIN,
+                        gstr_v.CNAME,
+                        gstr_v.NTNUM,
+                        gstr_v.NTDT,
+                        REGEXP_REPLACE(gstr_v.INUM, '[' || CHR(39) || CHR(34) || ']', ''),               
+                        gstr_v.IDT,
+                        gstr_v.VAL,
+                        gstr_v.POS,
+                        gstr_v.RCHRG,
+                        gstr_v.FY,
+                        gstr_v.DTY,
+                        gstr_v.RSN,
+                        gstr_v.P_GST,
+                        gstr_v.GEN2,
+                        gstr_v.GEN7,
+                        gstr_v.GEN8,
+                        gstr_v.GEN10,
+                        gstr_v.GEN11,
+                        gstr_v.GEN12,
+                        gstr_v.GEN13,
+                        gstr_v.PROJECT_CODE,
+                        gstr_v.PROJECT_NAME,
+                        CASE 
+                            WHEN gstr_v.DTY = 'RI' THEN 'Regular Invoice'
+                            WHEN gstr_v.DTY = 'C' THEN 'Credit Note'
+                            WHEN gstr_v.DTY = 'D' THEN 'Debit Note'
+                            ELSE NULL
+                        END TRANSACTION_TYPE
+                    INTO
+                        L_INVTYP,
+                        L_SPLYTY,
+                        L_dst,
+                        L_REFNUM,
+                        L_CTPY,
+                        L_CTIN,
+                        L_CNAME,
+                        L_NTNUM,
+                        L_NTDT,
+                        L_INUM,
+                        L_IDT,
+                        L_VAL,
+                        L_POS,
+                        L_RCHRG,
+                        L_FY,
+                        L_DTY,
+                        L_RSN,
+                        L_P_GST,
+                        L_GEN2,
+                        L_GEN7,
+                        L_GEN8,
+                        L_GEN10,
+                        L_GEN11,
+                        L_GEN12,
+                        L_GEN13,
+                        L_PROJECT_CODE,
+                        L_PROJECT_NAME,
+                        L_RPT_TXN_TYPE
+                    FROM
+                        XX_IRIS_GSTR1_LOG_T log_t,
+                        XX_IRIS_GSTR1_V gstr_v
+                    WHERE 1=1
+                        AND log_t.REQUEST_ID = G_REQUEST_ID
+                        AND log_t.TRX_ID = L_TRX_ID
+                        AND log_t.TRX_NUMBER = L_TRX_NUM
+                        AND log_t.TRX_ID = gstr_v.TRX_ID;
+                EXCEPTION WHEN OTHERS THEN
+                    FND_FILE.PUT_LINE(FND_FILE.LOG,'Error while fetching other header data');
+                    DBMS_OUTPUT.PUT_LINE('Error while fetching other header data');
+                END;
+                
+--                JSON_DATA := 
+--                '{
+--                    "invoices": [
+--                        {
+--                            "invTyp": "'||L_INVTYP||'",
+--                            "splyTy": "'||L_SPLYTY||'",
+--                            "dst": "'||L_DST||'",
+--                            "refnum": "'||L_REFNUM||'",
+--                            "ctpy": "'||L_CTPY||'",
+--                            "ctin": "'||L_CTIN||'",
+--                            "cname": "'||L_CNAME||'",
+--                            "ntNum": "'||L_NTNUM||'",
+--                            "ntDt": "'||L_NTDT||'",
+--                            "inum": "'||L_INUM||'",             
+--                            "idt": "'||L_IDT||'",
+--                            "pos": "'||L_POS||'",
+--                            "rchrg": "'||L_RCHRG||'",
+--                            "fy": "'||L_FY||'",
+--                            "dty": "'||L_DTY||'",
+--                            "rsn": "'||L_RSN||'",
+--                            "pgst": "'||L_P_GST||'",
+--                            "gen2": "'||L_GEN2||'",
+--                            "gen7": "'||L_GEN7||'",
+--                            "gen8": "'||L_GEN8||'",
+--                            "gen10": "'||L_GEN10||'",
+--                            "gen11": "'||L_GEN11||'",
+--                            "gen12": "'||L_GEN12||'",
+--                            "gen13": "'||L_GEN13||'",';
+                
+                JSON_DATA := 
+                '{"invoices": [{"invTyp": "'||L_INVTYP||'","splyTy": "'||L_SPLYTY||'","dst": "'||L_DST||'","refnum": "'||L_REFNUM||'","ctpy": "'||L_CTPY||'","ctin": "'||L_CTIN||'","cname": "'||L_CNAME||'","ntNum": "'||L_NTNUM||'","ntDt": "'||L_NTDT||'","inum": "'||L_INUM||'","idt": "'||L_IDT||'","pos": "'||L_POS||'","rchrg": "'||L_RCHRG||'","fy": "'||L_FY||'","dty": "'||L_DTY||'","rsn": "'||L_RSN||'","pgst": "'||L_P_GST||'","gen2": "'||L_GEN2||'","gen7": "'||L_GEN7||'","gen8": "'||L_GEN8||'","gen10": "'||L_GEN10||'","gen11": "'||L_GEN11||'","gen12": "'||L_GEN12||'","gen13": "'||L_GEN13||'",';
+                /* GSTR1 lines loop starts */
+                 
+                L_TOT_SVAL  := 0;
+                L_TOT_TXVAL := 0;
+                L_TOT_VAL   := 0;
+                L_TOT_IAMT  := 0;
+                L_TOT_CAMT  := 0;
+                L_TOT_SAMT  := 0;
+                
+                BEGIN
+                    
+                    L_LINE_CNT := 0;
+                    
+--                    JSON_DATA :=
+--                        JSON_DATA||'
+--                        "itemDetails": [';
+                    
+                    JSON_DATA :=
+                        JSON_DATA||'"itemDetails": [';
+                        
+                    BEGIN
+                    FOR j IN c_gstr1_lines (L_TRX_ID, L_TRX_NUM)
+                    LOOP
+                    
+                        L_RPT_SERIAL    := L_RPT_SERIAL + 1;
+                    
+                        L_TOT_SVAL  := L_SVAL + j.sval;
+                        L_TOT_VAL   := L_TOT_VAL + j.txval + NVL(j.iamt,0) + NVL(j.camt,0) + NVL(j.samt,0);
+                        L_TOT_TXVAL := L_TOT_TXVAL + j.txval;
+                        L_TOT_IAMT  := L_TOT_IAMT + j.iamt;
+                        L_TOT_CAMT  := L_TOT_CAMT + j.camt;
+                        L_TOT_SAMT  := L_TOT_SAMT + j.samt;
+                    
+                        L_LINE_CNT := L_LINE_CNT + 1;
+                                         
+                        L_SVAL      := j.sval;
+                        L_TY        := j.ty;
+                        L_HSN_SC    := j.hsn_sc;
+                        L_DESCRIPTION       := j.description;
+                        L_UQC       := j.uqc;
+                        L_QTY       := j.qty;
+                        L_TXVAL     := j.txval;
+                        L_IRT       := j.irt;
+                        L_IAMT      := j.iamt;
+                        L_CRT       := j.crt;
+                        L_CAMT      := j.camt;
+                        L_SRT       := j.srt;
+                        L_SAMT      := j.samt;
+                        L_CSRT      := j.csrt;
+                        L_CSAMT     := j.csamt;
+                        L_TXP       := j.txp;
+                        L_DISC      := j.disc;
+                        L_ADVAL     := j.adval;
+                        L_RT        := j.rt;
+                        
+                        BEGIN
+                            INSERT INTO XXIRIS_GSTR1_RPT_LINES_T
+                            (               
+                                REQUEST_ID,
+                                LINE_NUM,
+                                HEADER_LOG_ID,
+                                ILFS_GSTIN,
+                                PROJECT_CODE,
+                                PROJECT_NAME,
+                                INVOICE_NUMBER,
+                                INVOICE_DATE,
+                                CUSTOMER_GSTIN,
+                                CUSTOMER_NAME,
+                                TAXABLE_VALUE,
+                                IGST_RATE,
+                                IGST_AMT,
+                                CGST_RATE,
+                                CGST_AMT,
+                                SGST_RATE,
+                                SGST_AMT,
+                                CSGST_RATE,
+                                CSGST_AMT,
+                                INVOICE_VALUE,
+                                HSN_CODE, 
+                                EWAY_NO,
+                                TRANSACTION_TYPE
+                            )
+                            VALUES
+                            (
+                                G_REQUEST_ID,
+                                L_RPT_SERIAL,
+                                L_LOG_PK_ID,
+                                L_GSTIN,
+                                L_PROJECT_CODE,
+                                L_PROJECT_NAME,
+                                L_TRX_NUM,
+                                TO_DATE(L_TRX_DATE, 'DD-MM-YYYY'),
+                                L_CTIN,
+                                L_CNAME,
+                                L_TXVAL,
+                                L_IRT,
+                                L_IAMT,
+                                L_CRT,
+                                L_CAMT,
+                                L_SRT,
+                                L_SAMT,
+                                0,
+                                0,
+                                (L_TXVAL + NVL(L_IAMT,0) + NVL(L_CAMT,0) + NVL(L_SAMT,0)),
+                                L_HSN_SC,
+                                NULL,
+                                L_RPT_TXN_TYPE
+                            );
+                        EXCEPTION WHEN OTHERS THEN
+                            FND_FILE.PUT_LINE(FND_FILE.LOG,'Error while inserting Lines into XXIRIS_GSTR1_RPT_LINES_T data for Log ID - '||L_LOG_PK_ID||' and Line Number - '||L_RPT_SERIAL);
+                            DBMS_OUTPUT.PUT_LINE('Error while inserting Lines into XXIRIS_GSTR1_RPT_LINES_T data for Log ID - '||L_LOG_PK_ID||' and Line Number - '||L_RPT_SERIAL);
+                        END;
+                        
+--                        JSON_DATA :=
+--                            JSON_DATA||
+--                                    '{
+--                                        "num": '||L_LINE_CNT||',
+--                                        "sval": '||L_SVAL||',
+--                                        "ty": "'||L_TY||'",
+--                                        "hsnSc": "'||L_HSN_SC||'",
+--                                        "desc": "'||L_DESCRIPTION||'",
+--                                        "uqc": "'||L_UQC||'",
+--                                        "qty": '||L_QTY||',
+--                                        "txval": '||L_TXVAL||',
+--                                        "irt": '||L_IRT||',
+--                                        "iamt": "'||L_IAMT||'",
+--                                        "crt": "'||L_CRT||'",
+--                                        "camt": "'||L_CAMT||'",
+--                                        "srt": "'||L_SRT||'",
+--                                        "samt": "'||L_SAMT||'",
+--                                        "csrt": "'||L_CRT||'",
+--                                        "csamt": "'||L_CSAMT||'",
+--                                        "txp": "'||L_TXP||'",
+--                                        "disc": '||L_DISC||',
+--                                        "adval": "'||L_ADVAL||'",
+--                                        "rt": '||L_RT||'
+--                                    },';
+                        
+                        JSON_DATA :=
+                            JSON_DATA||'{"num": '||L_LINE_CNT||',"sval": '||L_SVAL||',"ty": "'||L_TY||'","hsnSc": "'||L_HSN_SC||'","desc": "'||L_DESCRIPTION||'","uqc": "'||L_UQC||'","qty": '||L_QTY||',"txval": '||L_TXVAL||',"irt": "'||L_IRT||'","iamt": "'||L_IAMT||'","crt": "'||L_CRT||'","camt": "'||L_CAMT||'","srt": "'||L_SRT||'","samt": "'||L_SAMT||'","csrt": "'||L_CSRT||'","csamt": "'||L_CSAMT||'","txp": "'||L_TXP||'","disc": '||L_DISC||',"adval": "'||L_ADVAL||'","rt": '||L_RT||'},';
+                        
+                    END LOOP;
+                    EXCEPTION WHEN OTHERS THEN
+                            FND_FILE.PUT_LINE(FND_FILE.LOG,'Error while inserting Lines into XXIRIS_GSTR1_RPT_LINES_T data');
+                            DBMS_OUTPUT.PUT_LINE('Error while inserting Lines into XXIRIS_GSTR1_RPT_LINES_T data');
+                    END;
+                    
+                    
+                    JSON_DATA   := REPLACE(JSON_DATA, '"",','null,');
+                    
+                    JSON_DATA := rtrim(JSON_DATA, ',')|| '],';
+            
+                EXCEPTION WHEN OTHERS THEN
+                    FND_FILE.PUT_LINE(FND_FILE.LOG,'Error while extracting GSTR1 LINE data from Oracle for Document Number - '||L_INUM);
+                    DBMS_OUTPUT.PUT_LINE('Error while extracting GSTR1 LINE data from Oracle for Document Number - '||L_INUM);
+                END;
+                /* GSTR1 lines loop ends */
+                
+--                L_TOT_VAL   := NVL(L_TOT_TXVAL,0) + NVL(L_TOT_IAMT,0) + NVL(L_TOT_CAMT,0) + NVL(L_TOT_SAMT,0);
+                
+                JSON_DATA := 
+                        JSON_DATA ||'"val": '||L_TOT_VAL||',"gstin": "'||L_GSTIN||'","fp": "'||L_FP||'","ft": "GSTR1"}]}';
+                
+                
+                COMMIT;
+                
+                BEGIN
+                    CALL_IRIS_API(L_LOG_PK_ID, L_GSTIN, JSON_DATA);
+                EXCEPTION WHEN OTHERS THEN
+                    FND_FILE.PUT_LINE(FND_FILE.LOG,'Error while IRIS API Call Prc for Request ID - '||G_REQUEST_ID||' with Error - '||SQLERRM);
+                    DBMS_OUTPUT.PUT_LINE('Error while IRIS API Call Prc for Request ID - '||G_REQUEST_ID||' with Error - '||SQLERRM);
+                END;
+                
+                
+            END LOOP;
+            
+        EXCEPTION WHEN OTHERS THEN
+            FND_FILE.PUT_LINE(FND_FILE.LOG,'Error while extracting GSTR1 data from Oracle for Request ID - '||G_REQUEST_ID||' with Error - '||SQLERRM);
+            DBMS_OUTPUT.PUT_LINE('Error while extracting GSTR1 data from Oracle for Request ID - '||G_REQUEST_ID||' with Error - '||SQLERRM);
+        END;
+        /* GSTR1 headers loop ends */
+        DBMS_OUTPUT.PUT_LINE('Number of Lines - '||L_LINE_CNT);
+        COMMIT;
+
+    END XXIRIS_GSTR1_API_PRC;
+    
+    PROCEDURE CALL_IRIS_API (
+        P_PK1_ID        NUMBER,
+        P_USERGSTIN     VARCHAR2,
+        P_JSON_REQ      CLOB
+    ) IS
+	
+        req utl_http.req;
+        res utl_http.resp;
+        url varchar2(4000) := 'http://172.16.16.5:6110/iris/ilfs/gstr1/wrapper/api/';
+        name varchar2(4000);
+        v_length        BINARY_INTEGER;
+        v_offset        PLS_INTEGER := 1;
+        V_BUFFER        VARCHAR2(32000); 
+        V_TAN_BUFFER    PLS_INTEGER := 2000;
+        CONTENT         varchar2(4000);
+                            
+        V_RES   CLOB;
+        
+BEGIN
+        
+        CONTENT := '{"userGstIn": "'|| P_USERGSTIN|| '","payload": '|| P_JSON_REQ||'}';
+        
+        BEGIN
+            UPDATE XX_IRIS_GSTR1_LOG_T SET REQUEST_PAYLOAD = content WHERE LOG_ID = P_PK1_ID;
+        EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error while updating GSTR1 Request payload in Log table for Log ID - '||P_PK1_ID);
+        END;
+
+        req := utl_http.begin_request(url, 'POST',' HTTP/1.1');
+        utl_http.set_header(req, 'user-agent', 'mozilla/4.0'); 
+        utl_http.set_header(req, 'content-type', 'application/json'); 
+        utl_http.set_header(req, 'Content-Length', length(content));
+
+        utl_http.write_text(req, content);
+        
+        WHILE ( v_offset < v_length ) LOOP
+            dbms_lob.read(content, v_tan_buffer, v_offset, v_buffer);
+            utl_http.write_text(req, v_buffer);
+            v_offset := v_offset + v_tan_buffer;
+        END LOOP;
+        
+        dbms_lob.createtemporary(v_res, FALSE);
+
+        res := utl_http.get_response(req);
+
+        BEGIN
+            LOOP
+                utl_http.read_text(res, V_BUFFER, 32000);
+                dbms_lob.writeappend(V_RES, length(V_BUFFER), V_BUFFER);
+--                dbms_output.put_line(V_BUFFER);
+            END LOOP;
+            
+            utl_http.end_response(res);
+            
+        EXCEPTION WHEN utl_http.end_of_body THEN
+            utl_http.end_response(res);
+        END;
+        
+        BEGIN
+            UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_PAYLOAD = V_RES WHERE LOG_ID = P_PK1_ID;
+            
+            SAVE_IRIS_RESPONSE_STATUS(P_PK1_ID);
+            
+        EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error while updating GSTR1 Response payload in Log table for Log ID - '||P_PK1_ID);
+        END;
+        
+    END CALL_IRIS_API;
+    
+    
+    PROCEDURE SAVE_IRIS_RESPONSE_STATUS
+    (   
+        P_PK1_ID        NUMBER
+    )
+    AS
+    
+    L_RESPONSE      CLOB;
+    L_STATUS        VARCHAR2(20);
+    L_RESP_MSG      VARCHAR2(4000);
+    L_TIMESTAMP     VARCHAR2(150);
+    
+    BEGIN
+    
+        BEGIN
+            SELECT RESPONSE_PAYLOAD
+            INTO L_RESPONSE
+            FROM XX_IRIS_GSTR1_LOG_T
+            WHERE LOG_ID = P_PK1_ID;
+        EXCEPTION WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE('Error while fetching Response Payload of GSTR1 for Log ID - '||P_PK1_ID);
+        END;
+        
+        L_STATUS := REGEXP_SUBSTR(L_RESPONSE, '"status"\s*:\s*"([^"]+)"', 1, 1, NULL, 1);
+        L_RESP_MSG := REGEXP_SUBSTR(L_RESPONSE, '"message"\s*:\s*"([^"]+)"', 1, 1, NULL, 1);
+        L_TIMESTAMP := REGEXP_SUBSTR(L_RESPONSE, '"timestamp"\s*:\s*"([^"]+)"', 1, 1, NULL, 1);
+        
+        IF upper(L_STATUS) = 'SUCCESS' 
+        THEN 
+            L_RESP_MSG := REGEXP_SUBSTR(L_RESPONSE, '"message"\s*:\s*"([^"]+)"', 1, 1, NULL, 1);
+            L_TIMESTAMP := REGEXP_SUBSTR(L_RESPONSE, '"timestamp"\s*:\s*"([^"]+)"', 1, 1, NULL, 1);
+        ELSIF REGEXP_SUBSTR(L_RESPONSE, '"status"\s*:\s*([^"]+),', 1, 1, NULL, 1) = '403'
+        THEN
+            L_STATUS := 'FAILURE';
+            L_RESP_MSG := REGEXP_SUBSTR(L_RESPONSE, '"message"\s*:\s*"([^"]+)"', 1, 1, NULL, 1);
+            L_TIMESTAMP := REGEXP_SUBSTR(L_RESPONSE, '"timestamp"\s*:\s*"([^"]+)"', 1, 1, NULL, 1);
+        ELSIF REGEXP_SUBSTR(L_RESPONSE, '"status"\s*:\s*([^"]+)}', 1, 1, NULL, 1) = '400'
+        THEN
+            L_STATUS := 'FAILURE';
+            L_RESP_MSG := REGEXP_SUBSTR(L_RESPONSE, '"message"\s*:\s*"([^"]+)"', 1, 1, NULL, 1);
+            L_TIMESTAMP := REGEXP_SUBSTR(L_RESPONSE, '"timestamp"\s*:\s*"([^"]+)"', 1, 1, NULL, 1);
+        END IF;
+        
+        UPDATE XX_IRIS_GSTR1_LOG_T SET RESPONSE_STATUS = L_STATUS, RESPONSE_MESSAGE = L_RESP_MSG, UPLOAD_TIME = L_TIMESTAMP WHERE LOG_ID = P_PK1_ID;
+        
+    
+    END SAVE_IRIS_RESPONSE_STATUS;
+
+END XXIRIS_UTILS_PKG1;

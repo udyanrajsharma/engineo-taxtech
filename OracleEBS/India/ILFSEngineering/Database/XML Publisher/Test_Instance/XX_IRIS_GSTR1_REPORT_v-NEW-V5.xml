@@ -1,0 +1,176 @@
+<?xml version = "1.0" encoding="UTF-8"?>
+
+<dataTemplate name="XX_IRIS_GSTR1_REPORT" description="ILFS GSTR1 Template" version="1.0">
+	<parameters>
+		<parameter name="P_REQUEST_ID" dataType="number"/>
+	</parameters>
+
+	<properties>
+	</properties>
+	
+	<dataQuery>
+		<sqlStatement name="Q_HEADERS">
+		<![CDATA[
+		SELECT DISTINCT
+            log_t.REQUEST_ID,
+			log_t.RETURN_PERIOD,
+			(SELECT 
+                COUNT(*)
+            FROM 
+                XX_IRIS_GSTR1_LOG_T log_t2 
+			WHERE 1=1
+                AND log_t.REQUEST_ID = log_t2.REQUEST_ID
+            ) No_of_Records_Processed,
+			(SELECT 
+                COUNT(*) 
+			FROM 
+                XX_IRIS_GSTR1_LOG_T log_t2 
+			WHERE 1=1
+                AND log_t.REQUEST_ID = log_t2.REQUEST_ID
+                AND log_t2.RESPONSE_STATUS = 'SUCCESS'
+            AND REQUEST_ID = :P_REQUEST_ID) No_of_Successful_Records,
+			(SELECT COUNT(*) 
+			FROM
+                XX_IRIS_GSTR1_LOG_T log_t2 
+			WHERE 1=1
+                AND log_t.REQUEST_ID = log_t2.REQUEST_ID
+                AND (log_t2.RESPONSE_STATUS = 'FAILURE' OR log_t2.RESPONSE_STATUS IS NULL)
+            AND REQUEST_ID = :P_REQUEST_ID) No_of_Failed_Records
+		FROM 
+			XX_IRIS_GSTR1_LOG_T log_t
+		WHERE 
+			log_t.REQUEST_ID = :P_REQUEST_ID
+		]]>
+		</sqlStatement>
+		<sqlStatement name="Q_LINES">
+		<![CDATA[
+        SELECT 
+            row_number() over (partition by log_t.REQUEST_ID order by rpt_t.HEADER_LOG_ID ASC) S_NO,
+			rpt_t.INVOICE_NUMBER INVOICE_NUMBER, 
+			rpt_t.INVOICE_DATE,
+			rpt_t.ILFS_GSTIN,
+			rpt_t.CUSTOMER_GSTIN,
+			rpt_t.CUSTOMER_NAME,
+			SUM(rpt_t.TAXABLE_VALUE) TAXABLE_VALUE,
+			SUM(rpt_t.INVOICE_VALUE) INVOICE_VALUE,
+			rpt_t.IGST_RATE IGST_RATE,
+			SUM(rpt_t.IGST_AMT) IGST_AMOUNT,
+			rpt_t.CGST_RATE CGST_RATE,
+			SUM(rpt_t.CGST_AMT) CGST_AMOUNT,
+			rpt_t.SGST_RATE SGST_RATE,
+			SUM(rpt_t.SGST_AMT) SGST_AMOUNT,
+			(SELECT 
+                flv.LOOKUP_CODE
+             FROM 
+                FND_LOOKUP_VALUES flv
+             WHERE 1=1
+                AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+                AND flv.LOOKUP_CODE = SUBSTR(rpt_t.CUSTOMER_GSTIN,0,2)
+            ) CUSTOMER_STATE,
+			rpt_t.HSN_CODE HSN,
+			(SELECT jrc.REPORTING_CODE_DESCRIPTION
+				FROM JAI_REPORTING_CODES jrc
+				WHERE 1=1 
+				AND jrc.REPORTING_CODE = rpt_t.HSN_CODE
+                AND jrc.REPORTING_TYPE_ID = 10000
+				AND TRUNC(NVL(jrc.EFFECTIVE_TO, SYSDATE)) >= TRUNC(SYSDATE)
+            ) HSN_Description,
+			(SELECT 
+                flv.DESCRIPTION
+             FROM 
+                FND_LOOKUP_VALUES flv
+             WHERE 1=1
+                AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+                AND flv.LOOKUP_CODE = SUBSTR(RPT_T.ILFS_GSTIN,0,2)
+            ) Shipment_from,
+			(SELECT 
+                flv.DESCRIPTION
+             FROM 
+                FND_LOOKUP_VALUES flv
+             WHERE 1=1
+                AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+                AND flv.LOOKUP_CODE = SUBSTR(rpt_t.CUSTOMER_GSTIN,0,2)
+            ) Shipment_to,
+			'' EWAY_Bill_No,
+			rpt_t.TRANSACTION_TYPE,
+			rpt_t.PROJECT_CODE,
+			rpt_t.PROJECT_NAME,
+			(select
+				flv.DESCRIPTION
+				FROM
+				FND_LOOKUP_VALUES flv
+				where 1=1
+				and flv.lookup_type = 'GST STATE LOOKUP'
+				AND FLV.LOOKUP_CODE = SUBSTR(RPT_T.ILFS_GSTIN,0,2))
+			PROJECT_STATE,
+			log_t.RESPONSE_STATUS STATUS,
+			log_t.REQUEST_ID REQUEST_ID,
+			log_t.RESPONSE_MESSAGE REMARKS
+		FROM
+			XX_IRIS_GSTR1_LOG_T log_t,
+			XXIRIS_GSTR1_RPT_LINES_T rpt_t
+		WHERE 1=1
+			AND log_t.LOG_ID = rpt_t.HEADER_LOG_ID
+			AND log_t.REQUEST_ID = :P_REQUEST_ID
+        GROUP BY
+            rpt_t.HEADER_LOG_ID,
+			rpt_t.INVOICE_NUMBER, 
+			rpt_t.INVOICE_DATE,
+			rpt_t.ILFS_GSTIN,
+			rpt_t.CUSTOMER_GSTIN,
+			rpt_t.CUSTOMER_NAME,
+			rpt_t.IGST_RATE,
+			rpt_t.CGST_RATE,
+			rpt_t.SGST_RATE,
+			rpt_t.HSN_CODE,
+			RPT_T.ILFS_GSTIN,
+			rpt_t.TRANSACTION_TYPE,
+			rpt_t.PROJECT_CODE,
+			rpt_t.PROJECT_NAME,
+			RPT_T.ILFS_GSTIN,
+			log_t.RESPONSE_STATUS,
+			log_t.REQUEST_ID,
+			log_t.RESPONSE_MESSAGE
+        ORDER BY 
+            rpt_t.HEADER_LOG_ID
+		]]>
+		</sqlStatement>
+		</dataQuery>
+	<datastructure>
+		<group name="G_HEADERS" source="Q_HEADERS">
+			<element name="REQUEST_ID" value="REQUEST_ID"/>
+			<element name="RETURN_PERIOD" value="RETURN_PERIOD"/>
+			<element name="No_of_Records_Processed" value="No_of_Records_Processed"/>
+			<element name="No_of_Successful_Records" value="No_of_Successful_Records"/>
+			<element name="No_of_Failed_Records" value="No_of_Failed_Records"/>
+		</group>
+		<group name="G_LINES" source="Q_LINES">		
+			<element name="S_NO" value="S_NO"/>
+			<element name="INVOICE_NUMBER" value="INVOICE_NUMBER"/>
+			<element name="INVOICE_DATE" value="INVOICE_DATE"/>
+			<element name="ILFS_GSTIN" value="ILFS_GSTIN"/>
+			<element name="CUSTOMER_GSTIN" value="CUSTOMER_GSTIN"/>
+			<element name="CUSTOMER_NAME" value="CUSTOMER_NAME"/>
+			<element name="CUSTOMER_STATE" value="CUSTOMER_STATE"/>
+			<element name="TAXABLE_VALUE" value="TAXABLE_VALUE"/>
+			<element name="INVOICE_VALUE" value="INVOICE_VALUE"/>
+			<element name="IGST_RATE" value="IGST_RATE"/>
+			<element name="IGST_AMOUNT" value="IGST_AMOUNT"/>
+			<element name="CGST_RATE" value="CGST_RATE"/>
+			<element name="CGST_AMOUNT" value="CGST_AMOUNT"/>
+			<element name="SGST_RATE" value="SGST_RATE"/>
+			<element name="SGST_AMOUNT" value="SGST_AMOUNT"/>
+			<element name="HSN" value="HSN"/>
+			<element name="HSN_Description" value="HSN_Description"/>
+			<element name="Shipment_from" value="Shipment_from"/>
+			<element name="Shipment_to" value="Shipment_to"/>
+			<element name="EWAY_Bill_No" value="EWAY_Bill_No"/>
+			<element name="TRANSACTION_TYPE" value="TRANSACTION_TYPE"/>
+			<element name="PROJECT_NAME" value="PROJECT_NAME"/>
+			<element name="PROJECT_CODE" value="PROJECT_CODE"/>
+			<element name="PROJECT_STATE" value="PROJECT_STATE"/>
+			<element name="STATUS" value="STATUS"/>
+			<element name="REMARKS" value="REMARKS"/>
+		</group>
+	</datastructure>
+</dataTemplate>
