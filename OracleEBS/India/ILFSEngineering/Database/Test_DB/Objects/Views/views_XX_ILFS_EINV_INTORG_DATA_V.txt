@@ -1,0 +1,442 @@
+SELECT DISTINCT
+    'INTERORG' ilfsTxnMethod,
+    CASE 
+        WHEN SUBSTR(seller_dtls.REGISTRATION_NUMBER,0,2) = SUBSTR(buyer_dtls.REGISTRATION_NUMBER,0,2) AND mtt.ATTRIBUTE8 IS NULL THEN 'NO_ACTION'
+        WHEN SUBSTR(seller_dtls.REGISTRATION_NUMBER,0,2) = SUBSTR(buyer_dtls.REGISTRATION_NUMBER,0,2) AND mtt.ATTRIBUTE8 IS NOT NULL THEN 'EWB_ONLY'
+        WHEN SUBSTR(seller_dtls.REGISTRATION_NUMBER,0,2) <> SUBSTR(buyer_dtls.REGISTRATION_NUMBER,0,2) AND mtt.ATTRIBUTE8 IS NULL THEN 'EINV_ONLY'
+        WHEN SUBSTR(seller_dtls.REGISTRATION_NUMBER,0,2) <> SUBSTR(buyer_dtls.REGISTRATION_NUMBER,0,2) AND mtt.ATTRIBUTE8 IS NOT NULL THEN 'EINV_EWB'
+    END apiCatg,
+    CASE
+		WHEN seller_dtls.REGISTRATION_NUMBER = '10AABCM3722F1Z7' THEN '10AAACI9260R002'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '29AABCM3722F1ZO' THEN '29AAACI9260R000'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '29AABCM3722F1Z0' THEN '29AAACI9260R000'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '09AABCM3722F1ZQ' THEN '09AAACI9260R002'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '36AABCM3722F1ZT' THEN '36AAACI9260R002'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '37AABCM3722F1ZR' THEN '37AAACI9260R002'
+        WHEN seller_dtls.REGISTRATION_NUMBER = '24AABCM3722F1ZY' THEN '24AAACI9260R002'
+        WHEN seller_dtls.REGISTRATION_NUMBER = '27AABCM3722F1ZS' THEN '27AAACI9260R002'
+		ELSE seller_dtls.REGISTRATION_NUMBER
+	END userGstin,
+	
+--    seller_dtls.REGISTRATION_NUMBER userGstin,
+    NULL pobCode,
+    'O' supplyType, -- O = Outward, for E-invoicing, I = Inward, Only for EWB purpose
+    CASE 
+        WHEN SUBSTR(seller_dtls.REGISTRATION_NUMBER,0,2) <> SUBSTR(buyer_dtls.REGISTRATION_NUMBER,0,2) THEN 'INTER'
+        WHEN SUBSTR(seller_dtls.REGISTRATION_NUMBER,0,2) = SUBSTR(buyer_dtls.REGISTRATION_NUMBER,0,2) THEN 'INTRA'
+        ELSE 'INTER'
+    END ntr,
+    'RI' docType,
+    'INV' ewbDocType,
+    'B2B' catg,
+    'O' dst,
+    'REG' trnTyp,
+    NVL(rsh.SHIPMENT_NUM, jtdf.TAX_INVOICE_NUM) no,
+    TO_CHAR(rsh.SHIPPED_DATE,'DD-MM-YYYY') dt,
+    TO_CHAR(rsh.SHIPPED_DATE,'DD/MM/YYYY') docDate,
+    --rsh.RECEIPT_NUM refinum, -- Not required for EWB
+    NULL refinum,
+--    TO_CHAR(rcv.TRANSACTION_DATE,'DD-MM-YYYY') refidt,
+    NULL refidt,
+    CASE WHEN jr.REGIME_NAME = 'RCM' THEN 'Y'
+        ELSE 'N'
+    END rchrg,
+    (SELECT 
+        flv.LOOKUP_CODE
+     FROM 
+        FND_LOOKUP_VALUES flv
+     WHERE 1=1
+        AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+        AND flv.LOOKUP_CODE = SUBSTR(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) 
+    ) pos,
+    NULL diffprcnt,
+    NULL etin,
+    seller_dtls.PARTY_NAME strdNm,
+    seller_dtls.PARTY_NAME slglNm,
+	CASE
+		WHEN seller_dtls.REGISTRATION_NUMBER = '10AABCM3722F1Z7' THEN '10AAACI9260R002'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '29AABCM3722F1ZO' THEN '29AAACI9260R000'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '29AABCM3722F1Z0' THEN '29AAACI9260R000'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '09AABCM3722F1ZQ' THEN '09AAACI9260R002'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '36AABCM3722F1ZT' THEN '36AAACI9260R002'
+		WHEN seller_dtls.REGISTRATION_NUMBER = '37AABCM3722F1ZR' THEN '37AAACI9260R002'
+        WHEN seller_dtls.REGISTRATION_NUMBER = '24AABCM3722F1ZY' THEN '24AAACI9260R002'
+        WHEN seller_dtls.REGISTRATION_NUMBER = '27AABCM3722F1ZS' THEN '27AAACI9260R002'
+		ELSE seller_dtls.REGISTRATION_NUMBER
+	END sgstin,
+	
+--    seller_dtls.REGISTRATION_NUMBER sgstin,
+    seller_dtls.ADDRESS_LINE_1 sbnm,
+    seller_dtls.ADDRESS_LINE_2 sflno,
+    seller_dtls.CITY sloc,
+    seller_dtls.CITY sdst,
+    (SELECT 
+        flv.LOOKUP_CODE
+     FROM 
+        FND_LOOKUP_VALUES flv
+     WHERE 1=1
+        AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+        AND flv.LOOKUP_CODE = SUBSTR(seller_dtls.REGISTRATION_NUMBER ,0,2) 
+    ) sstcd,
+    REGEXP_REPLACE(seller_dtls.POSTAL_CODE, '[^0-9]', '') spin,
+    buyer_dtls.REGISTRATION_NUMBER bgstin,
+    buyer_dtls.PARTY_NAME btrdNm,
+    buyer_dtls.PARTY_NAME blglNm,
+    buyer_dtls.ADDRESS_LINE_1 bbnm,
+    buyer_dtls.ADDRESS_LINE_2 bflno,
+    buyer_dtls.CITY bloc,
+    buyer_dtls.CITY bdst,
+    SUBSTR(buyer_dtls.REGISTRATION_NUMBER,0,2) bstcd,
+    REGEXP_REPLACE(buyer_dtls.POSTAL_CODE, '[^0-9]', '') bpin,
+    NULL bph,
+    NULL bem,
+    NULL dgstin,
+    NULL dtrdNm,
+    NULL dlglNm,
+    NULL dbnm,
+    NULL dflno,
+    NULL dloc,
+    NULL ddst,
+    NULL dstcd,
+    NULL dpin,
+    NULL dph,
+    NULL dem,
+    NULL togstin,
+    NULL totrdNm,
+    NULL tolglNm,
+    NULL tobnm,
+    NULL toflno,
+    NULL toloc,
+    NULL todst,
+    NULL tostcd,
+    NULL topin,
+    NULL toph,
+    NULL toem,
+    NULL sbnum,
+    NULL sbdt,
+    NULL port,
+    NULL cntcd,
+    NULL forCur,
+    NULL invForCur,
+    0 totinvval, -- Being calculated as a sum of the line amounts during API Payload preparation
+    0 totdisc,
+    0 totfrt,
+    0 totins,
+    0 totpkg,
+    0 totothchrg,
+    0 tottxval, -- Being calculated as a sum of the line amounts during API Payload preparation
+    0 totiamt,  -- Being calculated as a sum of the line amounts during API Payload preparation
+    0 totcamt,  -- Being calculated as a sum of the line amounts during API Payload preparation
+    0 totsamt,  -- Being calculated as a sum of the line amounts during API Payload preparation
+    0 totcsamt,  -- Being calculated as a sum of the line amounts during API Payload preparation
+    0 totstcsamt,    -- Being calculated as a sum of the line amounts during API Payload preparation
+    0 rndOffAmt,     -- Being calculated as a sum of the line amounts during API Payload preparation
+    rsl.LINE_NUM num,
+    NULL prdNm,
+    rsl.ITEM_DESCRIPTION prdDesc,
+    (SELECT NVL(jrc.REPORTING_CODE,'NULL') 
+    FROM 
+        JAI_TAX_DET_FACTORS jtdf,
+        JAI_REPORTING_CODES jrc
+     WHERE 1=1
+        AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+        AND jtdf.HSN_CODE_ID = jrc.REPORTING_CODE_ID
+    ) hsnCd,
+    NULL barcde,
+    abs(rsl.QUANTITY_RECEIVED) qty,
+    NULL freeQty,
+    CASE
+		WHEN rsl.UNIT_OF_MEASURE = 'KG' THEN 'KGS'
+		WHEN rsl.UNIT_OF_MEASURE = 'KM' THEN 'KME'
+		WHEN rsl.UNIT_OF_MEASURE = 'NUM' THEN 'NOS'
+		WHEN rsl.UNIT_OF_MEASURE = 'MT' THEN 'MTR'
+	ELSE rsl.UNIT_OF_MEASURE
+	END unit,
+	
+    --rsl.UNIT_OF_MEASURE unit,
+    jtl.UNIT_PRICE unitPrice,
+    abs(NVL(jtl.ROUNDED_TAXABLE_AMT_FUN_CURR,0)) sval,
+    0 disc,
+    0 othchrg,
+    abs(NVL(jtl.ROUNDED_TAXABLE_AMT_FUN_CURR,0)) txval,
+    CASE 
+        WHEN substr(seller_dtls.REGISTRATION_NUMBER,0,2) = substr(buyer_dtls.REGISTRATION_NUMBER,0,2) THEN (jtl.ACTUAL_TAX_RATE * 2)
+        ELSE jtl.ACTUAL_TAX_RATE
+    END rt, -- Blank as it is automatically derived by IRIS
+    CASE 
+        WHEN substr(seller_dtls.REGISTRATION_NUMBER,0,2) <> substr(buyer_dtls.REGISTRATION_NUMBER,0,2) THEN jtl.ACTUAL_TAX_RATE
+        ELSE NULL
+    END irt,
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE '%IGST%'
+        AND jtl2.TRX_TYPE = 'DELIVER'
+    )iamt,
+    CASE 
+        WHEN substr(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) = substr(jtl.THIRD_PARTY_PRIMARY_REG_NUM,0,2) THEN jtl.ACTUAL_TAX_RATE
+        ELSE NULL
+    END crt,
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE '%CGST%'
+        AND jtl2.TRX_TYPE = 'DELIVER'
+    ) camt,
+    CASE 
+        WHEN substr(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) = substr(jtl.THIRD_PARTY_PRIMARY_REG_NUM,0,2) THEN jtl.ACTUAL_TAX_RATE
+        ELSE NULL
+    END srt,
+    (SELECT 
+        SUM(ABS(jtl2.UNROUND_TAX_AMT_FUN_CURR))
+    FROM 
+        JAI_TAX_LINES jtl2,
+        JAI_TAX_RATES jtr2,
+        JAI_TAX_TYPES jtt
+    WHERE 1=1
+        AND jtl.TRX_LINE_ID = jtl2.TRX_LINE_ID
+        AND jtl2.TAX_RATE_ID = jtr2.TAX_RATE_ID
+        AND jtr2.TAX_TYPE_ID = jtt.TAX_TYPE_ID
+        AND jtt.TAX_TYPE_CODE LIKE '%SGST%'
+        AND jtl2.TRX_TYPE = 'DELIVER'
+    ) samt,
+    NULL csrt,
+    NULL csamt,
+    NULL stcsrt,
+    NULL stcsamt,
+    NULL cesNonAdval,
+    NULL stCesNonAdvl,
+    NULL itmVal, -- Being calculated as a sum of the line amounts during API Payload preparation
+    'T' txp,
+    NULL bchnm,
+    NULL bchExpDt,
+    NULL bchWrDt,
+    'N' isServc,
+    NULL preTaxVal,
+    NULL ordLineRef,
+    NULL orgCntry,
+    NULL prdSlNo,
+    NULL attNm,
+    NULL attVal,
+    NULL itmgen1,
+    NULL itmgen2,
+    NULL itmgen3,
+    NULL itmgen4,
+    NULL itmgen5,
+    NULL itmgen6,
+    NULL itmgen7,
+    NULL itmgen8,
+    NULL itmgen9,
+    NULL itmgen10,
+    NULL invRmk,
+    NULL invStDt,
+    NULL invEndDt,
+    NULL oinum,
+    NULL oidt,
+    NULL othRefNo,
+    NULL raref,
+    NULL radt,
+    NULL tendref,
+    NULL contref,
+    NULL extref,
+    NULL projref,
+    NULL poref,
+    NULL porefdt,
+    NULL payNm,
+    NULL acctdet,
+    NULL pay_mode,
+    NULL ifsc,
+    NULL payTerm,
+    NULL payInstr,
+    NULL crTrn,
+    NULL dirDr,
+    NULL crDay,
+    NULL balAmt,
+    NULL paidAmt,
+    NULL payDueDt,
+    mtt.ATTRIBUTE4 transId,
+    'Job Work' subSplyTyp,
+    'Supply' subSplyTypewb,
+    NULL subSplyDes,
+    NULL kdrefinum,
+    NULL kdrefidt,
+    mtt.ATTRIBUTE5 transMode,
+    DECODE(UPPER(mtt.ATTRIBUTE6),'REGULAR','R','O') vehTyp,
+    mtt.ATTRIBUTE7 transDist,
+    NULL transName,
+    mtt.ATTRIBUTE8 transDocNo,
+    NVL2(mtt.ATTRIBUTE9,TO_CHAR(TO_DATE(mtt.ATTRIBUTE9,'YYYY/MM/DD hh24:mi:ss'), 'DD-MM-YYYY'),NULL) EWB_transDocDate,
+    NVL2(mtt.ATTRIBUTE9,TO_CHAR(TO_DATE(mtt.ATTRIBUTE9,'YYYY/MM/DD hh24:mi:ss'), 'DD-MM-YYYY'),NULL) transDocDate,
+    mtt.ATTRIBUTE10 vehNo,
+    NULL url,
+    NULL docs,
+    NULL infoDtls,
+    NULL omon,
+    NULL odty,
+    NULL oinvtyp,
+    NULL octin,
+    NULL sec7act,
+    NULL clmrfnd,
+    NULL rfndelg,
+    NULL boef,
+    NULL taxSch,
+    NULL userIRN,
+    NULL genIrn,
+    NULL fy,
+    NULL refnum,
+    NULL pdt,
+    NULL ivst,
+    NULL cptycde,
+    NULL gen1,
+    NULL gen2,
+    NULL gen3,
+    NULL gen4,
+    NULL gen5,
+    NULL gen6,
+    NULL gen7,
+    NULL gen8,
+    NULL gen9,
+    NULL gen10,
+    seller_dtls.LOCATION_CODE gen11,
+    SUBSTR(seller_dtls.PARTY_NAME,1,30) gen12,
+    (SELECT 
+        flv.DESCRIPTION
+     FROM 
+        FND_LOOKUP_VALUES flv
+     WHERE 1=1
+        AND flv.LOOKUP_TYPE = 'GST STATE LOOKUP'
+        AND flv.LOOKUP_CODE = SUBSTR(seller_dtls.REGISTRATION_NUMBER,0,2)
+    ) gen13,
+    buyer_dtls.BUYER_PAN gen14,
+    NULL gen15,
+    NULL gen16,
+    NULL gen17,
+    NULL gen18,
+    NULL gen19,
+    NULL gen20,
+    NULL gen21,
+    NULL gen22,
+    NULL gen23,
+    NULL gen24,
+    NULL gen25,
+    NULL gen26,
+    NULL gen27,
+    NULL gen28,
+    NULL gen29,
+    NULL gen30,
+    NULL genewb,
+    NULL pobewb,
+    NULL pobret,
+    NULL tcsrt,
+    NULL tcsamt,
+    NULL pretcs,
+    NULL expduty,
+    NULL templateName,
+    NULL pa,
+    NULL paymode,
+    NULL trid,
+    NULL rapd,
+    NULL mc,
+-- ,jtl.EVENT_CLASS_CODE
+    rsh.ORGANIZATION_ID seller_org_id,
+    rsh.SHIP_TO_ORG_ID buyer_org_id
+FROM 
+    RCV_SHIPMENT_HEADERS rsh,
+    RCV_SHIPMENT_LINES rsl,
+--    RCV_TRANSACTIONS rcv,
+    JAI_TAX_LINES_ALL jtl,
+    JAI_TAX_DET_FACTORS jtdf,
+    JAI_TAX_RATES jtr,
+    JAI_REGIMES jr,
+    MTL_MATERIAL_TRANSACTIONS mtt,
+    (SELECT 
+        hrl.ORGANIZATION_ID ORG_ID,
+        ood.ORGANIZATION_NAME PARTY_NAME,
+        hrl.LOCATION_CODE,
+        hrl.ADDRESS_LINE_1,
+        hrl.ADDRESS_LINE_2,
+        hrl.ADDRESS_LINE_3,
+        hrl.POSTAL_CODE,
+        hrl.LOC_INFORMATION15 CITY,
+        jpr.PARTY_ID,
+        jprl.REGISTRATION_NUMBER
+    FROM
+        ORG_ORGANIZATION_DEFINITIONS ood,
+        HR_ORGANIZATION_UNITS_V hrl,
+        JAI_PARTY_REGS jpr,
+        JAI_PARTY_REG_LINES jprl
+    WHERE 1=1
+        AND ood.ORGANIZATION_ID = hrl.ORGANIZATION_ID
+        AND ood.ORGANIZATION_ID = jpr.PARTY_ID
+        AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+    ) seller_dtls,
+    (SELECT 
+        hrl.INVENTORY_ORGANIZATION_ID ORG_ID,
+        hou.NAME PARTY_NAME,
+        hrl.ADDRESS_LINE_1,
+        hrl.ADDRESS_LINE_2,
+        hrl.ADDRESS_LINE_3,
+        hrl.POSTAL_CODE,
+        hrl.LOC_INFORMATION15 CITY,
+		SUBSTR(jprl.REGISTRATION_NUMBER, 3, 10) BUYER_PAN,
+        jprl.REGISTRATION_NUMBER
+    FROM
+        HR_LOCATIONS hrl,
+        JAI_PARTY_REGS jpr,
+        JAI_PARTY_REG_LINES jprl,
+        HR_ORGANIZATION_UNITS hou
+    WHERE 1=1
+        AND hrl.INVENTORY_ORGANIZATION_ID = jpr.PARTY_ID
+        AND jpr.PARTY_REG_ID = jprl.PARTY_REG_ID
+        AND hrl.INVENTORY_ORGANIZATION_ID = hou.ORGANIZATION_ID
+        AND jpr.PARTY_TYPE_CODE = 'IO' 
+        AND jprl.EFFECTIVE_TO IS NULL
+        AND jprl.REGIME_ID = '10000'
+    ) buyer_dtls
+WHERE 1=1
+--    AND mtt.TRANSACTION_DATE BETWEEN TO_DATE(:p_from_date,'DD-MON-YYYY') AND TO_DATE(:p_to_date,'DD-MON-YYYY')
+--    AND rsh.SHIPMENT_NUM = '369'
+    AND rsh.SHIPMENT_HEADER_ID = rsl.SHIPMENT_HEADER_ID
+--    AND rsl.SHIPMENT_LINE_ID = rcv.SHIPMENT_LINE_ID
+--    AND rcv.TRANSACTION_ID = mtt.RCV_TRANSACTION_ID
+    AND rsl.MMT_TRANSACTION_ID = mtt.TRANSACTION_ID
+    AND EXISTS (SELECT 1
+                FROM 
+                    MTL_TRANSACTION_TYPES mtltyp
+                WHERE 1=1
+                    AND mtltyp.TRANSACTION_TYPE_ID = mtt.TRANSACTION_TYPE_ID
+                    AND upper(mtltyp.TRANSACTION_TYPE_NAME) = 'INTRANSIT SHIPMENT'
+                )
+--    AND rcv.SOURCE_DOCUMENT_CODE = 'INVENTORY'
+--    AND rcv.TRANSACTION_TYPE = 'DELIVER'
+--    AND NOT EXISTS (
+--        SELECT rcv2.SHIPMENT_HEADER_ID 
+--        FROM RCV_TRANSACTIONS rcv2 
+--        WHERE rcv2.TRANSACTION_TYPE LIKE 'RETURN TO%' 
+--        AND rcv2.SHIPMENT_HEADER_ID = rsh.SHIPMENT_HEADER_ID
+--    )
+--    AND rcv.TRANSACTION_ID = jtl.TRX_LOC_LINE_ID
+    AND rsh.SHIPMENT_HEADER_ID = jtl.TRX_ID
+    AND rsl.SHIPMENT_LINE_ID = jtl.TRX_LINE_ID
+--    AND jtl.ROUNDED_TAX_AMT_FUN_CURR <> '0'
+    AND jtl.ROUNDED_TAX_AMT_FUN_CURR IS NOT NULL
+    AND jtl.FIRST_PARTY_PRIMARY_REG_NUM IS NOT NULL
+    AND jtl.DET_FACTOR_ID = jtdf.DET_FACTOR_ID
+    AND jtl.TAX_RATE_ID = jtr.TAX_RATE_ID
+    AND jtr.REGIME_ID = jr.REGIME_ID
+    AND rsh.ORGANIZATION_ID = seller_dtls.ORG_ID
+    AND rsh.SHIP_TO_ORG_ID = buyer_dtls.ORG_ID

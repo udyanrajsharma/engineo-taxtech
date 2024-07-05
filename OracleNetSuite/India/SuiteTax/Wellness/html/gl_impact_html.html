@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item List Report</title>
+	<!-- Bootstrap CSS -->
+  <link href="https://7640589.app.netsuite.com/core/media/media.nl?id=324670&c=7640589&h=rkdYdTxA5q7SMKXZPn5fOqFmJNvts3ZY-v4nFZ_UXZDmyXrr&_xt=.css" rel="stylesheet">
+  <!-- Bootstrap Table CSS -->
+  <link href="https://7640589.app.netsuite.com/core/media/media.nl?id=324671&c=7640589&h=Rw3RkOscusmh3ZzVfaeiWmh3hV_7eXxm_D-ptQcixFSUblO9&_xt=.css" rel="stylesheet">
+  
+
+  <style>
+	body {
+    font-family: Open Sans,Helvetica,sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: rgb(96, 119, 153);
+    text-align: center;
+    padding: 12px 0;
+	font-size: 14px;
+    color: rgb(255, 255, 255);;
+	font-weight: 700 !important;
+
+	
+}
+
+.filters {
+    text-align: center;
+    margin: 20px 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+
+
+footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+.select_values {
+    width: 250px;
+    height: 30px;
+}
+
+
+
+ .dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.search-input {
+  padding: 5px;
+  width: 200px;
+}
+
+.search-input-data{
+  padding: 5px;
+  width: 250px;
+}
+
+.dropdown-list {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 200px;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1;
+}
+
+.dropdown-item {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dropdown-item:hover {
+  background-color: #ddd;
+}
+
+
+.search-button {
+  padding: 6px 18px;
+  background-color: rgb(96, 119, 153);
+  color: #fff;
+  border: none;
+  border-radius: 0 5px 5px 0;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+.search-button:hover {
+  background-color: #0056b3;
+}
+
+
+ #loader_val {
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+        }
+        #loader_val img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+
+.disabled {
+    pointer-events: none; /* Disable pointer events */
+    opacity: 0.5; /* Reduce opacity to indicate disabled state */
+    /* Optionally, you can add other styles to visually indicate the disabled state */
+    /* For example: */
+    background-color: #f0f0f0; /* Light gray background color */
+    color: #888; /* Dimmed text color */
+    /* You can add other styles as needed */
+}
+
+.scrolling-div {
+            height: 600px; /* Set the height as per your requirement */
+            overflow-y: scroll; /* Enable vertical scrolling */
+            border: 1px solid #ccc; /* Optional: Add a border for visual clarity */
+            padding: 10px; /* Optional: Add padding for content */
+        }
+		
+		
+.rptcolheaderdiv {
+    position: relative;
+    background-color: #E0E6EF !important;
+    color: #262626 !important;
+	font-size: 11px !important;
+	font-weight: 400 !important;
+}
+
+.smalltextnolink {
+    font-size: 12px !important;
+    font-weight: normal !important;
+    color: #6f6f6f !important;
+    text-transform: uppercase;
+}
+
+
+ .container_filter {
+    display: flex; /* Use flexbox to arrange rows */
+    flex-wrap: wrap; /* Allow wrapping of rows */
+  
+}
+
+.column_filter {
+    flex: 1; /* Each column takes up equal space */
+    background-color: #f2f2f2; /* Background color for columns */
+    padding: 10px; /* Padding for columns */
+    margin: 5px; /* Margin for spacing between columns */
+    text-align: left; /* Center-align content */
+    box-sizing: border-box; /* Include padding and border in the column's total width */
+}
+
+.column_btn_filter {
+    flex: 1; /* Each column takes up equal space */
+    padding: 10px; /* Padding for columns */
+    margin: 5px; /* Margin for spacing between columns */
+    text-align: left; /* Center-align content */
+    box-sizing: border-box; /* Include padding and border in the column's total width */
+}
+
+.row_filter {
+    display: flex; /* Use flexbox to arrange columns horizontally */
+    width: 100%; /* Ensure rows span the full width of the container */
+    justify-content: space-between; /* Space columns evenly within rows */
+}
+  
+.rptdata {
+    vertical-align: top !important;
+    font-weight: normal !important;
+    font-size: 8pt !important;
+    padding: 2px !important;
+    border-style: none !important;
+    min-height: 17px !important;
+}
+
+  </style>
+	<script src="https://7640589.app.netsuite.com/core/media/media.nl?id=324673&c=7640589&h=_SATqa_A1o8pLnDBXo7LcgcoN9cGKQV2lr4nw432pjTea-e9&_xt=.js"></script>
+	
+	<!-- Bootstrap JS -->
+<script src="https://7640589.app.netsuite.com/core/media/media.nl?id=324674&c=7640589&h=E0cA_NUyux5Kfa-v_uReBe1DoIVy_GKrv9FseUayzVRxMboN&_xt=.js"></script>
+<!-- Bootstrap Table JS -->
+<script src="https://7640589.app.netsuite.com/core/media/media.nl?id=324672&c=7640589&h=ApcbCG04Lv7za84McfXbX20YVaffXuE9bcYeJs-zWbQXi04N&_xt=.js"></script>
+
+
+</head>
+
+<body>
+    <header>
+        <p>InXpress Ledger Report</p>
+      <p>Date: February 22, 2024</p>
+		<div id="sub_data">
+		<p id="subsid"></p>
+		<p id="subsid1"></p>
+		<p id="subsid2"></p>
+		<p id="subsid3"></p>
+		<p id="subsid4"></p>
+		</div>
+    </header>
+	
+	    <div id="loader_val" class="loader_val" >
+        <img src="https://7640589.secure.netsuite.com/core/media/media.nl?id=324666&c=7640589&h=-HGLj2WPXROFLQF4xlbiVkslzfWKEZzwjO-H5WXiSprU3Z63" alt="Loading...">
+    </div>
+	
+	<form method="post" id="myForm" class="form-horizontal" action="https://7640589.extforms.netsuite.com/app/site/hosting/scriptlet.nl?script=3141&deploy=1&compid=7640589&h=6297382241695665126f">
+
+	<div class="filter-container smalltextnolink">
+	 <div class="filters">
+	 
+	 <div class="container_filter">
+  <div class="row_filter">
+ 
+    <div class="column_filter">
+	<label><strong>Subsidiary:</strong></label>
+  <label> <select class="select_values" id="subsidiary_id"  name="subsidiary_id" > </select> </label> 
+  </div>
+    <div class="column_filter">
+	   <label><strong>Type of Ledger:</strong></label>
+  <label> <select class="select_values" id="ledger_type"  name="ledger_type" >
+  <option value="">Select</option>
+  <option value="customer">Customer</option>
+  <option value="vendor">Vendor</option> </select>   </label>
+	</div>
+    <div class="column_filter">
+	  <label><strong>Analysis Type:</strong></label>
+  <label> <select class="select_values" id="analysis_type"  name="analysis_type" >
+  
+  <option value="detailed">Detailed</option>
+  <option value="summary">Summary</option> </select>   </label>
+	</div>
+	
+	 <div class="column_btn_filter">
+	 <button class="search-button" id="search_button">Search</button>
+   </div>
+	</div>
+	
+  
+  <div class="row_filter">
+  
+    <div class="column_filter">
+	 <label for="categoryFilter"><strong>Entity:</strong></label>
+    	<div class="dropdown">
+  <input type="text" placeholder="Search..." class="search-input-data select_values" id="selected_vendor" name="selected_vendor" >
+  <div class="dropdown-list">
+  </div>
+</div>
+	
+	</div>
+    <div class="column_filter">
+	<label for="statusFilter" ><strong>Start Date:</strong></label>
+ <label for="statusFilter" > <input type="date" id="start_date" name="start_date" class="select_values"></label>
+	</div>
+    <div class="column_filter">
+	
+	  <label for="statusFilter"><strong>End Date:</strong></label>
+  <label for="statusFilter" > <input type="date" id="end_date" name="end_date" class="select_values"> </label>
+	</div>
+	
+		 <div class="column_btn_filter">
+	  <button id="submitButton" type="submit" class="btn search-button">Download PDF</button>
+   </div>
+   
+	
+  </div>
+</div>
+</div>
+
+ 
+
+  
+  
+ 
+  
+  
+  
+</div>
+
+
+ 
+</div>
+
+<div class="scrolling-div" >
+<div class="filters rptdata">
+<p id="vendor_data"></p>
+<p id="opening_balance"></p>
+<p id="closing_balance"></p>
+</div>
+    <main>
+	 
+	<div id="main_table"  >
+       <table id="myTable" data-toggle="table" data-sortable="true"  data-search="true" >
+            <thead>
+                <tr class="rptcolheaderdiv">
+                    <th data-sortable="true" >Transaction Date</th>
+                    <th data-sortable="true" >Accounting Date</th>
+                    <th data-sortable="true" >Posting Period </th>
+                    <th data-sortable="true" >Transaction Type </th>
+                    <th data-sortable="true" >Transaction Number</th>
+                    <th data-sortable="true" >Journal Name</th> 
+                    <th data-sortable="true" >Account Code </th>
+                    <th data-sortable="true" >Currency </th>
+                    <th data-sortable="true" >Currency Conversion Rate</th>
+                    <th data-sortable="true" >Amount Dr </th>
+                    <th data-sortable="true" >Amount Cr </th>
+                    <th data-sortable="true" >Narration</th>
+                </tr>
+            </thead>
+            <tbody id="tbody" class="rptdata">
+                
+            </tbody>
+			
+            
+        </table>
+		
+		</div>
+		</div>
+		
+		 </form>
+    </main>
+    <script>
+	
+  
+$(function(){
+var vendor_data;
+var customer_data;
+
+	$('#subsidiary_id').on('change', function() {
+			
+			$('#disabledDiv').addClass('disabled');
+                var selectedOption = $(this).val();
+				var custID = 'vendor_customer'
+			$('#selected_vendor').val('');
+			$.ajax({
+			   type: "GET",
+			   url: "/app/site/hosting/scriptlet.nl?script=customscript_sl_to_gl&deploy=customdeploy_sl_to_gl&subsidiary_id="+selectedOption+"&cust_ID="+custID,
+			   async: false,
+			   processData: true,
+			   cache: false,
+			   success: function(objRec) 
+			   {  
+				if(objRec)
+				{
+				 var objRec = JSON.parse(objRec);
+		
+					 customer_data = objRec.customer_obj;
+					 vendor_data = objRec.vendor_obj;
+			
+					
+				}
+			   }
+			});
+			
+			var obj_array=[];
+			var ledger_type = $('#ledger_type').val();
+			if(ledger_type == 'vendor'){
+			obj_array = vendor_data;
+			}
+			
+			if(ledger_type == 'customer'){
+			obj_array = customer_data;
+			}
+			if(obj_array){
+			if(obj_array.length > 0){
+			for(var n=0;n<obj_array.length;n++)
+					{
+			var dynamicRowHT = '<div class="dropdown-item">'+obj_array[n].Name+'~'+obj_array[n].internalid+'</div>';
+			$('.dropdown-list').append(dynamicRowHT);
+				 }
+			
+			}
+			}
+			
+			
+			
+			
+          const searchInput = document.querySelector('.search-input-data');
+  const dropdownList = document.querySelector('.dropdown-list');
+  const dropdownItems = document.querySelectorAll('.dropdown-item');
+
+  searchInput.addEventListener('input', function() {
+    const searchTerm = searchInput.value.toLowerCase();
+
+    dropdownItems.forEach(function(item) {
+      if (item.textContent.toLowerCase().includes(searchTerm)) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    dropdownList.style.display = 'block';
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.matches('.search-input-data')) {
+      dropdownList.style.display = 'none';
+    }
+  });
+
+  dropdownItems.forEach(function(item) {
+
+    item.addEventListener('click', function() {
+	
+	
+      searchInput.value = item.textContent;
+      dropdownList.style.display = 'none';
+    });
+  });    
+  
+$('#disabledDiv').removeClass('disabled');
+				
+ });
+			
+$('#ledger_type').on('change', function() {
+			var obj_array=[];
+			var selectedOption = $(this).val();
+			 $('#selected_vendor').val('');
+			if(selectedOption == 'vendor'){
+			obj_array = vendor_data;
+			}
+			
+			if(selectedOption == 'customer'){
+			
+			obj_array = customer_data;
+			}
+			
+			if(obj_array.length > 0){
+			for(var n=0;n<obj_array.length;n++)
+					{
+			var dynamicRowHT = '<div class="dropdown-item">'+obj_array[n].Name+'~'+obj_array[n].internalid+'</div>';
+			$('.dropdown-list').append(dynamicRowHT);
+				 }
+			
+			}
+			
+  const searchInput = document.querySelector('.search-input-data');
+  const dropdownList = document.querySelector('.dropdown-list');
+  const dropdownItems = document.querySelectorAll('.dropdown-item');
+
+  searchInput.addEventListener('input', function() {
+    const searchTerm = searchInput.value.toLowerCase();
+
+    dropdownItems.forEach(function(item) {
+      if (item.textContent.toLowerCase().includes(searchTerm)) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    dropdownList.style.display = 'block';
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.matches('.search-input-data')) {
+      dropdownList.style.display = 'none';
+    }
+  });
+
+  dropdownItems.forEach(function(item) {
+
+    item.addEventListener('click', function() {
+	
+	
+      searchInput.value = item.textContent;
+      dropdownList.style.display = 'none';
+    });
+  });
+			
+
+});
+			
+
+ $("#search_button").on('click', function(){
+ 
+  var custID = 'search'; 
+  var selected_vendor = $('#selected_vendor').val();
+  
+  if(selected_vendor == ""){
+  alert("Please Select Any Vendor");
+  return false;
+  }
+  
+  
+  
+  var start_date = $('#start_date').val();
+  var end_date = $('#end_date').val();
+  var ledger_type = $('#ledger_type').val();
+  var analysis_type = $('#analysis_type').val();
+  
+
+  
+  if((start_date != "" && end_date == "") || (end_date != "" && start_date == "") || (end_date == "" && start_date == "") ){
+  alert("Please Select Both Start-Date and End-Date");
+   return false;
+  }
+  
+    $('#loader').show();
+  $('#tbody').empty();
+  $('#opening_balance').empty();
+  $('#closing_balance').empty();
+ 
+  $('#myTable').remove();
+  $('.search-input').remove();
+  $('#vend_data').remove();
+  var selected_vendor = selected_vendor.split('~');
+   $('#vendor_data').append('<span id="vend_data"><strong>'+selected_vendor[1]+'  '+selected_vendor[0]+'</strong>');
+	selected_vendor =  selected_vendor[1];
+	
+	$('.rowClass').remove();
+	
+    var open_bal = 0; 
+    var close_bal = 0; 
+    var symbol; 
+
+
+ if(analysis_type == 'detailed'){
+			$.ajax({
+			   type: "GET",
+			   url: "/app/site/hosting/scriptlet.nl?script=customscript_sl_to_gl&deploy=customdeploy_sl_to_gl&selected_vendor="+selected_vendor+"&start_date="+start_date+"&end_date="+end_date+"&ledger_type="+ledger_type+"&cust_ID="+custID,
+			   async: false,
+			   processData: true,
+			   cache: false,
+			   success: function(objRec) 
+			   {  
+				if(objRec)
+				{
+				 var objRec = JSON.parse(objRec);
+					var data_vendor = objRec.data_vendor;
+					 open_bal = objRec.open_bal;
+					 close_bal = objRec.close_bal;
+					 symbol = objRec.symbol;
+					var objRec = objRec.delaer_obj;
+			  var newTable = '<table  id="myTable" data-toggle="table" data-sortable="true"  data-search="true" data-paging="true" >' +
+                            '<thead><tr class="rptcolheaderdiv"><th data-sortable="true" >Transaction Date</th><th data-sortable="true" >Accounting Date</th><th data-sortable="true" >Posting Period </th><th data-sortable="true" >Transaction Type </th><th data-sortable="true" >Transaction Number</th><th data-sortable="true" >Journal Name</th><th data-sortable="true" >Account Code </th><th data-sortable="true" >Currency </th><th data-sortable="true" >Currency Conversion Rate</th><th data-sortable="true" >Amount Dr </th><th data-sortable="true" >Amount Cr </th><th data-sortable="true" >Narration</th>' +
+                                
+                                '</tr></thead><tbody id="tbody"></tbody></table>';
+
+                        // Append new table to container
+                        $('#main_table').append(newTable);
+					
+											for(var nm=0;nm<objRec.length;nm++)
+					{
+var dynamicRowHTML =  '<tr class="rowClass rptdata"> <td>'+objRec[nm].trandate+'</td><td>'+objRec[nm].trandate+'</td><td>'+objRec[nm].postingperiod+'</td> <td>'+objRec[nm].type+'</td><td>'+objRec[nm].transactionnumber+'</td><td>'+objRec[nm].account+'</td> <td>'+objRec[nm].account_type+'</td><td>'+objRec[nm].currency+'</td><td>'+objRec[nm].exchangerate+'</td><td>'+Math.abs(objRec[nm].debitamount)+'</td><td>'+Math.abs(objRec[nm].creditamount)+'</td><td>'+objRec[nm].memo+'</td></tr>';
+            $('#tbody').append(dynamicRowHTML);
+					
+					}
+				
+					
+				}
+			   }
+			});
+			}else{
+			custID = 'search_summary'; 
+			$.ajax({
+			   type: "GET",
+			   url: "/app/site/hosting/scriptlet.nl?script=customscript_sl_to_gl&deploy=customdeploy_sl_to_gl&selected_vendor="+selected_vendor+"&start_date="+start_date+"&end_date="+end_date+"&ledger_type="+ledger_type+"&cust_ID="+custID,
+			   async: false,
+			   processData: true,
+			   cache: false,
+			   success: function(objRec) 
+			   {  
+				if(objRec)
+				{
+				 var objRec = JSON.parse(objRec);
+					 open_bal = objRec.open_bal;
+					 close_bal = objRec.close_bal;
+					 symbol = objRec.symbol;
+					var objRec = objRec.delaer_obj;
+			  var newTable = '<table  id="myTable" data-toggle="table" data-sortable="true"  data-search="true" data-paging="true" >' +
+                            '<thead><tr class="rptcolheaderdiv"><th data-sortable="true" >Transaction Date</th><th data-sortable="true" >Posting Period </th><th data-sortable="true" >Transaction Type </th><th data-sortable="true" >Journal Name</th><th data-sortable="true" >Account Code </th><th data-sortable="true" >Amount Dr </th><th data-sortable="true" >Amount Cr </th><th data-sortable="true" >Narration</th>' +
+                                
+                                '</tr></thead><tbody id="tbody"></tbody></table>';
+
+                        // Append new table to container
+                        $('#main_table').append(newTable);
+					
+											for(var nms=0;nms<objRec.length;nms++)
+					{
+var dynamicRowHTML =  '<tr class="rowClass rptdata"> <td>'+objRec[nms].trandate+'</td><td>'+objRec[nms].postingperiod+'</td> <td>'+objRec[nms].type+'</td><td>'+objRec[nms].account+'</td> <td>'+objRec[nms].number+'</td><td>'+Math.abs(objRec[nms].debitamount)+'</td><td>'+Math.abs(objRec[nms].creditamount)+'</td><td>'+objRec[nms].memo+'</td></tr>';
+            $('#tbody').append(dynamicRowHTML);
+					
+					}
+				
+					
+				}
+			   }
+			});
+			
+			
+			
+			}
+			
+			
+			 $('#myTable').bootstrapTable();
+			  
+			 
+		$('#opening_balance').append('<span id="vend_balance"><strong>Opening Balance As of '+start_date+' : '+symbol+'.'+open_bal+'</strong>');	 
+		$('#closing_balance').append('<span id="vend_balance"><strong>Closing Balance As of '+end_date+' : '+symbol+'.'+close_bal+'</strong>');	 
+		 
+			
+ });
+ 
+ 
+ 
+ document.getElementById('myForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent the default form submission behavior
+            // Add your custom logic here, if needed
+        });
+		
+		
+  var form = document.getElementById('myForm');
+        var submitButton = document.getElementById('submitButton');
+
+        // Attach event listener to the button click event
+        submitButton.addEventListener('click', function() {
+            // Submit the form when the button is clicked
+            form.submit();
+        });
+
+  
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+
+ var custID = 'test';
+ var subsidry_data;
+console.log('hieeee');
+$.ajax({
+			   type: "GET",
+			   url: "/app/site/hosting/scriptlet.nl?script=customscript_sl_to_gl&deploy=customdeploy_sl_to_gl&cust_ID="+custID,
+			   async: false,
+			   processData: true,
+			   cache: false,
+			   success: function(objRec) 
+			   {  
+				if(objRec)
+				{
+					var objRec = JSON.parse(objRec);
+					
+				var	 subsidry_data = objRec.subsidiary_data;
+				 $('#subsidiary_id').append('<option value="">Select</option>');
+										for(var nm=0;nm<subsidry_data.length;nm++)
+					{
+  $('#subsidiary_id').append('<option value='+subsidry_data[nm].internalid+'>'+subsidry_data[nm].legalname+'</option>');
+					
+					}}}
+			});
+
+ 
+  const searchInput = document.querySelector('.search-input-data');
+  const dropdownList = document.querySelector('.dropdown-list');
+  const loader_val = document.querySelector('.loader_val');
+  const dropdownItems = document.querySelectorAll('.dropdown-item');
+  
+
+  searchInput.addEventListener('input', function() {
+    const searchTerm = searchInput.value.toLowerCase();
+
+    dropdownItems.forEach(function(item) {
+      if (item.textContent.toLowerCase().includes(searchTerm)) {
+        item.style.display = 'block';
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    dropdownList.style.display = 'block';
+  });
+
+  document.addEventListener('click', function(e) {
+    if (!e.target.matches('.search-input-data')) {
+      dropdownList.style.display = 'none';
+    }
+  });
+
+  dropdownItems.forEach(function(item) {
+
+    item.addEventListener('click', function() {
+	
+	
+      searchInput.value = item.textContent;
+      dropdownList.style.display = 'none';
+    });
+  });
+  
+   loader_val.style.display = 'none';
+  
+});
+
+
+
+
+function exportTableToCSV(tableID, filename) {
+    var csv = [];
+    var rows = document.querySelectorAll('#' + tableID + ' tbody tr');
+
+    for (var i = 0; i < rows.length; i++) {
+        var row = [], cols = rows[i].querySelectorAll('td, th');
+
+        for (var j = 0; j < cols.length; j++)
+            row.push(cols[j].innerText);
+
+        csv.push(row.join(','));
+    }
+
+    // Download CSV file
+    downloadCSV(csv.join('\n'), filename);
+}
+
+function downloadCSV(csv, filename) {
+    var csvFile;
+    var downloadLink;
+
+    csvFile = new Blob([csv], {type: 'text/csv'});
+    downloadLink = document.createElement('a');
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+}
+
+
+
+</script>
+</body>
+</html>

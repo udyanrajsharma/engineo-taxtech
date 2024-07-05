@@ -1,0 +1,15 @@
+create or replace PACKAGE XX_BVC_TEST_GSTR_TWO 
+    AS
+    
+    PROCEDURE get_gstr_two_BIP_report_from_fusion;
+
+    PROCEDURE get_presigned_url(PERIOD IN VARCHAR2);
+
+    PROCEDURE upload_file_to_storage(presigned_url IN CLOB, file_name IN VARCHAR2);
+
+    PROCEDURE trigger_file_ingestion(presigned_url IN VARCHAR2, userfilename IN VARCHAR2);
+
+    PROCEDURE get_file_ingestion_status(response IN CLOB);
+
+
+    END;
