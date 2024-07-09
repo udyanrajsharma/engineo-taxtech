@@ -37,7 +37,7 @@
             WHEN substr(jtl.first_party_primary_reg_num, 0, 2) = substr(buyer_dtls.buyer_gstin, 0, 2)  THEN
                 'INTRA'
             ELSE
-                'INTER'
+                NULL
         END,
         xx_iris_gst_utils_pkg.ilfs_gst_supply_type(jtl.trx_id)) ntr,
     CASE

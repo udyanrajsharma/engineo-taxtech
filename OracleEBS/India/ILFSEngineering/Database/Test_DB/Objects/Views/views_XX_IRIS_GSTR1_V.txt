@@ -39,11 +39,13 @@
 --        WHEN rctta.TYPE IN ('CM','DM') THEN 'R'
 --    END dst,
 	'O' dst,
-    CASE 
-        WHEN substr(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) <> substr(buyer_dtls.BUYER_GSTIN,0,2) THEN 'INTER'
-        WHEN substr(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) = substr(buyer_dtls.BUYER_GSTIN,0,2) THEN 'INTRA'
-        ELSE NULL
-    END splyTy,
+    nvl(
+        CASE 
+            WHEN substr(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) <> substr(buyer_dtls.BUYER_GSTIN,0,2) THEN 'INTER'
+            WHEN substr(jtl.FIRST_PARTY_PRIMARY_REG_NUM,0,2) = substr(buyer_dtls.BUYER_GSTIN,0,2) THEN 'INTRA'
+            ELSE NULL
+        END,
+        xx_iris_gst_utils_pkg.ilfs_gst_supply_type(jtl.trx_id)) splyTy,
 
     CASE 
         WHEN buyer_dtls.BUYER_GSTIN IS NULL THEN 'U'
