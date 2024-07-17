@@ -2,7 +2,7 @@ create or replace PACKAGE BODY  xx_bvc_test_gstr_two
 AS
     g_cleartax_auth_token VARCHAR(200)  := '1.626a6b16-8a8d-4185-9e93-cf06d94b5e74_604f203a1eea4f509fb14bd1d13b8b09b91216fa78b22f8efd39990cffef28c3';
 
-
+    
     PROCEDURE  get_gstr_two_bip_report_from_fusion
     IS
         v_fusion_url     VARCHAR2(200) := 'https://ekeo.fa.em2.oraclecloud.com/:443';
@@ -24,6 +24,7 @@ AS
         v_buffer         VARCHAR2(32767);
         v_offset         PLS_INTEGER := 1;
         v_tan_buffer     PLS_INTEGER := 2000;
+        v_report_bytes   CLOB;
         v_url            VARCHAR2(2000) := 'https://ekeo-test.fa.em2.oraclecloud.com:443/xmlpserver/services/ExternalReportWSSService';
         v_req_xml        VARCHAR2(32767) := '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:pub="http://xmlns.oracle.com/oxp/service/PublicReportService">
                                                <soap:Header/>
@@ -35,13 +36,13 @@ AS
                                                            <pub:item>
                                                               <pub:name>FROM_DATE</pub:name>
                                                               <pub:values>
-                                                                 <pub:item>1/4/2024</pub:item>
+                                                                 <pub:item>01-06-2023</pub:item>
                                                               </pub:values>
                                                            </pub:item>
                                                            <pub:item>
                                                               <pub:name>TO_DATE</pub:name>
                                                               <pub:values>
-                                                                 <pub:item>11/6/2024</pub:item>
+                                                                 <pub:item>30-06-2023</pub:item>
                                                               </pub:values>
                                                            </pub:item>
                                                         </pub:parameterNameValues>
@@ -52,20 +53,20 @@ AS
                                                </soap:Body>
                                             </soap:Envelope>';
 
-
+        l_offset NUMBER := 1;
         BEGIN
-             BEGIN
-                v_first_day := TRUNC(ADD_MONTHS(SYSDATE, -1),'MONTH');
-                v_from_date := TO_CHAR(v_first_day, 'DD/MM/YYYY');
-            END;
-            BEGIN
-                SELECT TO_CHAR(last_day(add_months(sysdate,-1)),'DD/MM/YYYY')
-                INTO v_to_date
-                FROM dual;
-            END;
-            v_req_xml := replace(v_req_xml, '{from_date}', v_from_date);
-            v_req_xml := replace(v_req_xml, '{to_date}', v_to_date);
-            v_url := utl_url.escape(v_url, FALSE, 'UTF-8');
+--             BEGIN
+--                v_first_day := TRUNC(ADD_MONTHS(SYSDATE, -1),'MONTH');
+--                v_from_date := TO_CHAR(v_first_day, 'DD/MM/YYYY');
+--            END;
+--            BEGIN
+--                SELECT TO_CHAR(last_day(add_months(sysdate,-1)),'DD/MM/YYYY')
+--                INTO v_to_date
+--                FROM dual;
+--            END;
+--            v_req_xml := replace(v_req_xml, '{from_date}', v_from_date);
+--            v_req_xml := replace(v_req_xml, '{to_date}', v_to_date);
+--            v_url := utl_url.escape(v_url, FALSE, 'UTF-8');
             dbms_output.put_line('v_url: ' || v_url);
             utl_http.set_wallet(
                 v_wallet_path,
@@ -124,38 +125,56 @@ AS
                 WHEN OTHERS THEN
                         dbms_output.put_line('Error ' || sqlerrm);
             END;
+    
+     v_report_bytes := REGEXP_SUBSTR(v_result, '<ns2:reportBytes>(.*)', 1, 1, NULL, 1);
+--      loop exit when l_offset > dbms_lob.getlength(v_report_bytes);
+--   DBMS_OUTPUT.PUT_LINE (dbms_lob.substr( v_report_bytes, 255, l_offset));
+--   l_offset := l_offset + 255;
+--  end loop;
 
+     dbms_output.put_line('1st check');
+     get_presigned_url(v_report_bytes);
 
     dbms_lob.freetemporary(v_result);
 
     END get_gstr_two_bip_report_from_fusion;    
 
-    PROCEDURE get_presigned_url (PERIOD IN VARCHAR2)
+    PROCEDURE get_presigned_url (gstr2_file_bytes IN CLOB)
     IS
         v_clear_tax_base_url  VARCHAR2(100) := 'https://api-sandbox.clear.in/integration/v1/generatePreSign/purchase?fileName={file_name}';
         v_url                 VARCHAR2(150);
+        v_gstr2_file_bytes    CLOB := gstr2_file_bytes;
         v_file_content_type   VARCHAR2(3)  := 'CSV';
-        v_file_name           VARCHAR2(20) ;
+        v_file_name           VARCHAR2(20) := 'GSTR2_RPT';
         req                   utl_http.req;
-        Res                   utl_http.resp;
+        res                   utl_http.resp;
+        v_wallet_path    VARCHAR2(50) := 'file:/rdsdbdata/userdirs/03';
+        v_wallet_pwd     VARCHAR2(20) := 'Clear_Wallet';
         v_buffer              VARCHAR2(32767);
         v_presigned_url       CLOB;
+        v_result              CLOB;
         BEGIN
             v_url := REPLACE(v_clear_tax_base_url, '{file_name}', v_file_name);
             v_url := utl_url.escape(v_url, FALSE, 'UTF-8');
+            v_url := utl_url.escape(v_url, FALSE, 'UTF-8');
+            utl_http.set_wallet(
+                v_wallet_path,
+                v_wallet_pwd
+            );
             req := utl_http.begin_request(v_url,'GET');
             utl_http.set_header(req, 'X-cleartax-auth-token', g_cleartax_auth_token);
             utl_http.set_header(req, 'fileContentType', v_file_content_type);
             res := utl_http.get_response(req);
-            dbms_lob.createtemporary(v_presigned_url, FALSE);
+            dbms_output.put_line(res.status_code);
+            dbms_lob.createtemporary(v_result, FALSE);
 			dbms_lob.OPEN(
-            v_presigned_url,
+            v_result,
             dbms_lob.lob_readwrite
             );
             BEGIN 
                 LOOP
                     utl_http.read_text(res, v_buffer);
-                    dbms_lob.writeappend(v_presigned_url, LENGTH(v_buffer), v_buffer);
+                    dbms_lob.writeappend(v_result, LENGTH(v_buffer), v_buffer);
                 END LOOP;
             EXCEPTION
                 WHEN utl_http.end_of_body THEN
@@ -163,18 +182,22 @@ AS
                 WHEN OTHERS THEN
                         dbms_output.put_line('Error under upload_file_to_storage :: '||sqlerrm);
             END;
-
-        upload_file_to_storage(v_presigned_url, v_file_name);
-        dbms_lob.freetemporary(v_presigned_url);
+        v_presigned_url := json_value(v_result, '$.preSignedS3Url');
+        dbms_output.put_line('check');
+        upload_file_to_storage(v_presigned_url, v_file_name, v_gstr2_file_bytes);
+        dbms_lob.freetemporary(v_result);
     END get_presigned_url;
 
-    PROCEDURE upload_file_to_storage(presigned_url IN CLOB, file_name IN VARCHAR2)
+    PROCEDURE upload_file_to_storage(presigned_url IN CLOB, file_name IN VARCHAR2, gstr2_file_bytes IN CLOB)
     IS
         v_presigned_url CLOB := presigned_url;
-        v_file          CLOB;
+        v_ReportBytesArray         CLOB := gstr2_file_bytes;
+        v_file_blob   BLOB;
         v_file_name     VARCHAR2(100);
         req             utl_http.req;
         res             utl_http.resp;
+        v_wallet_path    VARCHAR2(50) := 'file:/rdsdbdata/userdirs/03';
+        v_wallet_pwd     VARCHAR2(20) := 'Clear_Wallet';
         v_buffer        VARCHAR2(32767);
         v_result        CLOB;
         v_error_message VARCHAR2(4000);
@@ -182,21 +205,38 @@ AS
         v_offset        PLS_INTEGER := 1;
         v_tan_buffer    PLS_INTEGER := 2000;
         v_status_code   VARCHAR2(10);
-
+        t_buffer varchar2(32767);
+        t_pos number := 1;
+        t_size number := nls_charset_decl_len( 32764, nls_charset_id( 'char_cs' ) );
+        t_len number;
+        t_tmp raw(32767);
+        l_offset number := 1;
         BEGIN
+            
+            v_file_blob := P_Base64.DecodeToBlob(v_ReportBytesArray);
+            
             v_presigned_url := utl_url.escape(v_presigned_url, FALSE, 'UTF-8');
-            v_length := dbms_lob.getlength(v_file);
+            v_length := dbms_lob.getlength(v_file_blob);
+            utl_http.set_wallet(
+                v_wallet_path,
+                v_wallet_pwd
+            );
             req := utl_http.begin_request(v_presigned_url,'PUT');
-            utl_http.set_header(req, 'Content-Type', 'application/vnd.ms-excel;charset:UTF-8');
-            utl_http.set_header(req, 'Content-Length', v_length);
-            utl_http.set_header(req, 'Transfer-Encoding', 'chunked');
-            utl_http.set_body_charset('UTF-8');
+            utl_http.set_header(req, 'Content-Type', 'application/vnd.ms-excel');
+--            utl_http.set_header(req, 'Content-Length', v_length);
+--            utl_http.set_header(req, 'Transfer-Encoding', 'chunked');
+            utl_http.set_response_error_check(TRUE);
+--            utl_http.set_body_charset('UTF-8');  
             WHILE ( v_offset < v_length ) LOOP
-                dbms_lob.read(v_file, v_tan_buffer, v_offset, v_buffer);
-                utl_http.write_text(req, v_buffer);
+                dbms_lob.read(v_file_blob, v_tan_buffer, v_offset, v_buffer);
+                utl_http.write_raw(req, v_buffer);
                 v_offset := v_offset + v_tan_buffer;
             END LOOP;
-            res := utl_http.get_response(req);
+            
+            res := utl_http.get_response(req); 
+            dbms_output.put_line(res.status_code);
+            dbms_output.put_line(res.reason_phrase);
+            utl_http.end_response(res);
             dbms_lob.createtemporary(v_result, FALSE);
             dbms_lob.OPEN(
             v_result,
@@ -213,7 +253,7 @@ AS
                 WHEN OTHERS THEN
                         dbms_output.put_line('Error under the loop for upload_file_to_storage'||sqlerrm);
             END;
-
+        
         v_status_code  := res.status_code;         
         IF (res.status_code = utl_http.http_ok) THEN
             trigger_file_ingestion(v_presigned_url, v_file_name);
@@ -231,6 +271,8 @@ AS
         v_json_payload    VARCHAR2(32767);
         req               utl_http.req;
         res               utl_http.resp;
+        v_wallet_path    VARCHAR2(50) := 'file:/rdsdbdata/userdirs/03';
+        v_wallet_pwd     VARCHAR2(20) := 'Clear_Wallet';
         v_buffer          VARCHAR2(32767);
         v_result          CLOB;
         v_error_message   VARCHAR2(4000);
@@ -254,6 +296,10 @@ AS
                                   }';
           v_length := dbms_lob.getlength(v_json_payload);
           v_url := utl_url.ESCAPE(v_clear_tax_url, FALSE, 'UTF-8');
+          utl_http.set_wallet(
+                v_wallet_path,
+                v_wallet_pwd
+            );
           req := utl_http.begin_request(v_clear_tax_url,'POST');
           utl_http.set_header(req, 'Transfer-Encoding', 'chunked');
           utl_http.set_header(req, 'Content-Type', 'application/json;charset:UTF-8');
@@ -271,6 +317,7 @@ AS
           dbms_lob.lob_readwrite
           );
           res := utl_http.get_response(req);
+          dbms_output.put_line(res.status_code);
           BEGIN
             LOOP
                 utl_http.read_text(res, v_buffer, 32000);
@@ -292,6 +339,8 @@ AS
         v_trigger_file_ingestion_status_json_response CLOB := response;
         req                                           utl_http.req;
         res                                           utl_http.resp;
+        v_wallet_path    VARCHAR2(50) := 'file:/rdsdbdata/userdirs/03';
+        v_wallet_pwd     VARCHAR2(20) := 'Clear_Wallet';
         v_cleartax_base_url                           VARCHAR2(300) := 'https://api-sandbox.clear.in/integration/v1/ingest/file/purchase/status/{activityID}?tenant=MAXITC';
         v_activity_id                                 VARCHAR2(100) := regexp_substr(v_trigger_file_ingestion_status_json_response, '"activityId"\s*:\s*"(.?)"', 1, 1, NULL, 1);
         v_url                                         VARCHAR2(500);
@@ -300,6 +349,10 @@ AS
         BEGIN
             v_url := REPLACE(v_cleartax_base_url, '{activityID}', v_activity_ID);
             v_url := utl_url.ESCAPE(v_url, FALSE, 'UTF-8');
+            utl_http.set_wallet(
+                v_wallet_path,
+                v_wallet_pwd
+            );
             req := utl_http.begin_request(v_url,'GET');
             utl_http.set_header(req, 'X-cleartax-auth-token', g_cleartax_auth_token);
             dbms_lob.createtemporary(v_result, FALSE);
@@ -307,6 +360,7 @@ AS
             v_result,
             dbms_lob.lob_readwrite);
             res := utl_http.get_response(req);  
+            dbms_output.put_line(res.status_code);
             BEGIN
                 LOOP
                     utl_http.read_text(res, v_buffer, 32000);
@@ -321,5 +375,58 @@ AS
 
         dbms_lob.freetemporary(v_result);
     END get_file_ingestion_status;
+
+--    FUNCTION decode_base64(p_clob_in IN CLOB) RETURN BLOB IS
+--        v_blob BLOB;
+--        v_result BLOB;
+--        v_offset INTEGER;
+--        v_buffer_size BINARY_INTEGER := 32767;
+--        v_buffer_varchar VARCHAR2(32767);
+--        v_buffer_raw RAW(32767);
+--     BEGIN
+--        IF p_clob_in IS NULL THEN
+--          RETURN NULL;
+--        END IF;
+--        dbms_lob.createtemporary(v_blob, TRUE);
+--        v_offset := 1;
+--        FOR i IN 1 .. CEIL(dbms_lob.getlength(p_clob_in) / v_buffer_size) LOOP
+--          dbms_lob.READ(p_clob_in, v_buffer_size, v_offset, v_buffer_varchar);
+--          v_buffer_raw := utl_raw.cast_to_raw(v_buffer_varchar);
+--          v_buffer_raw := utl_encode.base64_decode(v_buffer_raw);
+--          dbms_lob.writeappend(v_blob, utl_raw.LENGTH(v_buffer_raw), v_buffer_raw);
+--          v_offset := v_offset + v_buffer_size;
+--        END LOOP;
+--        v_result := v_blob;
+--        dbms_lob.freetemporary(v_blob);
+--        Return v_result;
+--     END decode_base64;
+--        function clobbase642blob( p_clob clob )
+--        return blob
+--        is
+--          t_blob blob;
+--          t_buffer varchar2(32767);
+--          t_pos number := 1;
+--          t_size number := nls_charset_decl_len( 32764, nls_charset_id( 'char_cs' ) );
+--          t_len number;
+--          t_tmp raw(32767);
+--        begin
+--          dbms_lob.createtemporary( t_blob, true );
+--          t_len := length( p_clob );
+--          loop
+--            exit when t_pos > t_len;
+--            t_buffer := replace( replace( substr( p_clob, t_pos, t_size ), chr(10) ), chr(13) );
+--            t_pos := t_pos + t_size;
+--            while t_pos <= t_len and mod( length( t_buffer ), 4 ) > 0
+--            loop
+--              t_buffer := t_buffer || replace( replace( substr( p_clob, t_pos, 1 ), chr(10) ), chr(13) );
+--              t_pos := t_pos + 1;
+--            end loop;
+--            t_tmp := utl_encode.base64_decode( utl_raw.cast_to_raw( t_buffer ) );
+--            dbms_lob.writeappend( t_blob, utl_raw.length( t_tmp ), t_tmp );
+--          end loop;
+--          return t_blob;
+--        end;
+
+        
 
 END xx_bvc_test_gstr_two;
