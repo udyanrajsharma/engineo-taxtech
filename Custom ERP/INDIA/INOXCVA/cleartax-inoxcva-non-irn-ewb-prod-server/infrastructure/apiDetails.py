@@ -50,10 +50,10 @@ class apiDetails:
                 'X-Cleartax-Auth-Token': prodClearTaxEwbToken,  
                 'gstin': gstIn
             }
-            servicelogger_info.info(f"request Paylaod: {payload}")
+            # servicelogger_info.info(f"request Paylaod: {payload}")
             response = requests.put(url=clear_tax_generateEWBapi_url, headers=request_headers, json=json.loads(json.dumps(payload, default=decimal_default)))
             response_statusCode = response.status_code 
-            servicelogger_info.info(f"Response from API: {response.text}")           
+            # servicelogger_info.info(f"Response from API: {response.text}")           
             try:
                 data = response.json()
             except ValueError:

@@ -131,6 +131,28 @@ class database:
         finally:
             connection.close()
 
+    # Save Exception Generate EWB
+    def persistExceptionFailureResponseInDBForEWBNonIrnPayload(failStatus, documentNumber, ErrorMessage):
+        try:
+            connection = database.databaseConnection()
+            cur = connection.cursor()
+            insert_query = "INSERT INTO [dbo].[EWB_NON_IRN_RESPONSE] ([Ewb_status], [Error_message], [DOCUMENT_NUMBER], [UPLOAD_TIME]) VALUES (%s, %s, %s, %s)"
+            bind_var = [failStatus, ErrorMessage, documentNumber, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
+            cur.execute(insert_query, bind_var)
+            connection.commit()
+
+            update_query = "update [dbo].[EWAY_BILL_FORMAT_FIDR1376_FOR_EWAY_PURPOSE] set [ACTIVE] = '2' WHERE [Document Number] = %s"
+            cur.execute(update_query, (documentNumber))
+            connection.commit()
+
+            servicelogger_info.info(f"... Response Records from ClearTax API for generate EWB inserted into [EWB_NON_IRN_RESPONSE] table for Failure status for Document Number : {documentNumber}...\n")
+            cur.close() 
+            connection.close()
+        except Exception as e:
+            servicelogger_error.exception("Exception Occured for Exception Failure response in database for generate EWB")
+        finally:
+            connection.close()
+
     # Cancel E-way Bill
     def executeCancelEWBHeaderQuery():
         try:
@@ -197,6 +219,28 @@ class database:
         finally:
             connection.close()
 
+    # Save Exception Cancel EWB
+    def persistExceptionFailureResponseInDBForCancelEWBpayload(failStatus, ewbNumber, ErrorMessage):
+        try:
+            connection = database.databaseConnection()
+            cur = connection.cursor()
+            insert_query = "INSERT INTO [dbo].[CANCEL_RESPONSE_DATA] ([EWB_STATUS], [ERROR_MESSAGE], [EWB_NO], [UPLOAD_TIME]) VALUES (%s, %s, %s, %s)"
+            bind_var = [failStatus, ErrorMessage, ewbNumber, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
+            cur.execute(insert_query, bind_var)
+            connection.commit()
+
+            update_query = "update [dbo].[ICUST_IIL096_C] set [ACTIVE] = '2' WHERE [EWAY_BILL_NO] = %s"
+            cur.execute(update_query, (ewbNumber))
+            connection.commit()
+
+            servicelogger_info.info(f"... Response Records from ClearTax API for cancel EWB exception in payload inserted into [EWB_NON_IRN_RESPONSE] table for Failure status for EWB Number : {ewbNumber}...\n")
+            cur.close() 
+            connection.close()
+        except Exception as e:
+            servicelogger_error.exception("Exception Occured for Exception Failure response in database for cancel EWB payload")
+        finally:
+            connection.close()
+
     # Update E-Way Bill
     def executeUpdateEWBHeaderQuery():
         try:
@@ -210,7 +254,7 @@ class database:
             connection.close()
             return rows
         except Exception as e:
-            servicelogger_error.exception("Exception Occured in executing the database Query for update EWB :\n ")
+            servicelogger_error.exception("\nException Occured in executing the database Query for update EWB :\n ")
         finally:
             connection.close()
 
@@ -261,6 +305,28 @@ class database:
             connection.close()
         except Exception as e:
             servicelogger_error.exception("Exception Occured for Failure response in database for update EWB :\n ")
+        finally:
+            connection.close()
+
+    # Save Exception Update EWB
+    def persistExceptionFailureResponseInDBForUpdateEWBpayload(failStatus, ewbNumber, ErrorMessage):
+        try:
+            connection = database.databaseConnection()
+            cur = connection.cursor()
+            insert_query = "INSERT INTO [dbo].[UPDATE_RESPONSE_DATA] ([STATUS], [ERROR_MESSAGE], [EWB_NO], [UPLOAD_TIME]) VALUES (%s, %s, %s, %s)"
+            bind_var = [failStatus, ErrorMessage, ewbNumber, datetime.now().strftime("%m-%d-%Y %H:%M:%S")]
+            cur.execute(insert_query, bind_var)
+            connection.commit()
+
+            update_query = "update [dbo].[ICUST_IIL097_C] set [ACTIVE] = '2' WHERE [EWAY_BILL_NO] = %s"
+            cur.execute(update_query, (ewbNumber))
+            connection.commit()
+
+            servicelogger_info.info(f"... Response Records from ClearTax API for update EWB exceptionin payload inserted into [EWB_NON_IRN_RESPONSE] table for Failure status for EWB Number : {ewbNumber}...\n")
+            cur.close() 
+            connection.close()
+        except Exception as e:
+            servicelogger_error.exception("Exception Occured for Exception Failure response in database for update EWB payload")
         finally:
             connection.close()
    

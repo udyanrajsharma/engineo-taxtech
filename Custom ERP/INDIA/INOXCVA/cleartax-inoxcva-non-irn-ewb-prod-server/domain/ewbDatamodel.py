@@ -24,6 +24,119 @@ class ewbDatamodel:
     def executeClearTaxEWBapi(payload,gstIn):
         return apiDetails.InvokeClearTaxGenerateEWBAPI(payload,gstIn)
     
+    def preparedEWBNonIRNpayload(row):
+        document_No = row[0]
+        LineItem_data = ewbDatamodel.getLineItemData(document_No) # Get the line item data
+        total_assessable_Amount = 0.00
+        total_Invoice_Amount = 0.00
+        cgst_amount = 0.00
+        sgst_amount = 0.00
+        igst_amount = 0.00
+        cess_amount = 0.00
+        cess_NonAdvol_amount = 0.00
+
+        gstIn = row[14]
+        payload = {
+        "DocumentNumber": row[0],
+        "DocumentType": row[2],
+        "DocumentDate": row[1],
+        "SupplyType": row[3],
+        "SubSupplyType": row[4],
+        "SubSupplyTypeDesc": row[5],
+        "TransactionType": row[6],
+        "BuyerDtls": {
+            "Gstin": row[7],
+            "LglNm": row[8],
+            "TrdNm": "",
+            "Addr1": row[9],
+            "Addr2": row[10],
+            "Loc": row[11],
+            "Pin": row[12],
+            "Stcd": row[13]
+        },
+        "SellerDtls": {
+            "Gstin": row[14],
+            "LglNm": row[15],
+            "TrdNm": "",
+            "Addr1": row[16],
+            "Addr2": row[17],
+            "Loc": row[18],
+            "Pin": row[19],
+            "Stcd": row[20]
+        },
+        "ExpShipDtls": {
+            "LglNm": row[21],
+            "Addr1": row[22],
+            "Addr2": row[23],
+            "Loc": row[24],
+            "Pin": row[25],
+            "Stcd": row[26]
+        },
+        "DispDtls": {
+            "Nm": "",
+            "Addr1": "",
+            "Addr2": "",
+            "Loc": "",
+            "Pin": "",
+            "Stcd": ""
+        },
+        "ItemList": [   
+        ],
+        "TotalInvoiceAmount": "",
+        "TotalCgstAmount": "",
+        "TotalSgstAmount": "",
+        "TotalIgstAmount": "",
+        "TotalCessAmount": "",
+        "TotalCessNonAdvolAmount": "",
+        "TotalAssessableAmount": "",
+        "OtherAmount": "",
+        "OtherTcsAmount": "",
+        "TransId": row[27],
+        "TransName": row[28],
+        "TransMode": row[29],
+        "Distance": row[30],
+        "TransDocNo": row[31],
+        "TransDocDt": row[32],
+        "VehNo": row[33],
+        "VehType": row[34]
+        }
+        for items in LineItem_data:
+            total_assessable_Amount += float(items[5])
+            cgst_amount += float(items[7])
+            sgst_amount += float(items[9])
+            igst_amount += float(items[11])
+            cess_amount += float(items[13])
+            cess_NonAdvol_amount += float(items[15])
+            
+            payload["ItemList"].append  ({
+                "ProdName": items[0],
+                "ProdDesc": items[1],
+                "HsnCd": items[2],
+                "Qty": items[3],
+                "Unit": items[4],
+                "AssAmt": items[5],
+                "CgstRt": items[6],
+                "CgstAmt": items[7],
+                "SgstRt": items[8],
+                "SgstAmt": items[9],
+                "IgstRt": items[10],
+                "IgstAmt": items[11],
+                "CesRt": items[12],
+                "CesAmt": items[13],
+                "OthChrg": items[14],
+                "CesNonAdvAmt": items[15]
+        })       
+        payload["TotalCgstAmount"] = cgst_amount
+        payload["TotalSgstAmount"] = sgst_amount
+        payload["TotalIgstAmount"] = igst_amount
+        payload["TotalCessAmount"] = cess_amount
+        payload["TotalCessNonAdvolAmount"] = cess_NonAdvol_amount
+        payload["TotalAssessableAmount"] = total_assessable_Amount
+        total_Invoice_Amount = total_assessable_Amount + cgst_amount + sgst_amount + igst_amount + cess_amount + cess_NonAdvol_amount
+        payload["TotalInvoiceAmount"] = total_Invoice_Amount
+        servicelogger_info.info("...Payload for generate EWB created...\n")
+        return payload, gstIn
+
     def createEWBpdfFile(ewbNo, gstIn, documentNo, ewbType):
         try:    
             current_time = datetime.now().strftime("%d%m%Y_%H%M")
@@ -93,12 +206,31 @@ class ewbDatamodel:
         except Exception as e:
             servicelogger_error.exception("Exception Occured in saving the response for generate EWB :\n ")
 
+    def payloadCreationEWBNonIRNexceptionFailureResponse(ewbNum, exceptionMessage):
+        try:
+            status = "FAILURE"
+            servicelogger_info.info(f"Exception Message: {exceptionMessage}")
+            database.persistExceptionFailureResponseInDBForEWBNonIrnPayload(status, ewbNum, exceptionMessage)
+        except Exception as e:
+            servicelogger_error.exception("Exception Occured in saving the response of Exception message on payoad creation: \n")
+
     # Cancel E-Way Bill
     def getCancelEWBHeaderData():
         return database.executeCancelEWBHeaderQuery()
     
     def executeCancelEWBClearTaxEWBapi(cancelEWBpayload,gstIn):
         return apiDetails.InvokeClearTaxCancelEWB(cancelEWBpayload, gstIn)
+    
+    def preparedCancelEWBpayload(row):
+        gstIn = row[1]
+        ewbNumber = row[0]
+        cancelEWBpayload = {
+            "ewbNo": row[0],
+            "cancelRsnCode": row[2],
+            "cancelRmrk" : row[3]
+        }
+        servicelogger_info.info("...Payload for cancel EWB created...\n")
+        return cancelEWBpayload, gstIn, ewbNumber
     
     def cancelEWBsaveResponse(response_data, res_status_code, cancelEWBpayload, ewbNo):
         try:
@@ -131,12 +263,42 @@ class ewbDatamodel:
         except Exception as e:
             servicelogger_error.exception("Exception Occured in saving the response for cancel EWB :\n ")
 
+    def payloadCreationCancelEWBNonIRNexceptionFailureResponse(ewbNum, exceptionMessage):
+        try:
+            status = "FAILURE"
+            database.persistExceptionFailureResponseInDBForCancelEWBpayload(status, ewbNum, exceptionMessage)
+        except Exception as e:
+            servicelogger_error.exception("Exception Occured in saving the response of Exception message on payoad creation: \n")
+
+
     # Update E-Way Bill
     def getUpdateEWBHeaderData():
         return database.executeUpdateEWBHeaderQuery()
     
     def executeUpdateEWBClearTaxEWBapi(updateEWBpayload,gstIn):
         return apiDetails.InvokeClearTaxUpdateEWB(updateEWBpayload,gstIn)
+    
+    def preparedUpdateEWbPayload(row):
+        gstIn = row[1]
+        ewbNumber = row[0]
+        documentNo = row[9]
+        updateEWBpayload = {
+            "EwbNumber": row[0],
+            "FromPlace": row[2],
+            "FromState": row[3],
+            "ReasonCode": row[4],
+            "ReasonRemark": row[5],
+            "TransDocNo": row[6],
+            "TransDocDt": row[7],
+            "TransMode": row[8],
+            "DocumentNumber": row[9],
+            "DocumentType": row[10],
+            "DocumentDate": row[11],
+            "VehicleType": row[12],
+            "VehNo": row[13]
+        }
+        servicelogger_info.info("...Payload for update EWB created...\n")
+        return updateEWBpayload, gstIn, ewbNumber, documentNo
     
     def saveResponseUpdateEWB(response_data, res_status_code, updateEWBpayload, ewbNo, usergstIn, documentNo):
         try:
@@ -168,3 +330,10 @@ class ewbDatamodel:
                 database.persistUpdateEWBFailureResponseInDB(all_msg_values, updateEWBpayload, response_data, ewbNo)
         except Exception as e:
             servicelogger_error.exception("Exception Occured in saving the response for update EWB :\n ")
+
+    def payloadCreationUpdateEWBNonIRNexceptionFailureResponse(ewbNum, exceptionMessage):
+        try:
+            status = "FAILURE"
+            database.persistExceptionFailureResponseInDBForUpdateEWBpayload(status, ewbNum, exceptionMessage)
+        except Exception as e:
+            servicelogger_error.exception("Exception Occured in saving the response of Exception message on payoad creation: \n")
